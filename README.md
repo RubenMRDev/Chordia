@@ -29,7 +29,7 @@
 
 ## 🌐 Live Preview
 
-[![View Preview](https://img.shields.io/badge/Live%20Preview-Click%20Here-blue?style=for-the-badge)](http://www.chordia.vercel.app/)
+[![View Preview](https://img.shields.io/badge/Live%20Preview-Click%20Here-blue?style=for-the-badge)](https://chordiamusic.vercel.app/)
 
 ## 🛠️ Contributing
 
