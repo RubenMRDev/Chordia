@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chordia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="src/webicon.webp" type="image/x-icon">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body class="bg-[#111827]">
+    <header class="bg-[#1F2937] p-4 flex justify-between items-center">
+      <img src="src/logo.svg" alt="SVG Image" class="border-none ml-6">
+      <div class="flex gap-2">
+        <button id="exportBtn" class="px-4 py-1 bg-[#9333EA] text-white rounded-md flex items-center">
+          <img src="src/export.svg" alt="" class="mr-2">
+          Export
+        </button>
+        <button id="importBtn" class="px-4 py-1 bg-[#9333EA] text-white rounded-md flex items-center">
+          <img src="src/import.svg" alt="" class="mr-2">
+          Import
+        </button>
+      </div>
+    </header>
+
+
+    <div class="container mx-auto mt-5">
+      <button
+        id="togglePianoBtn"
+        class="bg-[#9333EA] text-white py-2 px-4 rounded hover:bg-blue-600 transition mb-4"
+      >
+        Show / Hide Piano
+      </button>
+
+      <div id="pianoContainer" class="mb-6 hidden">
+        <div class="mb-4">
+          <label for="numOctaves" class="mr-2 font-semibold"
+            >Número de octavas:</label
+          >
+          <input
+            type="number"
+            id="numOctaves"
+            min="1"
+            max="4"
+            value="1"
+            class="p-2 border rounded w-16"
+          />
+        </div>
+
+        <div
+          id="pianoKeys"
+          class="overflow-auto whitespace-nowrap border bg-gray-200 relative mb-4"
+        ></div>
+
+        <div class="mb-2">
+          <label for="chordName" class="mr-2 font-semibold"
+            >Nombre del acorde:</label
+          >
+          <input
+            type="text"
+            id="chordName"
+            placeholder="Ingresa el nombre del acorde"
+            class="p-2 border rounded w-full"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            id="saveChordBtn"
+            class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition"
+          >
+            Guardar Acorde
+          </button>
+          <button
+            id="clearKeysBtn"
+            class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+          >
+            Eliminar Teclas
+          </button>
+        </div>
+      </div>
+
+      <div id="savedChords">
+        <h2 class="text-xl font-bold mb-2 text-white">Saved Chords:</h2>
+        <div id="chordList" class="space-y-4"></div>
+
+        <div class="mt-4 flex flex-wrap gap-4">
+          
+          <input
+            type="file"
+            id="fileInput"
+            class="hidden"
+            accept="application/json"
+          />
+        </div>
+      </div>
+    </div>
+
+    <script src="src/main.js"></script>
+  </body>
