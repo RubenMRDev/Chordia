@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --background-dark: #0f1624;
+  --background-darker: #0a101b;
+  --accent-green: #00E676;
+  --text-primary: #ffffff;
+  --text-secondary: #a0aec0;
+  --card-background: #1a2332;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--background-dark);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--accent-green);
+  color: #000;
+}
+
+.btn-primary:hover {
+  background-color: #00c853;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.section {
+  padding: 4rem 0;
+}
+
+.card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  padding: 1.5rem;
+  height: 100%;
+}
+
+.feature-icon {
+  color: var(--accent-green);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.music-notes-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.2;
+  z-index: -1;
+  overflow: hidden;
+}
