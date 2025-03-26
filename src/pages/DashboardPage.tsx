@@ -145,10 +145,14 @@ const DashboardPage: React.FC = () => {
           position: 'absolute',
           top: 0,
           right: 0,
-          width: '50%',
+          width: '100%',
           height: '100%',
           opacity: 0.5,
-          zIndex: 0
+          zIndex: 0,
+          backgroundImage: `url("https://res.cloudinary.com/doy4x4chv/image/upload/v1742987174/dashboard_eohinb.webp")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+
         }}>
           {/* This would be a background image or SVG with music notes */}
         </div>

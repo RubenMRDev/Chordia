@@ -6,6 +6,8 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import DiscoveryPage from './pages/DiscoverPage';
 import LibraryPage from './pages/LibraryPage';
+import ProfilePage from './pages/ProfilePage';
+import EditProfilePage from './pages/EditProfilePage';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
       <Route path="/library" element={<LibraryPage />} />
       <Route path="/discover" element={<DiscoveryPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/profile/edit" element={<EditProfilePage />} />
     </Routes>
   );
 }

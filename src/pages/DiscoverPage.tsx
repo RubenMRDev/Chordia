@@ -15,7 +15,8 @@ const DiscoverPage: React.FC = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.1)'
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Link to="/dashboard" style={{ 
