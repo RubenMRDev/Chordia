@@ -244,7 +244,28 @@ const ProfilePage: React.FC = () => {
           />
         </div>
 
-        
+        {/* Profile Details */}
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>{profileData?.displayName}</h1>
+          <p style={{ color: "var(--accent-green)", marginBottom: "1rem" }}>
+            @{profileData?.displayName?.toLowerCase().replace(/\s+/g, "")}
+          </p>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
+            <div>
+              <span style={{ fontWeight: "bold" }}>{profileData?.stats?.tracks || 0}</span>
+              <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Tracks</span>
+            </div>
+            <div>
+              <span style={{ fontWeight: "bold" }}>{profileData?.stats?.followers || 0}</span>
+              <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Followers</span>
+            </div>
+            <div>
+              <span style={{ fontWeight: "bold" }}>{profileData?.stats?.following || 0}</span>
+              <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Following</span>
+            </div>
+          </div>
+        </div>
 
         {/* Profile Actions */}
         <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
