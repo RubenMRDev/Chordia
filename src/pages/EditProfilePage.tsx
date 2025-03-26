@@ -18,13 +18,13 @@ const EditProfilePage: React.FC = () => {
     name: userProfile?.displayName || currentUser?.displayName || "",
     bio:
       userProfile?.bio ||
-      "Electronic music producer and DJ based in Miami. Creating vibes since 2018. Available for collaborations.",
-    location: userProfile?.location || "Miami, FL",
-    website: userProfile?.website || "alexmusic.com",
-    instagram: userProfile?.socialLinks?.instagram || "alexmusic",
-    twitter: userProfile?.socialLinks?.twitter || "alexmusic",
-    soundcloud: userProfile?.socialLinks?.soundcloud || "alexmusic",
-    spotify: userProfile?.socialLinks?.spotify || "alexmusic",
+      "",
+    location: userProfile?.location || "",
+    website: userProfile?.website || "",
+    instagram: userProfile?.socialLinks?.instagram || "",
+    twitter: userProfile?.socialLinks?.twitter || "",
+    soundcloud: userProfile?.socialLinks?.soundcloud || "",
+    spotify: userProfile?.socialLinks?.spotify || "",
   })
 
   // Manejar cambios en los inputs

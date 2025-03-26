@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
-import { getUserProfile, type UserProfile } from "../firebase/userService"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getUserProfile, type UserProfile } from "../firebase/userService";
 import {
   FaMusic,
   FaBell,
@@ -19,30 +19,59 @@ import {
   FaPlay,
   FaHeart,
   FaComment,
-} from "react-icons/fa"
+} from "react-icons/fa";
+import Header from "../components/Header";
+import Swal from "sweetalert2"; // Import SweetAlert
 
 const ProfilePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("tracks")
-  const { currentUser } = useAuth()
-  const [profileData, setProfileData] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState("tracks");
+  const { currentUser, logout } = useAuth(); // Get the logout function from the context
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (currentUser) {
         try {
-          const profile = await getUserProfile(currentUser.uid)
-          setProfileData(profile)
+          const profile = await getUserProfile(currentUser.uid);
+          setProfileData(profile);
         } catch (error) {
-          console.error("Error fetching user profile:", error)
+          console.error("Error fetching user profile:", error);
         } finally {
-          setLoading(false)
+          setLoading(false);
         }
       }
-    }
+    };
 
-    fetchUserProfile()
-  }, [currentUser])
+    fetchUserProfile();
+  }, [currentUser]);
+
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure you want to log out?",
+      text: "You will be redirected to the login page.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "var(--accent-green)", // Green color for confirm button
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, log out",
+      cancelButtonText: "Cancel",
+      background: "var(--background-darker)", // Darker background
+      color: "var(--text-secondary)", // White secondary text
+      titleColor: "var(--accent-green)", // Green title text
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await logout();
+          navigate("/login"); // Redirect to the login page after logout
+        } catch (error) {
+          console.error("Error logging out:", error);
+          Swal.fire("Error", "There was a problem logging out.", "error");
+        }
+      }
+    });
+  };
 
   // Datos de ejemplo para las canciones
   const tracks = [
@@ -86,7 +115,7 @@ const ProfilePage: React.FC = () => {
       comments: 39,
       image: "/placeholder.svg?height=200&width=200",
     },
-  ]
+  ];
 
   if (loading) {
     return (
@@ -102,91 +131,12 @@ const ProfilePage: React.FC = () => {
       >
         Loading...
       </div>
-    )
+    );
   }
 
   return (
     <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
-      {/* Header/Navigation */}
-      <header
-        style={{
-          padding: "1rem 2rem",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Link
-            to="/dashboard"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              textDecoration: "none",
-              color: "var(--accent-green)",
-              marginRight: "3rem",
-              fontWeight: "bold",
-              fontSize: "1.25rem",
-            }}
-          >
-            <FaMusic style={{ marginRight: "0.5rem" }} />
-            Chordia
-          </Link>
-
-          <nav style={{ display: "flex", gap: "2rem" }}>
-            <Link
-              to="/dashboard"
-              style={{ color: "var(--text-primary)", textDecoration: "none", fontWeight: "medium" }}
-            >
-              Home
-            </Link>
-            <Link
-              to="/profile"
-              style={{ color: "var(--accent-green)", textDecoration: "none", fontWeight: "medium" }}
-            >
-              Profile
-            </Link>
-            <Link
-              to="/discover"
-              style={{ color: "var(--text-primary)", textDecoration: "none", fontWeight: "medium" }}
-            >
-              Discover
-            </Link>
-            <Link
-              to="/studio"
-              style={{ color: "var(--text-primary)", textDecoration: "none", fontWeight: "medium" }}
-            >
-              Studio
-            </Link>
-          </nav>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-primary)",
-              cursor: "pointer",
-              fontSize: "1.25rem",
-            }}
-          >
-            <FaBell />
-          </button>
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-primary)",
-              cursor: "pointer",
-              fontSize: "1.25rem",
-            }}
-          >
-            <FaCog />
-          </button>
-        </div>
-      </header>
+      <Header/>
 
       {/* Profile Banner */}
       <div
@@ -286,16 +236,17 @@ const ProfilePage: React.FC = () => {
           </Link>
           <button
             style={{
-              backgroundColor: "transparent",
-              color: "var(--text-primary)",
+              backgroundColor: "#dc3545", // Red background
+              color: "white",
               padding: "0.5rem 1.25rem",
               borderRadius: "4px",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "none",
               fontWeight: "bold",
               cursor: "pointer",
             }}
+            onClick={handleLogout} // Call the logout function on click
           >
-            Share Profile
+            Logout
           </button>
         </div>
       </div>
@@ -639,7 +590,7 @@ const ProfilePage: React.FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProfilePage
+export default ProfilePage;
