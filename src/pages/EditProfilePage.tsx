@@ -3,9 +3,10 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { FaMusic, FaArrowLeft, FaCamera, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from "react-icons/fa"
+import { FaMusic, FaArrowLeft, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
 import { updateUserProfile } from "../firebase/userService"
+import { uploadProfilePicture } from "../firebase/storageService"; // Importa el servicio de subida
 
 const EditProfilePage: React.FC = () => {
   const navigate = useNavigate()
@@ -15,7 +16,6 @@ const EditProfilePage: React.FC = () => {
   // Estado para los datos del formulario
   const [formData, setFormData] = useState({
     name: userProfile?.displayName || currentUser?.displayName || "",
-    username: userProfile?.displayName?.toLowerCase().replace(/\s+/g, "") || "",
     bio:
       userProfile?.bio ||
       "Electronic music producer and DJ based in Miami. Creating vibes since 2018. Available for collaborations.",
@@ -35,6 +35,7 @@ const EditProfilePage: React.FC = () => {
       [name]: value,
     }))
   }
+
 
   // Manejar envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
@@ -137,109 +138,8 @@ const EditProfilePage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Profile Picture */}
-          <div
-            style={{
-              marginBottom: "2rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "150px",
-                height: "150px",
-                borderRadius: "50%",
-                overflow: "hidden",
-                position: "relative",
-                marginBottom: "1rem",
-              }}
-            >
-              <img
-                src="/placeholder.svg?height=150&width=150"
-                alt="Profile"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "rgba(0,0,0,0.7)",
-                  padding: "0.5rem",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    color: "var(--text-primary)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <FaCamera style={{ marginRight: "0.5rem" }} />
-                  <span>Change</span>
-                  <input type="file" style={{ display: "none" }} />
-                </label>
-              </div>
-            </div>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-              Recommended: Square JPG or PNG, at least 300x300px
-            </p>
-          </div>
-
           {/* Profile Banner */}
-          <div
-            style={{
-              marginBottom: "2rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                height: "150px",
-                borderRadius: "8px",
-                overflow: "hidden",
-                position: "relative",
-                marginBottom: "1rem",
-                background: "linear-gradient(90deg, #004d40 0%, #00796b 100%)",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "rgba(0,0,0,0.7)",
-                  padding: "0.5rem",
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    color: "var(--text-primary)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <FaCamera style={{ marginRight: "0.5rem" }} />
-                  <span>Change Banner</span>
-                  <input type="file" style={{ display: "none" }} />
-                </label>
-              </div>
-            </div>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>Recommended: 1500x500px JPG or PNG</p>
-          </div>
+          {/* Removed banner editing section */}
 
           {/* Basic Info */}
           <div style={{ marginBottom: "2rem" }}>
@@ -270,47 +170,6 @@ const EditProfilePage: React.FC = () => {
                   fontSize: "1rem",
                 }}
               />
-            </div>
-
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Username
-              </label>
-              <div style={{ position: "relative" }}>
-                <span
-                  style={{
-                    position: "absolute",
-                    left: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  @
-                </span>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    paddingLeft: "2rem",
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "4px",
-                    color: "var(--text-primary)",
-                    fontSize: "1rem",
-                  }}
-                />
-              </div>
             </div>
 
             <div style={{ marginBottom: "1.5rem" }}>
