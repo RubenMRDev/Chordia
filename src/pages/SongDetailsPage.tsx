@@ -207,7 +207,7 @@ const SongDetailsPage: React.FC = () => {
       
       <audio ref={metronomeRef} src="/metronome-click.mp3" preload="auto" />
       <div style={{ padding: '2rem' }}>
-        <Link to="/library" style={{
+        <Link to="/dashboard" style={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -219,7 +219,7 @@ const SongDetailsPage: React.FC = () => {
         onMouseOver={(e) => { e.currentTarget.style.color = 'var(--accent-green)'; }}
         onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
         >
-          <FaArrowLeft /> Back to Library
+          <FaArrowLeft /> Back to Stage
         </Link>
         {loading ? (
           <div style={{ 

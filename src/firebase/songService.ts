@@ -81,3 +81,24 @@ export const deleteSongById = async (songId: string): Promise<void> => {
     throw error;
   }
 };
+
+export const getAllSongs = async (): Promise<Song[]> => {
+  try {
+    const q = query(
+      collection(db, "songs"),
+      orderBy("createdAt", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const songs: Song[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      songs.push({ id: doc.id, ...doc.data() } as Song);
+    });
+    
+    return songs;
+  } catch (error) {
+    console.error("Error getting all songs:", error);
+    throw error;
+  }
+};
