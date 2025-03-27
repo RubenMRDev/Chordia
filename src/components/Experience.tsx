@@ -63,99 +63,77 @@ const Experience: React.FC = () => {
   });
 
   return (
-    <section ref={sectionRef} className="section" style={{ 
-      backgroundColor: 'var(--background-darker)',
-      padding: '5rem 0'
-    }}>
-      <div className="container" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '3rem',
-        alignItems: 'center'
-      }}>
+    <section 
+      ref={sectionRef} 
+      className="py-20 bg-[var(--background-darker)]"
+    >
+      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 style={{ 
-            fontSize: '2.5rem', 
-            fontWeight: 'bold',
-            marginBottom: '2rem',
-            ...slideInStyle(isVisible)
-          }}>
-            Experience Music Like Never Before
+          <h2 
+            className="text-4xl font-bold mb-8"
+            style={slideInStyle(isVisible)}
+          >
+            Experience Music <span className="text-[#04e073]">Like Never Before</span>
           </h2>
 
-          <div className="feature-detail" data-index="0" style={{ 
-            marginBottom: '1.5rem',
-            ...slideInStyle(detailsVisible[0]),
-            transitionDelay: '0.2s'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 'bold',
-              marginBottom: '0.5rem'
-            }}>
-              Real-time Chord Recognition
+          <div 
+            className="feature-detail mb-6" 
+            data-index="0" 
+            style={{ 
+              ...slideInStyle(detailsVisible[0]),
+              transitionDelay: '0.2s'
+            }}
+          >
+            <h3 className="text-xl font-bold mb-2">
+              <span className="text-[#04e073]">Real-time</span> Chord Recognition
             </h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-[var(--text-secondary)]">
               Instantly see chord names and progressions as you play.
             </p>
           </div>
 
-          <div className="feature-detail" data-index="1" style={{ 
-            marginBottom: '1.5rem',
-            ...slideInStyle(detailsVisible[1]),
-            transitionDelay: '0.4s'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 'bold',
-              marginBottom: '0.5rem'
-            }}>
-              Smart Practice Tools
+          <div 
+            className="feature-detail mb-6" 
+            data-index="1"
+            style={{ 
+              ...slideInStyle(detailsVisible[1]),
+              transitionDelay: '0.4s'
+            }}
+          >
+            <h3 className="text-xl font-bold mb-2">
+              <span className="text-[#04e073]">Smart</span> Practice Tools
             </h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Track your progress and get personalized recommendations.
+            <p className="text-[var(--text-secondary)]">
+              Track your progress and get <span className="text-[#04e073]">personalized</span> recommendations.
             </p>
           </div>
 
-          <div className="feature-detail" data-index="2" style={{ 
-            ...slideInStyle(detailsVisible[2]),
-            transitionDelay: '0.6s'
-          }}>
-            <h3 style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 'bold',
-              marginBottom: '0.5rem'
-            }}>
-              Community Sharing
+          <div 
+            className="feature-detail" 
+            data-index="2"
+            style={{ 
+              ...slideInStyle(detailsVisible[2]),
+              transitionDelay: '0.6s'
+            }}
+          >
+            <h3 className="text-xl font-bold mb-2">
+              <span className="text-[#04e073]">Community</span> Sharing
             </h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Share your arrangements and collaborate with other musicians.
+            <p className="text-[var(--text-secondary)]">
+              Share your arrangements and <span className="text-[#04e073]">collaborate</span> with other musicians.
             </p>
           </div>
         </div>
 
-        <div style={{ 
-          position: 'relative',
-          maxWidth: '500px',
-          margin: '0 auto',
-          ...slideInRightStyle(imageVisible)
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 0,
-          }}></div>
+        <div 
+          className="relative max-w-xl mx-auto"
+          style={slideInRightStyle(imageVisible)}
+        >
+          <div className="absolute top-0 right-0 w-full h-full z-0"></div>
           <img 
             src="https://res.cloudinary.com/doy4x4chv/image/upload/v1743115656/Screenshot_2025-03-27_234752_ufhij8.png" 
             alt="Chordia App" 
-            style={{
-              width: '100%',
-              position: 'relative',
-              zIndex: 1
-            }}
+            className="w-full relative z-10"
           />
         </div>
       </div>

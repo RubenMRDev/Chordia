@@ -3,19 +3,10 @@ import { FaTwitter, FaFacebook, FaInstagram, FaYoutube } from 'react-icons/fa';
 
 const Footer: React.FC = () => {
   return (
-    <footer style={{ 
-      backgroundColor: 'var(--background-darker)',
-      padding: '4rem 0 2rem'
-    }}>
-        <div style={{ 
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          paddingTop: '2rem',
-          textAlign: 'center',
-          color: 'var(--text-secondary)',
-          fontSize: '0.875rem'
-        }}>
-          &copy; {new Date().getFullYear()} Chordia. All rights reserved.
-        </div>
+    <footer className="bg-[var(--background-darker)] py-10  ">
+      <div className=" border-white/10   text-center text-[var(--text-secondary)] text-sm">
+        &copy; {new Date().getFullYear()} Chordia. All rights reserved.
+      </div>
     </footer>
   );
 };

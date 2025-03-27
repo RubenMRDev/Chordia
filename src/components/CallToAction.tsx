@@ -28,14 +28,11 @@ const CallToAction: React.FC = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="section" style={{ textAlign: 'center' }}>
-      <div className="container">
+    <section ref={sectionRef} className="py-12 md:py-16 lg:py-20 text-center">
+      <div className="container mx-auto px-4">
         <h2 
-          className={`slide-up ${isVisible ? 'animate' : ''}`} 
+          className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-4 slide-up ${isVisible ? 'animate' : ''}`} 
           style={{ 
-            fontSize: '2.5rem', 
-            fontWeight: 'bold',
-            marginBottom: '1rem',
             opacity: 0,
             transform: 'translateY(40px)',
             transition: 'opacity 0.5s ease, transform 0.5s ease',
@@ -45,12 +42,8 @@ const CallToAction: React.FC = () => {
           Start Your Musical Journey Today
         </h2>
         <p 
-          className={`slide-up ${isVisible ? 'animate' : ''}`} 
+          className={`text-base md:text-lg text-gray-600 max-w-md md:max-w-xl lg:max-w-2xl mx-auto mb-8 slide-up ${isVisible ? 'animate' : ''}`} 
           style={{ 
-            color: 'var(--text-secondary)',
-            marginBottom: '2rem',
-            maxWidth: '700px',
-            margin: '0 auto 2rem',
             opacity: 0,
             transform: 'translateY(40px)',
             transition: 'opacity 0.5s ease, transform 0.5s ease',
@@ -61,14 +54,21 @@ const CallToAction: React.FC = () => {
         </p>
         <Link 
           to="/register" 
-          className={`btn btn-primary slide-up ${isVisible ? 'animate' : ''}`} 
+          className={`inline-block px-6 py-3 font-medium rounded-md hover:shadow-lg transition-all duration-300 slide-up ${isVisible ? 'animate' : ''}`} 
           style={{ 
-            textDecoration: 'none',
+            backgroundColor: '#04e073',
+            color: 'black',
             opacity: 0,
             transform: 'translateY(40px)',
-            transition: 'opacity 0.5s ease, transform 0.5s ease',
+            transition: 'opacity 0.5s ease, transform 0.5s ease, background-color 0.3s ease, box-shadow 0.3s ease',
             transitionDelay: '0.5s',
-            display: 'inline-block'
+            textDecoration: 'none'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#03b061';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#04e073';
           }}
         >
           Get Started Free

@@ -12,6 +12,13 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import { useAuth } from "./context/AuthContext"
 import CreateSongPage from "./pages/CreateSongPage"
 import SongDetailsPage from "./pages/SongDetailsPage"
+import Header from './components/Header';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import Experience from './components/Experience';
+import CallToAction from './components/CallToAction';
+import Footer from './components/Footer';
+import LandingLayout from './components/LandingLayout';
 import "./App.css"
 
 
@@ -20,7 +27,16 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={
+        <LandingLayout>
+          <Header />
+          <Hero />
+          <Features />
+          <Experience />
+          <CallToAction />
+          <Footer />
+        </LandingLayout>
+      } />
       <Route path="/login" element={currentUser ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/register" element={currentUser ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
       <Route

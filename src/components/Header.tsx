@@ -3,20 +3,17 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaMusic } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
-
 const Header: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const [activeLink, setActiveLink] = useState<string | null>(null);
   const location = useLocation();
-  
   const handleLinkClick = (path: string) => {
     setActiveLink(path);
   };
-  
   return (
     <div className="w-full mt-0">
       <header className="w-full px-6 sm:px-8 md:px-16 py-4 md:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center border-white/10 bg-[var(--background-darker)] text-[var(--text-primary)]">
-        {/* Top row for mobile: Logo and profile/login */}
+        
         <div className="flex justify-between items-center w-full sm:w-auto">
           <Link
         to="/"
@@ -25,9 +22,7 @@ const Header: React.FC = () => {
         <FaMusic className="mr-3 text-[var(--accent-green)]" />
         Chordia
           </Link>
-          
           <div className="flex sm:hidden items-center">
-            
         {currentUser ? (
           <Link to="/profile">
             <img
@@ -47,7 +42,6 @@ const Header: React.FC = () => {
           </div>
         </div>
         
-        {/* Navigation links - visible on all screens */}
         <nav className="flex justify-center text-base sm:text-lg py-4 sm:py-0 w-full sm:w-auto">
           <div className="flex space-x-6 sm:space-x-8 md:space-x-12">
         <Link
@@ -79,8 +73,7 @@ const Header: React.FC = () => {
         </Link>
           </div>
         </nav>
-
-        {/* Desktop user profile/login section */}
+        
         <div className="hidden sm:flex items-center gap-6 pr-4">
           {currentUser ? (
         <>
@@ -111,5 +104,4 @@ const Header: React.FC = () => {
     </div>
   );
 };
-
 export default Header;
