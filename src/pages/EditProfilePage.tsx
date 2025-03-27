@@ -1,19 +1,15 @@
 "use client"
-
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaMusic, FaArrowLeft, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
 import { updateUserProfile } from "../firebase/userService"
-import { uploadProfilePicture } from "../firebase/storageService"; // Importa el servicio de subida
-
+import { uploadProfilePicture } from "../firebase/storageService";
 const EditProfilePage: React.FC = () => {
   const navigate = useNavigate()
   const { currentUser, userProfile } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
-
-  // Estado para los datos del formulario
   const [formData, setFormData] = useState({
     name: userProfile?.displayName || currentUser?.displayName || "",
     bio:
@@ -26,8 +22,6 @@ const EditProfilePage: React.FC = () => {
     soundcloud: userProfile?.socialLinks?.soundcloud || "",
     spotify: userProfile?.socialLinks?.spotify || "",
   })
-
-  // Manejar cambios en los inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({
@@ -35,20 +29,13 @@ const EditProfilePage: React.FC = () => {
       [name]: value,
     }))
   }
-
-
-  // Manejar envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!currentUser) {
       return
     }
-
     try {
       setIsLoading(true)
-
-      // Actualizar el perfil en Firestore
       await updateUserProfile(currentUser.uid, {
         displayName: formData.name,
         bio: formData.bio,
@@ -61,7 +48,6 @@ const EditProfilePage: React.FC = () => {
           spotify: formData.spotify,
         },
       })
-
       navigate("/profile")
     } catch (error) {
       console.error("Error updating profile:", error)
@@ -69,7 +55,6 @@ const EditProfilePage: React.FC = () => {
       setIsLoading(false)
     }
   }
-
   return (
     <div
       style={{
@@ -78,7 +63,7 @@ const EditProfilePage: React.FC = () => {
         color: "var(--text-primary)",
       }}
     >
-      {/* Header/Navigation */}
+      
       <header
         style={{
           padding: "1rem 2rem",
@@ -106,8 +91,7 @@ const EditProfilePage: React.FC = () => {
           </Link>
         </div>
       </header>
-
-      {/* Main Content */}
+      
       <div
         style={{
           maxWidth: "800px",
@@ -136,15 +120,12 @@ const EditProfilePage: React.FC = () => {
           </Link>
           <h1>Edit Profile</h1>
         </div>
-
         <form onSubmit={handleSubmit}>
-          {/* Profile Banner */}
-          {/* Removed banner editing section */}
-
-          {/* Basic Info */}
+          
+          
+          
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1.5rem" }}>Basic Information</h2>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -171,7 +152,6 @@ const EditProfilePage: React.FC = () => {
                 }}
               />
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -199,7 +179,6 @@ const EditProfilePage: React.FC = () => {
                 }}
               />
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -226,7 +205,6 @@ const EditProfilePage: React.FC = () => {
                 }}
               />
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -254,11 +232,9 @@ const EditProfilePage: React.FC = () => {
               />
             </div>
           </div>
-
-          {/* Social Links */}
+          
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1.5rem" }}>Social Links</h2>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -297,7 +273,6 @@ const EditProfilePage: React.FC = () => {
                 />
               </div>
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -336,7 +311,6 @@ const EditProfilePage: React.FC = () => {
                 />
               </div>
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -375,7 +349,6 @@ const EditProfilePage: React.FC = () => {
                 />
               </div>
             </div>
-
             <div style={{ marginBottom: "1.5rem" }}>
               <label
                 style={{
@@ -415,8 +388,7 @@ const EditProfilePage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Form Actions */}
+          
           <div
             style={{
               display: "flex",
@@ -438,7 +410,6 @@ const EditProfilePage: React.FC = () => {
             >
               Cancel
             </Link>
-
             <button
               type="submit"
               disabled={isLoading}
@@ -461,6 +432,4 @@ const EditProfilePage: React.FC = () => {
     </div>
   )
 }
-
 export default EditProfilePage
-

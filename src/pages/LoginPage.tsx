@@ -1,11 +1,9 @@
 "use client"
-
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaMusic, FaEnvelope, FaLock, FaGoogle, FaFacebook, FaApple } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
-
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -13,12 +11,9 @@ const LoginPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login")
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-
   const { login, signInWithGoogle, signInWithFacebook, error, setError } = useAuth()
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     try {
       setIsLoading(true)
       await login(email, password)
@@ -29,7 +24,6 @@ const LoginPage: React.FC = () => {
       setIsLoading(false)
     }
   }
-
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true)
@@ -41,7 +35,6 @@ const LoginPage: React.FC = () => {
       setIsLoading(false)
     }
   }
-
   const handleFacebookSignIn = async () => {
     try {
       setIsLoading(true)
@@ -53,7 +46,6 @@ const LoginPage: React.FC = () => {
       setIsLoading(false)
     }
   }
-
   return (
     <div
       style={{
@@ -78,11 +70,9 @@ const LoginPage: React.FC = () => {
         <div style={{ marginBottom: "1.5rem" }}>
           <FaMusic style={{ fontSize: "2rem", color: "var(--accent-green)" }} />
         </div>
-
         <h1 style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>Welcome to Chordia</h1>
         <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>Your creative journey begins here</p>
-
-        {/* Tabs */}
+        
         <div
           style={{
             display: "flex",
@@ -118,8 +108,7 @@ const LoginPage: React.FC = () => {
             Register
           </Link>
         </div>
-
-        {/* Error message */}
+        
         {error && (
           <div
             style={{
@@ -147,8 +136,7 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
         )}
-
-        {/* Form */}
+        
         <form onSubmit={handleSubmit}>
           <div
             style={{
@@ -182,7 +170,6 @@ const LoginPage: React.FC = () => {
               required
             />
           </div>
-
           <div
             style={{
               position: "relative",
@@ -215,7 +202,6 @@ const LoginPage: React.FC = () => {
               required
             />
           </div>
-
           <div
             style={{
               display: "flex",
@@ -241,7 +227,6 @@ const LoginPage: React.FC = () => {
               />
               Remember me
             </label>
-
             <a
               href="#"
               style={{
@@ -253,7 +238,6 @@ const LoginPage: React.FC = () => {
               Forgot password?
             </a>
           </div>
-
           <button
             type="submit"
             disabled={isLoading}
@@ -274,8 +258,7 @@ const LoginPage: React.FC = () => {
             {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-
-        {/* Social Login */}
+        
         <div style={{ marginBottom: "1.5rem" }}>
           <div
             style={{
@@ -290,7 +273,6 @@ const LoginPage: React.FC = () => {
             </span>
             <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.1)" }}></div>
           </div>
-
           <div style={{ display: "flex", gap: "0.5rem" }}>
             <button
               onClick={handleGoogleSignIn}
@@ -311,7 +293,6 @@ const LoginPage: React.FC = () => {
             >
               <FaGoogle />
             </button>
-
             <button
               onClick={handleFacebookSignIn}
               disabled={isLoading}
@@ -331,7 +312,6 @@ const LoginPage: React.FC = () => {
             >
               <FaFacebook />
             </button>
-
             <button
               style={{
                 flex: 1,
@@ -350,8 +330,7 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Create Account */}
+        
         <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
           Don't have an account?{" "}
           <Link to="/register" style={{ color: "var(--accent-green)", textDecoration: "none" }}>
@@ -362,6 +341,4 @@ const LoginPage: React.FC = () => {
     </div>
   )
 }
-
 export default LoginPage
-

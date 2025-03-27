@@ -1,5 +1,4 @@
 "use client";
-
 import type React from "react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -21,15 +20,13 @@ import {
   FaComment,
 } from "react-icons/fa";
 import Header from "../components/Header";
-import Swal from "sweetalert2"; // Import SweetAlert
-
+import Swal from "sweetalert2";
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("tracks");
-  const { currentUser, logout } = useAuth(); // Get the logout function from the context
+  const { currentUser, logout } = useAuth();
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (currentUser) {
@@ -43,28 +40,26 @@ const ProfilePage: React.FC = () => {
         }
       }
     };
-
     fetchUserProfile();
   }, [currentUser]);
-
   const handleLogout = () => {
     Swal.fire({
       title: "Are you sure you want to log out?",
       text: "You will be redirected to the login page.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "var(--accent-green)", // Green color for confirm button
+      confirmButtonColor: "var(--accent-green)",
       cancelButtonColor: "#d33",
       confirmButtonText: "Yes, log out",
       cancelButtonText: "Cancel",
-      background: "var(--background-darker)", // Darker background
-      color: "var(--text-secondary)", // White secondary text
-      titleColor: "var(--accent-green)", // Green title text
+      background: "var(--background-darker)",
+      color: "var(--text-secondary)",
+      titleColor: "var(--accent-green)",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await logout();
-          navigate("/login"); // Redirect to the login page after logout
+          navigate("/login");
         } catch (error) {
           console.error("Error logging out:", error);
           Swal.fire("Error", "There was a problem logging out.", "error");
@@ -72,8 +67,6 @@ const ProfilePage: React.FC = () => {
       }
     });
   };
-
-  // Datos de ejemplo para las canciones
   const tracks = [
     {
       id: 1,
@@ -116,7 +109,6 @@ const ProfilePage: React.FC = () => {
       image: "/placeholder.svg?height=200&width=200",
     },
   ];
-
   if (loading) {
     return (
       <div
@@ -133,12 +125,10 @@ const ProfilePage: React.FC = () => {
       </div>
     );
   }
-
   return (
     <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
       <Header/>
-
-      {/* Profile Banner */}
+      
       <div
         style={{
           height: "200px",
@@ -163,8 +153,7 @@ const ProfilePage: React.FC = () => {
           }}
         ></div>
       </div>
-
-      {/* Profile Info */}
+      
       <div
         style={{
           padding: "0 2rem",
@@ -176,7 +165,7 @@ const ProfilePage: React.FC = () => {
           textAlign: "center",
         }}
       >
-        {/* Profile Picture */}
+        
         <div
           style={{
             width: "120px",
@@ -193,14 +182,12 @@ const ProfilePage: React.FC = () => {
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>
-
-        {/* Profile Details */}
+        
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>{profileData?.displayName}</h1>
           <p style={{ color: "var(--accent-green)", marginBottom: "1rem" }}>
             @{profileData?.displayName?.toLowerCase().replace(/\s+/g, "")}
           </p>
-
           <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
             <div>
               <span style={{ fontWeight: "bold" }}>{profileData?.stats?.tracks || 0}</span>
@@ -216,8 +203,7 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Profile Actions */}
+        
         <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
           <Link
             to="/profile/edit"
@@ -236,7 +222,7 @@ const ProfilePage: React.FC = () => {
           </Link>
           <button
             style={{
-              backgroundColor: "#dc3545", // Red background
+              backgroundColor: "#dc3545",
               color: "white",
               padding: "0.5rem 1.25rem",
               borderRadius: "4px",
@@ -244,18 +230,17 @@ const ProfilePage: React.FC = () => {
               fontWeight: "bold",
               cursor: "pointer",
             }}
-            onClick={handleLogout} // Call the logout function on click
+            onClick={handleLogout}
           >
             Logout
           </button>
         </div>
       </div>
-
-      {/* Main Content */}
+      
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem", padding: "2rem" }}>
-        {/* Sidebar */}
+        
         <div>
-          {/* About Section */}
+          
           <div
             style={{
               backgroundColor: "rgba(255,255,255,0.05)",
@@ -268,7 +253,6 @@ const ProfilePage: React.FC = () => {
             <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem", lineHeight: 1.6 }}>
               {profileData?.bio || "No bio yet"}
             </p>
-
             <div
               style={{
                 display: "flex",
@@ -280,7 +264,6 @@ const ProfilePage: React.FC = () => {
               <FaMapMarkerAlt style={{ marginRight: "0.75rem" }} />
               {profileData?.location || "No location set"}
             </div>
-
             <div
               style={{
                 display: "flex",
@@ -299,7 +282,6 @@ const ProfilePage: React.FC = () => {
                 {profileData?.website || "No website set"}
               </a>
             </div>
-
             <div style={{ display: "flex", alignItems: "center", color: "var(--text-secondary)" }}>
               <FaCalendarAlt style={{ marginRight: "0.75rem" }} />
               Joined{" "}
@@ -309,8 +291,7 @@ const ProfilePage: React.FC = () => {
               })}
             </div>
           </div>
-
-          {/* Social Links */}
+          
           <div
             style={{
               backgroundColor: "rgba(255,255,255,0.05)",
@@ -363,10 +344,9 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Content Area */}
+        
         <div>
-          {/* Tabs */}
+          
           <div
             style={{
               display: "flex",
@@ -433,8 +413,7 @@ const ProfilePage: React.FC = () => {
               Reposts
             </button>
           </div>
-
-          {/* Tracks Grid */}
+          
           {activeTab === "tracks" && (
             <div
               style={{
@@ -475,7 +454,6 @@ const ProfilePage: React.FC = () => {
                       <FaPlay />
                     </button>
                   </div>
-
                   <div style={{ padding: "1rem" }}>
                     <h3 style={{ marginBottom: "0.5rem" }}>{track.title}</h3>
                     <p
@@ -489,7 +467,6 @@ const ProfilePage: React.FC = () => {
                       <span>{track.genre}</span>
                       <span>{track.duration}</span>
                     </p>
-
                     <div
                       style={{
                         display: "flex",
@@ -517,8 +494,7 @@ const ProfilePage: React.FC = () => {
               ))}
             </div>
           )}
-
-          {/* Placeholder para otras pestañas */}
+          
           {activeTab === "albums" && (
             <div style={{ textAlign: "center", padding: "3rem 0" }}>
               <h3 style={{ color: "var(--text-secondary)" }}>No albums yet</h3>
@@ -541,7 +517,6 @@ const ProfilePage: React.FC = () => {
               </button>
             </div>
           )}
-
           {activeTab === "playlists" && (
             <div style={{ textAlign: "center", padding: "3rem 0" }}>
               <h3 style={{ color: "var(--text-secondary)" }}>No playlists yet</h3>
@@ -564,7 +539,6 @@ const ProfilePage: React.FC = () => {
               </button>
             </div>
           )}
-
           {activeTab === "reposts" && (
             <div style={{ textAlign: "center", padding: "3rem 0" }}>
               <h3 style={{ color: "var(--text-secondary)" }}>No reposts yet</h3>
@@ -592,5 +566,4 @@ const ProfilePage: React.FC = () => {
     </div>
   );
 };
-
 export default ProfilePage;

@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { currentUser, loading } = useAuth()
 
   if (loading) {
-    // Puedes mostrar un spinner o un mensaje de carga aquí
+    
     return <div>Loading...</div>
   }
 

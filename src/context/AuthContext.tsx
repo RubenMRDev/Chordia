@@ -48,7 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch user profile when currentUser changes
+  
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (currentUser) {
@@ -81,13 +81,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null)
       const result = await createUserWithEmailAndPassword(auth, email, password)
-      // Actualizar el perfil del usuario con su nombre
+      
       if (result.user) {
         await updateProfile(result.user, {
           displayName: name,
         })
 
-        // Create user profile in Firestore
+        
         await createUserProfile({
           uid: result.user.uid,
           displayName: name,
@@ -140,7 +140,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
 
-      // Create user profile in Firestore if it's a new user
+      
       if (result.user) {
         await createUserProfile({
           uid: result.user.uid,
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const provider = new FacebookAuthProvider()
       const result = await signInWithPopup(auth, provider)
 
-      // Create user profile in Firestore if it's a new user
+      
       if (result.user) {
         await createUserProfile({
           uid: result.user.uid,

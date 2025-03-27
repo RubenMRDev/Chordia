@@ -52,4 +52,41 @@ export default tseslint.config({
   },
 })
 ```
-# Chordia
+
+# Chordia Landing
+
+A web application for creating and managing chord progressions.
+
+## Installation
+
+1. Install dependencies:
+
+```bash
+npm install
+# or
+yarn
+```
+
+2. Install SweetAlert2 for confirmation dialogs:
+
+```bash
+npm install sweetalert2
+# or
+yarn add sweetalert2
+```
+
+3. Run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Features
+
+- Create and edit chord progressions using an interactive piano keyboard
+- Save songs with title, tempo, key, and time signature
+- Manage your chord library

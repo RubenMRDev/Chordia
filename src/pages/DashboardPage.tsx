@@ -2,9 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaMusic, FaSearch, FaStar, FaRegStar, FaPlay, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import Header from "../components/Header";
-
 const DashboardPage: React.FC = () => {
-  // Función para renderizar estrellas de dificultad
   const renderDifficultyStars = (level: number) => {
     const stars = [];
     for (let i = 0; i < 3; i++) {
@@ -16,7 +14,6 @@ const DashboardPage: React.FC = () => {
     }
     return stars;
   };
-
   return (
     <div style={{ 
       backgroundColor: 'var(--background-darker)',
@@ -25,7 +22,6 @@ const DashboardPage: React.FC = () => {
     }}>
       <Header />
       
-      {/* Hero Section */}
       <section style={{ 
         padding: '4rem 2rem',
         position: 'relative',
@@ -43,7 +39,6 @@ const DashboardPage: React.FC = () => {
           }}>
             Create Music Magic with Chordia
           </h1>
-          
           <p style={{ 
             color: 'var(--text-secondary)',
             fontSize: '1.1rem',
@@ -53,7 +48,6 @@ const DashboardPage: React.FC = () => {
             Your ultimate platform for chord progression and song creation.
             Transform your musical ideas into reality.
           </p>
-          
           <div style={{ display: 'flex', gap: '1rem' }}>
             <Link to="/create" style={{ 
               backgroundColor: 'var(--accent-green)',
@@ -65,7 +59,6 @@ const DashboardPage: React.FC = () => {
             }}>
               Create Custom Song
             </Link>
-            
             <Link to="/library" style={{ 
               border: '1px solid var(--accent-green)',
               color: 'var(--accent-green)',
@@ -79,7 +72,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Background music notes would be here */}
         <div style={{ 
           position: 'absolute',
           top: 0,
@@ -91,13 +83,11 @@ const DashboardPage: React.FC = () => {
           backgroundImage: `url("https://res.cloudinary.com/doy4x4chv/image/upload/v1742987174/dashboard_eohinb.webp")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-
         }}>
-          {/* This would be a background image or SVG with music notes */}
+          
         </div>
       </section>
       
-      {/* Popular Songs Section */}
       <section style={{ padding: '2rem' }}>
         <h2 style={{ 
           fontSize: '1.75rem',
@@ -106,13 +96,12 @@ const DashboardPage: React.FC = () => {
         }}>
           Popular Songs
         </h2>
-        
         <div style={{ 
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '1.5rem'
         }}>
-          {/* Song Card 1 */}
+          
           <div style={{ 
             backgroundColor: 'rgba(255,255,255,0.05)',
             borderRadius: '8px',
@@ -127,10 +116,8 @@ const DashboardPage: React.FC = () => {
             }}>
               <FaMusic />
             </div>
-            
             <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Wonderwall</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Oasis</p>
-            
             <div style={{ 
               display: 'flex',
               justifyContent: 'space-between',
@@ -142,7 +129,6 @@ const DashboardPage: React.FC = () => {
                   {renderDifficultyStars(2)}
                 </span>
               </div>
-              
               <button style={{ 
                 backgroundColor: 'var(--accent-green)',
                 color: '#000',
@@ -160,7 +146,6 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Song Card 2 */}
           <div style={{ 
             backgroundColor: 'rgba(255,255,255,0.05)',
             borderRadius: '8px',
@@ -175,10 +160,8 @@ const DashboardPage: React.FC = () => {
             }}>
               <FaMusic />
             </div>
-            
             <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Hallelujah</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Jeff Buckley</p>
-            
             <div style={{ 
               display: 'flex',
               justifyContent: 'space-between',
@@ -190,7 +173,6 @@ const DashboardPage: React.FC = () => {
                   {renderDifficultyStars(3)}
                 </span>
               </div>
-              
               <button style={{ 
                 backgroundColor: 'var(--accent-green)',
                 color: '#000',
@@ -208,7 +190,6 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Song Card 3 */}
           <div style={{ 
             backgroundColor: 'rgba(255,255,255,0.05)',
             borderRadius: '8px',
@@ -223,10 +204,8 @@ const DashboardPage: React.FC = () => {
             }}>
               <FaMusic />
             </div>
-            
             <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Perfect</h3>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Ed Sheeran</p>
-            
             <div style={{ 
               display: 'flex',
               justifyContent: 'space-between',
@@ -238,7 +217,6 @@ const DashboardPage: React.FC = () => {
                   {renderDifficultyStars(2)}
                 </span>
               </div>
-              
               <button style={{ 
                 backgroundColor: 'var(--accent-green)',
                 color: '#000',
@@ -258,7 +236,6 @@ const DashboardPage: React.FC = () => {
         </div>
       </section>
       
-      {/* Create Your Own Song Section */}
       <section style={{ 
         padding: '4rem 2rem',
         backgroundColor: 'var(--background-dark)',
@@ -275,7 +252,6 @@ const DashboardPage: React.FC = () => {
           }}>
             Create Your Own Song
           </h2>
-          
           <p style={{ 
             color: 'var(--text-secondary)',
             fontSize: '1.1rem',
@@ -286,7 +262,6 @@ const DashboardPage: React.FC = () => {
             Start from scratch and compose your masterpiece. Our intuitive
             chord editor makes it easy to bring your musical vision to life.
           </p>
-          
           <Link to="/create" style={{ 
             backgroundColor: 'var(--accent-green)',
             color: '#000',
@@ -299,7 +274,6 @@ const DashboardPage: React.FC = () => {
             Start Creating Now
           </Link>
         </div>
-        
         <div style={{ 
           display: 'flex',
           justifyContent: 'center',
@@ -316,7 +290,7 @@ const DashboardPage: React.FC = () => {
             position: 'relative',
             overflow: 'hidden'
           }}>
-            {/* Esta sería la imagen circular con notas musicales verdes */}
+            
             <div style={{ 
               position: 'absolute',
               width: '100%',
@@ -325,7 +299,6 @@ const DashboardPage: React.FC = () => {
               opacity: 0.5
             }}></div>
             
-            {/* Aquí podrías agregar SVGs o imágenes de notas musicales */}
             <FaMusic style={{ 
               color: 'var(--accent-green)', 
               fontSize: '4rem',
@@ -336,7 +309,6 @@ const DashboardPage: React.FC = () => {
         </div>
       </section>
       
-      {/* Footer */}
       <footer style={{ 
         backgroundColor: 'var(--background-darker)',
         padding: '3rem 2rem 1.5rem',
@@ -348,7 +320,7 @@ const DashboardPage: React.FC = () => {
           gap: '2rem',
           marginBottom: '3rem'
         }}>
-          {/* Logo and Tagline */}
+          
           <div>
             <div style={{ 
               display: 'flex', 
@@ -366,7 +338,6 @@ const DashboardPage: React.FC = () => {
             </p>
           </div>
           
-          {/* Quick Links */}
           <div>
             <h3 style={{ marginBottom: '1rem' }}>Quick Links</h3>
             <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -388,7 +359,6 @@ const DashboardPage: React.FC = () => {
             </ul>
           </div>
           
-          {/* Resources */}
           <div>
             <h3 style={{ marginBottom: '1rem' }}>Resources</h3>
             <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -410,7 +380,6 @@ const DashboardPage: React.FC = () => {
             </ul>
           </div>
           
-          {/* Connect */}
           <div>
             <h3 style={{ marginBottom: '1rem' }}>Connect</h3>
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -427,7 +396,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Copyright */}
         <div style={{ 
           textAlign: 'center',
           color: 'var(--text-secondary)',
@@ -441,5 +409,4 @@ const DashboardPage: React.FC = () => {
     </div>
   );
 };
-
 export default DashboardPage;

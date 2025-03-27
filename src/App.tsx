@@ -10,6 +10,8 @@ import ProfilePage from "./pages/ProfilePage"
 import EditProfilePage from "./pages/EditProfilePage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { useAuth } from "./context/AuthContext"
+import CreateSongPage from "./pages/CreateSongPage"
+import SongDetailsPage from "./pages/SongDetailsPage"
 
 function App() {
   const { currentUser } = useAuth()
@@ -56,6 +58,22 @@ function App() {
         element={
           <ProtectedRoute>
             <EditProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/create"
+        element={
+          <ProtectedRoute>
+            <CreateSongPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/song/:songId"
+        element={
+          <ProtectedRoute>
+            <SongDetailsPage />
           </ProtectedRoute>
         }
       />

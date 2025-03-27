@@ -1,7 +1,7 @@
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore"
 import { db } from "./config"
 
-// Interfaz para el perfil de usuario
+
 export interface UserProfile {
   uid: string
   displayName: string
@@ -19,7 +19,7 @@ export interface UserProfile {
   }
 }
 
-// Crear o actualizar el perfil de usuario en Firestore
+
 export const createUserProfile = async (user: UserProfile): Promise<void> => {
   const userRef = doc(db, "users", user.uid)
 
@@ -27,13 +27,13 @@ export const createUserProfile = async (user: UserProfile): Promise<void> => {
     const userDoc = await getDoc(userRef)
 
     if (!userDoc.exists()) {
-      // Si el usuario no existe, crear un nuevo documento
+      
       await setDoc(userRef, {
         ...user,
         joinDate: new Date().toISOString(),
       })
     } else {
-      // Si el usuario ya existe, actualizar solo los campos proporcionados
+      
       await updateDoc(userRef, { ...user })
     }
   } catch (error) {
@@ -42,7 +42,7 @@ export const createUserProfile = async (user: UserProfile): Promise<void> => {
   }
 }
 
-// Obtener el perfil de usuario desde Firestore
+
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   const userRef = doc(db, "users", uid)
 
@@ -60,7 +60,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   }
 }
 
-// Actualizar el perfil de usuario en Firestore
+
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>): Promise<void> => {
   const userRef = doc(db, "users", uid)
 

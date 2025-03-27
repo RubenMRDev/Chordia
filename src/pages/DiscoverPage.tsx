@@ -1,10 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
-
-
 import { FaMusic, FaSearch } from 'react-icons/fa';
-
 const DiscoverPage: React.FC = () => {
   return (
     <div style={{ 
@@ -13,7 +10,6 @@ const DiscoverPage: React.FC = () => {
       color: 'var(--text-primary)'
     }}>
       <Header />
-      
       <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
         <h1 style={{ 
           fontSize: '2.5rem',
@@ -41,5 +37,4 @@ const DiscoverPage: React.FC = () => {
     </div>
   );
 };
-
 export default DiscoverPage;

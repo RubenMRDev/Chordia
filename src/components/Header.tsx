@@ -1,19 +1,15 @@
 "use client";
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaMusic } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
-
 const Header: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const [activeLink, setActiveLink] = useState<string | null>(null);
   const location = useLocation();
-
   const handleLinkClick = (path: string) => {
     setActiveLink(path);
   };
-
   return (
     <header
       style={{
@@ -36,14 +32,12 @@ const Header: React.FC = () => {
             color: "white",
             fontWeight: "bold",
             fontSize: "1.25rem",
-            marginRight: "5rem", // Increased spacing here
+            marginRight: "5rem", 
           }}
         >
           <FaMusic style={{ marginRight: "0.5rem", color: "var(--accent-green)" }} />
           Chordia
         </Link>
-
-        {/* Navigation Links */}
         <nav style={{ display: "flex", gap: "1.5rem" }}>
           <Link
             to="/discover"
@@ -80,8 +74,6 @@ const Header: React.FC = () => {
           </Link>
         </nav>
       </div>
-
-      {/* User Section */}
       <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         {currentUser ? (
           <>
@@ -125,5 +117,4 @@ const Header: React.FC = () => {
     </header>
   );
 };
-
 export default Header;

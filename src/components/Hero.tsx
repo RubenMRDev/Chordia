@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaMusic } from 'react-icons/fa';
-
 const Hero: React.FC = () => {
   return (
     <section style={{ 
@@ -10,7 +9,6 @@ const Hero: React.FC = () => {
       overflow: 'hidden',
       backgroundColor: 'var(--background-darker)'
     }}>
-      {/* Fondo con notas musicales */}
       <div style={{ 
         position: 'absolute',
         top: 0,
@@ -23,7 +21,6 @@ const Hero: React.FC = () => {
         opacity: 0.5,
         zIndex: 0
       }}></div>
-      
       <div className="container">
         <div style={{ maxWidth: '600px', position: 'relative', zIndex: 1 }}>
           <h1 style={{ 
@@ -53,5 +50,4 @@ const Hero: React.FC = () => {
     </section>
   );
 };
-
 export default Hero;
