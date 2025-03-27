@@ -1,8 +1,69 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const Experience: React.FC = () => {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [detailsVisible, setDetailsVisible] = useState([false, false, false]);
+  const [imageVisible, setImageVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+            setImageVisible(true);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    const detailsObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const index = Number(entry.target.getAttribute('data-index'));
+          if (entry.isIntersecting) {
+            setDetailsVisible(prev => {
+              const newState = [...prev];
+              newState[index] = true;
+              return newState;
+            });
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+      
+      const details = sectionRef.current.querySelectorAll('.feature-detail');
+      details.forEach(detail => {
+        detailsObserver.observe(detail);
+      });
+    }
+
+    return () => {
+      observer.disconnect();
+      detailsObserver.disconnect();
+    };
+  }, []);
+
+  const slideInStyle = (isActive: boolean) => ({
+    transform: isActive ? 'translateX(0)' : 'translateX(-50px)',
+    opacity: isActive ? 1 : 0,
+    transition: 'transform 0.6s ease-out, opacity 0.6s ease-out',
+  });
+
+  const slideInRightStyle = (isActive: boolean) => ({
+    transform: isActive ? 'translateX(0)' : 'translateX(50px)',
+    opacity: isActive ? 1 : 0,
+    transition: 'transform 0.8s ease-out, opacity 0.8s ease-out',
+  });
+
   return (
-    <section className="section" style={{ 
+    <section ref={sectionRef} className="section" style={{ 
       backgroundColor: 'var(--background-darker)',
       padding: '5rem 0'
     }}>
@@ -16,12 +77,17 @@ const Experience: React.FC = () => {
           <h2 style={{ 
             fontSize: '2.5rem', 
             fontWeight: 'bold',
-            marginBottom: '2rem'
+            marginBottom: '2rem',
+            ...slideInStyle(isVisible)
           }}>
             Experience Music Like Never Before
           </h2>
 
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div className="feature-detail" data-index="0" style={{ 
+            marginBottom: '1.5rem',
+            ...slideInStyle(detailsVisible[0]),
+            transitionDelay: '0.2s'
+          }}>
             <h3 style={{ 
               fontSize: '1.25rem', 
               fontWeight: 'bold',
@@ -34,7 +100,11 @@ const Experience: React.FC = () => {
             </p>
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div className="feature-detail" data-index="1" style={{ 
+            marginBottom: '1.5rem',
+            ...slideInStyle(detailsVisible[1]),
+            transitionDelay: '0.4s'
+          }}>
             <h3 style={{ 
               fontSize: '1.25rem', 
               fontWeight: 'bold',
@@ -47,7 +117,10 @@ const Experience: React.FC = () => {
             </p>
           </div>
 
-          <div>
+          <div className="feature-detail" data-index="2" style={{ 
+            ...slideInStyle(detailsVisible[2]),
+            transitionDelay: '0.6s'
+          }}>
             <h3 style={{ 
               fontSize: '1.25rem', 
               fontWeight: 'bold',
@@ -64,7 +137,8 @@ const Experience: React.FC = () => {
         <div style={{ 
           position: 'relative',
           maxWidth: '500px',
-          margin: '0 auto'
+          margin: '0 auto',
+          ...slideInRightStyle(imageVisible)
         }}>
           <div style={{
             position: 'absolute',
@@ -72,12 +146,10 @@ const Experience: React.FC = () => {
             right: 0,
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(135deg, var(--accent-green) 0%, var(--accent-green) 50%, transparent 50%)',
             zIndex: 0,
-            borderRadius: '12px'
           }}></div>
           <img 
-            src="/src/assets/phone-mockup.png" 
+            src="https://res.cloudinary.com/doy4x4chv/image/upload/v1743115656/Screenshot_2025-03-27_234752_ufhij8.png" 
             alt="Chordia App" 
             style={{
               width: '100%',
