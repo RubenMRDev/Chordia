@@ -1,8 +1,85 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaMusic, FaSearch, FaStar, FaRegStar, FaPlay, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaMusic, FaSearch, FaStar, FaRegStar, FaPlay, FaTwitter, FaInstagram, FaYoutube, FaUser } from 'react-icons/fa';
 import Header from "../components/Header";
+import { getAllSongs } from '../firebase/songService';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
+
+interface DisplaySong {
+  id: string;
+  title: string;
+  key: string;
+  timeSignature: string;
+  tempo: number;
+  username: string;
+  userId: string;
+  createdAt: string;
+  difficulty?: number;
+}
+
 const DashboardPage: React.FC = () => {
+  const [songs, setSongs] = useState<DisplaySong[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRandomSongs = async () => {
+      try {
+        setLoading(true);
+        const allSongs = await getAllSongs();
+        
+        // Process songs to include username
+        const songsWithUserData = await Promise.all(
+          allSongs.map(async (song) => {
+            let username = '@user';
+            
+            // Try to fetch the username from the users collection
+            try {
+              const userDoc = await getDoc(doc(db, "users", song.userId));
+              if (userDoc.exists()) {
+                username = '@' + (userDoc.data().username || 
+                                  userDoc.data().displayName || 
+                                  userDoc.data().email?.split('@')[0] || 
+                                  'user');
+              }
+            } catch (err) {
+              console.error('Error fetching user data:', err);
+            }
+            
+            // Add a random difficulty level between 1-3
+            const difficulty = Math.floor(Math.random() * 3) + 1;
+            
+            return {
+              id: song.id || '',
+              title: song.title,
+              key: song.key,
+              timeSignature: song.timeSignature,
+              tempo: song.tempo,
+              username: username,
+              userId: song.userId,
+              createdAt: song.createdAt,
+              difficulty: difficulty
+            };
+          })
+        );
+        
+        // Get 3 random songs
+        const randomSongs = [...songsWithUserData]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        
+        setSongs(randomSongs);
+      } catch (error) {
+        console.error('Error fetching songs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRandomSongs();
+  }, []);
+
   const renderDifficultyStars = (level: number) => {
     const stars = [];
     for (let i = 0; i < 3; i++) {
@@ -14,6 +91,16 @@ const DashboardPage: React.FC = () => {
     }
     return stars;
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+  
   return (
     <div style={{ 
       backgroundColor: 'var(--background-darker)',
@@ -94,146 +181,97 @@ const DashboardPage: React.FC = () => {
           color: 'var(--accent-green)',
           marginBottom: '2rem'
         }}>
-          Popular Songs
+          Random Community Songs
         </h2>
-        <div style={{ 
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: '1.5rem'
-        }}>
-          
-          <div style={{ 
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            position: 'relative'
-          }}>
-            <div style={{ 
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              color: 'var(--accent-green)'
-            }}>
-              <FaMusic />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Wonderwall</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Oasis</p>
-            <div style={{ 
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }}>Difficulty:</span>
-                <span style={{ display: 'inline-flex', gap: '0.25rem' }}>
-                  {renderDifficultyStars(2)}
-                </span>
-              </div>
-              <button style={{ 
-                backgroundColor: 'var(--accent-green)',
-                color: '#000',
-                width: '2.5rem',
-                height: '2.5rem',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-                cursor: 'pointer'
-              }}>
-                <FaPlay />
-              </button>
-            </div>
+        
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <p>Loading songs...</p>
           </div>
-          
-          <div style={{ 
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            position: 'relative'
-          }}>
-            <div style={{ 
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              color: 'var(--accent-green)'
-            }}>
-              <FaMusic />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Hallelujah</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Jeff Buckley</p>
-            <div style={{ 
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }}>Difficulty:</span>
-                <span style={{ display: 'inline-flex', gap: '0.25rem' }}>
-                  {renderDifficultyStars(3)}
-                </span>
-              </div>
-              <button style={{ 
-                backgroundColor: 'var(--accent-green)',
-                color: '#000',
-                width: '2.5rem',
-                height: '2.5rem',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-                cursor: 'pointer'
-              }}>
-                <FaPlay />
-              </button>
-            </div>
+        ) : songs.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              No songs available at the moment.
+            </p>
           </div>
-          
+        ) : (
           <div style={{ 
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            position: 'relative'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: '1.5rem'
           }}>
-            <div style={{ 
-              position: 'absolute',
-              top: '1rem',
-              right: '1rem',
-              color: 'var(--accent-green)'
-            }}>
-              <FaMusic />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Perfect</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Ed Sheeran</p>
-            <div style={{ 
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }}>Difficulty:</span>
-                <span style={{ display: 'inline-flex', gap: '0.25rem' }}>
-                  {renderDifficultyStars(2)}
-                </span>
+            {songs.map(song => (
+              <div 
+                key={song.id}
+                style={{ 
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  padding: '1.5rem',
+                  position: 'relative',
+                  cursor: 'pointer'
+                }}
+                onClick={() => navigate(`/song/${song.id}`)}
+              >
+                <div style={{ 
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  color: 'var(--accent-green)'
+                }}>
+                  <FaMusic />
+                </div>
+                <div style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: '0.75rem',
+                  color: 'var(--text-secondary)'
+                }}>
+                  <FaUser style={{ marginRight: '0.5rem' }} />
+                  <span>{song.username}</span>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>{song.title}</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                  {song.key} • {song.timeSignature} • {song.tempo} BPM
+                </p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                  Created: {formatDate(song.createdAt)}
+                </p>
+                <div style={{ 
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }}>Difficulty:</span>
+                    <span style={{ display: 'inline-flex', gap: '0.25rem' }}>
+                      {renderDifficultyStars(song.difficulty || 2)}
+                    </span>
+                  </div>
+                  <button 
+                    style={{ 
+                      backgroundColor: 'var(--accent-green)',
+                      color: '#000',
+                      width: '2.5rem',
+                      height: '2.5rem',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/song/${song.id}`);
+                    }}
+                  >
+                    <FaPlay />
+                  </button>
+                </div>
               </div>
-              <button style={{ 
-                backgroundColor: 'var(--accent-green)',
-                color: '#000',
-                width: '2.5rem',
-                height: '2.5rem',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-                cursor: 'pointer'
-              }}>
-                <FaPlay />
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
+        )}
       </section>
       
       <section style={{ 
