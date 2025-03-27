@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import { useAuth } from "./context/AuthContext"
 import CreateSongPage from "./pages/CreateSongPage"
 import SongDetailsPage from "./pages/SongDetailsPage"
+import "./App.css"
+
 
 function App() {
   const { currentUser } = useAuth()

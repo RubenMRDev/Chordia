@@ -3,118 +3,113 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaMusic } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+
 const Header: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
   const [activeLink, setActiveLink] = useState<string | null>(null);
   const location = useLocation();
+  
   const handleLinkClick = (path: string) => {
     setActiveLink(path);
   };
+  
   return (
-    <header
-      style={{
-        padding: "1rem 2rem",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
-        backgroundColor: "var(--background-darker)",
-        color: "var(--text-primary)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <Link
-          to="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            textDecoration: "none",
-            color: "white",
-            fontWeight: "bold",
-            fontSize: "1.25rem",
-            marginRight: "5rem", 
-          }}
-        >
-          <FaMusic style={{ marginRight: "0.5rem", color: "var(--accent-green)" }} />
-          Chordia
-        </Link>
-        <nav style={{ display: "flex", gap: "1.5rem" }}>
+    <div className="w-full mt-0">
+      <header className="w-full px-6 sm:px-8 md:px-16 py-4 md:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center border-white/10 bg-[var(--background-darker)] text-[var(--text-primary)]">
+        {/* Top row for mobile: Logo and profile/login */}
+        <div className="flex justify-between items-center w-full sm:w-auto">
           <Link
-            to="/discover"
-            onClick={() => handleLinkClick("/discover")}
-            style={{
-              textDecoration: "none",
-              color: location.pathname === "/discover" ? "var(--accent-green)" : "var(--text-primary)",
-              fontWeight: "bold",
-            }}
+        to="/"
+        className="flex items-center no-underline text-white font-bold text-xl sm:text-2xl"
           >
-            Discover
+        <FaMusic className="mr-3 text-[var(--accent-green)]" />
+        Chordia
           </Link>
-          <Link
-            to="/library"
-            onClick={() => handleLinkClick("/library")}
-            style={{
-              textDecoration: "none",
-              color: location.pathname === "/library" ? "var(--accent-green)" : "var(--text-primary)",
-              fontWeight: "bold",
-            }}
-          >
-            Library
-          </Link>
-          <Link
-            to="/dashboard"
-            onClick={() => handleLinkClick("/dashboard")}
-            style={{
-              textDecoration: "none",
-              color: location.pathname === "/dashboard" ? "var(--accent-green)" : "var(--text-primary)",
-              fontWeight: "bold",
-            }}
-          >
-            Stage
-          </Link>
-        </nav>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          
+          <div className="flex sm:hidden items-center">
+            
         {currentUser ? (
-          <>
-            <Link
-              to="/profile"
-              style={{
-                textDecoration: "none",
-                color: "var(--text-primary)",
-                fontWeight: "bold",
-              }}
-            >
-              {userProfile?.displayName || currentUser.displayName}
-            </Link>
+          <Link to="/profile">
             <img
-              src={userProfile?.photoURL || currentUser.photoURL || "/default-avatar.png"}
+              src={userProfile?.photoURL || currentUser?.photoURL || "/default-avatar.png"}
               alt="Profile"
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                objectFit: "cover",
-              }}
+              className="w-10 h-10 rounded-full object-cover"
             />
-          </>
+          </Link>
         ) : (
           <Link
             to="/login"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "var(--accent-green)",
-              color: "#000",
-              borderRadius: "4px",
-              textDecoration: "none",
-              fontWeight: "bold",
-            }}
+            className="py-2 px-4 text-sm bg-[var(--accent-green)] text-black rounded font-bold no-underline"
           >
             Sign In
           </Link>
         )}
-      </div>
-    </header>
+          </div>
+        </div>
+        
+        {/* Navigation links - visible on all screens */}
+        <nav className="flex justify-center text-base sm:text-lg py-4 sm:py-0 w-full sm:w-auto">
+          <div className="flex space-x-6 sm:space-x-8 md:space-x-12">
+        <Link
+          to="/discover"
+          onClick={() => handleLinkClick("/discover")}
+          className={`no-underline font-bold ${
+            location.pathname === "/discover" ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
+          }`}
+        >
+          Discover
+        </Link>
+        <Link
+          to="/library"
+          onClick={() => handleLinkClick("/library")}
+          className={`no-underline font-bold ${
+            location.pathname === "/library" ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
+          }`}
+        >
+          Library
+        </Link>
+        <Link
+          to="/dashboard"
+          onClick={() => handleLinkClick("/dashboard")}
+          className={`no-underline font-bold ${
+            location.pathname === "/dashboard" ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
+          }`}
+        >
+          Stage
+        </Link>
+          </div>
+        </nav>
+
+        {/* Desktop user profile/login section */}
+        <div className="hidden sm:flex items-center gap-6 pr-4">
+          {currentUser ? (
+        <>
+          <Link
+            to="/profile"
+            className="hidden md:block no-underline text-[var(--text-primary)] font-bold"
+          >
+            {userProfile?.displayName || currentUser.displayName}
+          </Link>
+          <Link to="/profile">
+            <img
+              src={userProfile?.photoURL || currentUser.photoURL || "/default-avatar.png"}
+              alt="Profile"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+            />
+          </Link>
+        </>
+          ) : (
+        <Link
+          to="/login"
+          className="py-3 px-6 bg-[var(--accent-green)] text-black rounded font-bold no-underline"
+        >
+          Sign In
+        </Link>
+          )}
+        </div>
+      </header>
+    </div>
   );
 };
+
 export default Header;
