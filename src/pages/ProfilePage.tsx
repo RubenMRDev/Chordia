@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getUserProfile, type UserProfile } from "../firebase/userService";
+import { getUserSongs, deleteSongById, type Song } from '../firebase/songService';
 import {
   FaMusic,
   FaBell,
@@ -18,29 +19,37 @@ import {
   FaPlay,
   FaHeart,
   FaComment,
+  FaPlus,
+  FaClock,
+  FaTrash,
 } from "react-icons/fa";
 import Header from "../components/Header";
 import Swal from "sweetalert2";
 const ProfilePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("tracks");
+  const [activeTab, setActiveTab] = useState("songs");
   const { currentUser, logout } = useAuth();
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchUserData = async () => {
       if (currentUser) {
         try {
-          const profile = await getUserProfile(currentUser.uid);
+          const [profile, userSongs] = await Promise.all([
+            getUserProfile(currentUser.uid),
+            getUserSongs(currentUser.uid)
+          ]);
           setProfileData(profile);
+          setSongs(userSongs);
         } catch (error) {
-          console.error("Error fetching user profile:", error);
+          console.error("Error fetching user data:", error);
         } finally {
           setLoading(false);
         }
       }
     };
-    fetchUserProfile();
+    fetchUserData();
   }, [currentUser]);
   const handleLogout = () => {
     Swal.fire({
@@ -67,48 +76,6 @@ const ProfilePage: React.FC = () => {
       }
     });
   };
-  const tracks = [
-    {
-      id: 1,
-      title: "Neon Dreams",
-      genre: "Electronic",
-      duration: "3:45",
-      plays: "24.5K",
-      likes: "1.2K",
-      comments: 86,
-      image: "/placeholder.svg?height=200&width=200",
-    },
-    {
-      id: 2,
-      title: "Midnight Echo",
-      genre: "House",
-      duration: "4:12",
-      plays: "19.9K",
-      likes: "945",
-      comments: 52,
-      image: "/placeholder.svg?height=200&width=200",
-    },
-    {
-      id: 3,
-      title: "Digital Horizon",
-      genre: "Techno",
-      duration: "5:30",
-      plays: "15.2K",
-      likes: "832",
-      comments: 47,
-      image: "/placeholder.svg?height=200&width=200",
-    },
-    {
-      id: 4,
-      title: "Urban Pulse",
-      genre: "Deep House",
-      duration: "4:55",
-      plays: "12.8K",
-      likes: "723",
-      comments: 39,
-      image: "/placeholder.svg?height=200&width=200",
-    },
-  ];
   if (loading) {
     return (
       <div
@@ -125,10 +92,17 @@ const ProfilePage: React.FC = () => {
       </div>
     );
   }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
   return (
     <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
       <Header/>
-      
       <div
         style={{
           height: "200px",
@@ -153,7 +127,6 @@ const ProfilePage: React.FC = () => {
           }}
         ></div>
       </div>
-      
       <div
         style={{
           padding: "0 2rem",
@@ -165,7 +138,6 @@ const ProfilePage: React.FC = () => {
           textAlign: "center",
         }}
       >
-        
         <div
           style={{
             width: "120px",
@@ -182,7 +154,6 @@ const ProfilePage: React.FC = () => {
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>
-        
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>{profileData?.displayName}</h1>
           <p style={{ color: "var(--accent-green)", marginBottom: "1rem" }}>
@@ -203,7 +174,6 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-        
         <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
           <Link
             to="/profile/edit"
@@ -236,11 +206,8 @@ const ProfilePage: React.FC = () => {
           </button>
         </div>
       </div>
-      
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem", padding: "2rem" }}>
-        
         <div>
-          
           <div
             style={{
               backgroundColor: "rgba(255,255,255,0.05)",
@@ -291,7 +258,6 @@ const ProfilePage: React.FC = () => {
               })}
             </div>
           </div>
-          
           <div
             style={{
               backgroundColor: "rgba(255,255,255,0.05)",
@@ -344,9 +310,7 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-        
         <div>
-          
           <div
             style={{
               display: "flex",
@@ -356,152 +320,114 @@ const ProfilePage: React.FC = () => {
               whiteSpace: "nowrap",
             }}
           >
-            <button
-              onClick={() => setActiveTab("tracks")}
-              style={{
-                padding: "1rem 1.5rem",
-                background: "none",
-                border: "none",
-                color: activeTab === "tracks" ? "var(--accent-green)" : "var(--text-primary)",
-                borderBottom: activeTab === "tracks" ? "2px solid var(--accent-green)" : "none",
-                cursor: "pointer",
-                fontWeight: activeTab === "tracks" ? "bold" : "normal",
-              }}
-            >
-              Tracks
-            </button>
-            <button
-              onClick={() => setActiveTab("albums")}
-              style={{
-                padding: "1rem 1.5rem",
-                background: "none",
-                border: "none",
-                color: activeTab === "albums" ? "var(--accent-green)" : "var(--text-primary)",
-                borderBottom: activeTab === "albums" ? "2px solid var(--accent-green)" : "none",
-                cursor: "pointer",
-                fontWeight: activeTab === "albums" ? "bold" : "normal",
-              }}
-            >
-              Albums
-            </button>
-            <button
-              onClick={() => setActiveTab("playlists")}
-              style={{
-                padding: "1rem 1.5rem",
-                background: "none",
-                border: "none",
-                color: activeTab === "playlists" ? "var(--accent-green)" : "var(--text-primary)",
-                borderBottom: activeTab === "playlists" ? "2px solid var(--accent-green)" : "none",
-                cursor: "pointer",
-                fontWeight: activeTab === "playlists" ? "bold" : "normal",
-              }}
-            >
-              Playlists
-            </button>
-            <button
-              onClick={() => setActiveTab("reposts")}
-              style={{
-                padding: "1rem 1.5rem",
-                background: "none",
-                border: "none",
-                color: activeTab === "reposts" ? "var(--accent-green)" : "var(--text-primary)",
-                borderBottom: activeTab === "reposts" ? "2px solid var(--accent-green)" : "none",
-                cursor: "pointer",
-                fontWeight: activeTab === "reposts" ? "bold" : "normal",
-              }}
-            >
-              Reposts
-            </button>
-          </div>
-          
-          {activeTab === "tracks" && (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "1.5rem",
+                padding: "1rem 1.5rem",
+                color: "var(--accent-green)",
+                borderBottom: "2px solid var(--accent-green)",
+                fontWeight: "bold",
               }}
             >
-              {tracks.map((track) => (
-                <div
-                  key={track.id}
-                  style={{ backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "8px", overflow: "hidden" }}
+              Songs
+            </div>
+          </div>
+          {songs.length > 0 ? (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '1.5rem'
+            }}>
+              {songs.map(song => (
+                <div 
+                  key={song.id}
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onClick={() => navigate('/library')}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
                 >
-                  <div style={{ position: "relative" }}>
-                    <img
-                      src={track.image}
-                      alt={track.title}
-                      style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover" }}
-                    />
-                    <button
-                      style={{
-                        position: "absolute",
-                        bottom: "1rem",
-                        right: "1rem",
-                        backgroundColor: "var(--accent-green)",
-                        color: "#000",
-                        width: "3rem",
-                        height: "3rem",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: "1.25rem",
-                      }}
-                    >
-                      <FaPlay />
-                    </button>
+                  <div style={{ 
+                    position: 'relative',
+                    height: '160px',
+                    backgroundColor: '#1f2937',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '1rem'
+                  }}>
+                    <div style={{ 
+                      width: '100px',
+                      height: '100px',
+                      border: '2px solid var(--accent-green)',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <FaMusic style={{ fontSize: '2.5rem', color: 'var(--accent-green)' }} />
+                    </div>
                   </div>
-                  <div style={{ padding: "1rem" }}>
-                    <h3 style={{ marginBottom: "0.5rem" }}>{track.title}</h3>
-                    <p
-                      style={{
-                        color: "var(--text-secondary)",
-                        marginBottom: "1rem",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>{track.genre}</span>
-                      <span>{track.duration}</span>
-                    </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "1rem",
-                        color: "var(--text-secondary)",
-                        fontSize: "0.875rem",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                        <FaPlay style={{ fontSize: "0.75rem" }} />
-                        <span>{track.plays}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                        <FaHeart style={{ fontSize: "0.75rem" }} />
-                        <span>{track.likes}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                        <FaComment style={{ fontSize: "0.75rem" }} />
-                        <span>{track.comments}</span>
+                  <div style={{ padding: '1rem' }}>
+                    <h3 style={{ 
+                      fontSize: '1.25rem', 
+                      marginBottom: '0.5rem'
+                    }}>
+                      {song.title}
+                    </h3>
+                    <div style={{ 
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem',
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      gap: '1rem'
+                    }}>
+                      <div>Key: {song.key}</div>
+                      <div>{song.timeSignature}</div>
+                      <div>{song.tempo} BPM</div>
+                    </div>
+                    <div style={{ 
+                      display: 'flex',
+                      justifyContent: 'flex-start',
+                      alignItems: 'center',
+                      marginTop: '1rem',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.875rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <FaClock style={{ fontSize: '0.875rem' }} />
+                        <span>{formatDate(song.createdAt)}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-          
-          {activeTab === "albums" && (
-            <div style={{ textAlign: "center", padding: "3rem 0" }}>
-              <h3 style={{ color: "var(--text-secondary)" }}>No albums yet</h3>
-              <p style={{ color: "var(--text-secondary)", marginTop: "1rem" }}>
-                Start creating albums to showcase your music collections.
+          ) : (
+            <div style={{ 
+              textAlign: "center", 
+              padding: "3rem 1rem", 
+              backgroundColor: "rgba(255,255,255,0.05)", 
+              borderRadius: "8px" 
+            }}>
+              <FaMusic style={{ fontSize: '3rem', color: 'var(--text-secondary)', marginBottom: '1rem' }} />
+              <h2 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                You haven't created any songs yet
+              </h2>
+              <p style={{ marginBottom: "1.5rem", color: "var(--text-secondary)" }}>
+                Create your first song to see it here
               </p>
-              <button
+              <Link
+                to="/create"
                 style={{
                   backgroundColor: "var(--accent-green)",
                   color: "#000",
@@ -510,55 +436,14 @@ const ProfilePage: React.FC = () => {
                   border: "none",
                   fontWeight: "bold",
                   cursor: "pointer",
-                  marginTop: "1.5rem",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
                 }}
               >
-                Create Album
-              </button>
-            </div>
-          )}
-          {activeTab === "playlists" && (
-            <div style={{ textAlign: "center", padding: "3rem 0" }}>
-              <h3 style={{ color: "var(--text-secondary)" }}>No playlists yet</h3>
-              <p style={{ color: "var(--text-secondary)", marginTop: "1rem" }}>
-                Create playlists to organize your favorite tracks.
-              </p>
-              <button
-                style={{
-                  backgroundColor: "var(--accent-green)",
-                  color: "#000",
-                  padding: "0.75rem 1.5rem",
-                  borderRadius: "4px",
-                  border: "none",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  marginTop: "1.5rem",
-                }}
-              >
-                Create Playlist
-              </button>
-            </div>
-          )}
-          {activeTab === "reposts" && (
-            <div style={{ textAlign: "center", padding: "3rem 0" }}>
-              <h3 style={{ color: "var(--text-secondary)" }}>No reposts yet</h3>
-              <p style={{ color: "var(--text-secondary)", marginTop: "1rem" }}>
-                Share music you love with your followers by reposting tracks.
-              </p>
-              <button
-                style={{
-                  backgroundColor: "var(--accent-green)",
-                  color: "#000",
-                  padding: "0.75rem 1.5rem",
-                  borderRadius: "4px",
-                  border: "none",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  marginTop: "1.5rem",
-                }}
-              >
-                Discover Music
-              </button>
+                <FaPlus /> Create Song
+              </Link>
             </div>
           )}
         </div>
