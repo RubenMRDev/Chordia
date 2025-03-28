@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaMusic, FaPlay, FaStar } from 'react-icons/fa';
+import { FaUser, FaMusic, FaPlay, FaStar, FaRegStar, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import Header from '../components/Header';
 import { getAllSongs } from '../firebase/songService';
 import { getDoc, doc } from 'firebase/firestore';

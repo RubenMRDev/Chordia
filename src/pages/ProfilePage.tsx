@@ -1,11 +1,32 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaMusic, FaPlay, FaClock, FaPlus, FaPen, FaRegUserCircle, FaTrash } from 'react-icons/fa';
+import { FaMusic, FaClock, FaPlus, FaTrash, FaMapMarkerAlt, FaGlobe, FaCalendarAlt, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from 'react-icons/fa';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-import { getUserSongs, type Song, deleteUserProfile, deleteAllUserSongs } from '../firebase/songService';
+import { getUserSongs, type Song, deleteAllUserSongs } from '../firebase/songService';
 import Swal from 'sweetalert2';
+
+// Add a temporary implementation of getUserProfile and deleteUserProfile
+const getUserProfile = async (uid: string) => {
+  // This is a temporary implementation
+  return {
+    displayName: "User",
+    photoURL: "",
+    bio: "No bio available",
+    location: "Unknown",
+    website: "",
+    socialLinks: {},
+    joinDate: new Date().toISOString()
+  };
+};
+
+const deleteUserProfile = async (uid: string) => {
+  // This is a temporary implementation
+  console.log(`Deleting user profile for ${uid}`);
+  return Promise.resolve();
+};
+
 const ProfilePage: React.FC = () => {
   const [_activeTab, _setActiveTab] = useState("songs");
   const { currentUser, logout } = useAuth();

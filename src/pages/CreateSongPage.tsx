@@ -152,7 +152,8 @@ export default function CreateSongPage() {
         chords: chordProgression,
         createdAt: new Date().toISOString()
       };
-      const _songId = await createSong(songData);
+      // Using void to explicitly ignore the returned value
+      void await createSong(songData);
       Swal.fire({
         title: 'Success!',
         text: `Song "${songTitle}" saved successfully!`,
