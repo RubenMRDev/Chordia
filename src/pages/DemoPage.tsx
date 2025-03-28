@@ -16,7 +16,6 @@ interface TutorialStep {
 }
 const DemoPage = () => {
   const navigate = useNavigate()
-  const [isSaving, setIsSaving] = useState<boolean>(false)
   const [songTitle, setSongTitle] = useState<string>("My Demo Song")
   const [octave, setOctave] = useState<number>(1)
   const [tempo, setTempo] = useState<number>(130)
@@ -31,8 +30,6 @@ const DemoPage = () => {
   const [highlightArea, setHighlightArea] = useState<string | null>(null);
   const metronomeRef = useRef<HTMLAudioElement | null>(null);
   const pianoSoundsRef = useRef<{[key: string]: HTMLAudioElement}>({});
-  const animationFrameRef = useRef<number | null>(null);
-  const lastTickTimeRef = useRef<number | null>(null);
   const playbackIntervalRef = useRef<number | null>(null);
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
   const hasBlackKeyAfter = [true, true, false, true, true, true, false]
@@ -112,9 +109,6 @@ const DemoPage = () => {
   }
   const normalizeNote = (note: string): string => {
     return note.replace('s', '#');
-  }
-  const formatForDisplay = (note: string): string => {
-    return normalizeNote(note);
   }
   const handleEditChord = (index: number) => {
     console.log("Editing chord", index, chordProgression[index]);
@@ -521,7 +515,6 @@ const DemoPage = () => {
                   <div className="relative flex h-24 sm:h-28 mx-auto" style={{ width: `calc(100% - 20px)` }}>
                     {whiteKeys.map((note, index) => {
                       const actualIndex = index + 7;
-                      const noteWithIndex = `${note}-${actualIndex}`;
                       const isSelected = isNoteSelected(note, actualIndex);
                       return (
                         <div
