@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { FaMusic, FaPlay, FaUser, FaSort, FaRandom, FaClock } from 'react-icons/fa';
@@ -23,6 +23,7 @@ const DiscoverPage: React.FC = () => {
   const [songs, setSongs] = useState<DisplaySong[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortMethod, setSortMethod] = useState<SortMethod>('recent');
+  const [animationsReady, setAnimationsReady] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,6 +75,18 @@ const DiscoverPage: React.FC = () => {
     fetchAllSongs();
   }, [sortMethod]);
 
+  useEffect(() => {
+    // Set animations ready to false whenever songs change
+    setAnimationsReady(false);
+    
+    // Trigger animations after a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      setAnimationsReady(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [songs]);
+
   const sortSongs = (songsToSort: DisplaySong[], method: SortMethod): DisplaySong[] => {
     switch (method) {
       case 'recent':
@@ -101,178 +114,87 @@ const DiscoverPage: React.FC = () => {
     });
   };
 
+  // Helper to generate staggered animation delay
+  const getAnimationDelay = (index: number): string => {
+    return `${index * 100}ms`;
+  };
+
   return (
-    <div style={{ 
-      backgroundColor: 'var(--background-darker)',
-      minHeight: '100vh',
-      color: 'var(--text-primary)'
-    }}>
+    <div className="bg-[#0c141c] min-h-screen text-white">
       <Header />
-      <div style={{ padding: '2rem' }}>
-        <h1 style={{ 
-          fontSize: '2.5rem',
-          color: 'var(--accent-green)',
-          marginBottom: '2rem',
-          textAlign: 'center'
-        }}>
+      <div className="p-4 md:p-8">
+        <h1 className="text-2xl md:text-4xl text-[#04e073] mb-8 text-center font-bold">
           Discover Music From All Users
         </h1>
         
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: '2rem',
-          gap: '1rem'
-        }}>
+        <div className="flex justify-center mb-8 gap-4 flex-wrap">
           <button
             onClick={() => handleSortChange('recent')}
-            style={{
-              backgroundColor: sortMethod === 'recent' ? 'var(--accent-green)' : 'rgba(255,255,255,0.1)',
-              color: sortMethod === 'recent' ? '#000' : 'var(--text-primary)',
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md border-none cursor-pointer ${
+              sortMethod === 'recent' 
+                ? 'bg-[#04e073] text-black' 
+                : 'bg-[#1e2638] text-white hover:bg-[#2a324d]'
+            } transition-colors`}
           >
             <FaClock /> Most Recent
           </button>
           <button
             onClick={() => handleSortChange('random')}
-            style={{
-              backgroundColor: sortMethod === 'random' ? 'var(--accent-green)' : 'rgba(255,255,255,0.1)',
-              color: sortMethod === 'random' ? '#000' : 'var(--text-primary)',
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md border-none cursor-pointer ${
+              sortMethod === 'random' 
+                ? 'bg-[#04e073] text-black' 
+                : 'bg-[#1e2638] text-white hover:bg-[#2a324d]'
+            } transition-colors`}
           >
             <FaRandom /> Random
           </button>
         </div>
         
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <div className="text-center py-8">
             <p>Loading songs...</p>
           </div>
         ) : songs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+          <div className="text-center py-8">
+            <p className="text-gray-300 text-lg">
               No hay canciones disponibles en este momento.
             </p>
           </div>
         ) : (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-            gap: '1.5rem',
-            padding: '1rem'
-          }}>
-            {songs.map((song) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
+            {songs.map((song, index) => (
               <div 
                 key={song.id}
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                }}
+                className={`bg-[#162032] rounded-lg overflow-hidden cursor-pointer shadow-md hover:-translate-y-[1px] transition-transform duration-200 border border-[#1e293b] opacity-0 translate-y-8 ${animationsReady ? 'animate-slide-in' : ''}`}
                 onClick={() => navigate(`/song/${song.id}`)}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                style={{ animationDelay: getAnimationDelay(index) }}
               >
-                <div style={{ 
-                  color: 'var(--accent-green)', 
-                  padding: '0.75rem 1rem',
-                  borderBottom: '1px solid rgba(255,255,255,0.1)',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
-                  <FaUser style={{ marginRight: '0.5rem' }} />
+                <div className="text-[#04e073] p-3 border-b border-[#1e293b] flex items-center">
+                  <FaUser className="mr-2" />
                   <span>{song.username}</span>
                 </div>
-                <div style={{ 
-                  position: 'relative',
-                  height: '160px',
-                  backgroundColor: '#1f2937',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '1rem'
-                }}>
-                  <div style={{ 
-                    width: '100px',
-                    height: '100px',
-                    border: '2px solid var(--accent-green)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <FaMusic style={{ fontSize: '2.5rem', color: 'var(--accent-green)' }} />
+                <div className="relative h-40 bg-[#11192a] flex items-center justify-center p-4">
+                  <div className="w-24 h-24 border-2 border-[#04e073] rounded-full flex items-center justify-center bg-[#0c141c] shadow-inner">
+                    <FaMusic className="text-4xl text-[#04e073]" />
                   </div>
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
                       navigate(`/song/${song.id}`);
                     }}
-                    style={{
-                      position: 'absolute',
-                      bottom: '1rem',
-                      right: '1rem',
-                      backgroundColor: 'var(--accent-green)',
-                      color: '#000',
-                      width: '3rem',
-                      height: '3rem',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
+                    className="absolute bottom-4 right-4 bg-[#04e073] text-black w-12 h-12 rounded-full flex items-center justify-center border-none cursor-pointer hover:bg-[#03d069] transition-colors shadow-md"
                   >
                     <FaPlay />
                   </button>
                 </div>
-                <div style={{ padding: '1rem' }}>
-                  <h3 style={{ 
-                    fontSize: '1.25rem', 
-                    marginBottom: '0.5rem'
-                  }}>
-                    {song.title}
-                  </h3>
-                  <div style={{ 
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    marginBottom: '1rem',
-                    display: 'flex',
-                    gap: '1rem'
-                  }}>
-                    <div>Key: {song.key}</div>
-                    <div>{song.timeSignature}</div>
-                    <div>{song.tempo} BPM</div>
+                <div className="p-4">
+                  <h3 className="text-xl mb-2 truncate font-medium text-gray-100">{song.title}</h3>
+                  <div className="text-gray-300 text-sm mb-4 flex flex-wrap gap-4">
+                    <div className="px-2 py-1 rounded bg-[#1e2638] inline-block">Key: {song.key}</div>
+                    <div className="px-2 py-1 rounded bg-[#1e2638] inline-block">{song.timeSignature}</div>
+                    <div className="px-2 py-1 rounded bg-[#1e2638] inline-block">{song.tempo} BPM</div>
                   </div>
-                  <div style={{ 
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
+                  <div className="text-gray-400 text-sm flex items-center gap-2">
                     <span>Created: {formatDate(song.createdAt)}</span>
                   </div>
                 </div>
@@ -281,20 +203,27 @@ const DiscoverPage: React.FC = () => {
           </div>
         )}
         
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <Link to="/dashboard" style={{ 
-            display: 'inline-block',
-            backgroundColor: 'var(--accent-green)',
-            color: '#000',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '4px',
-            textDecoration: 'none',
-            fontWeight: 'bold'
-          }}>
+        <div className="text-center mt-8">
+          <Link to="/dashboard" className="inline-block bg-[#04e073] text-black py-3 px-6 rounded-md no-underline font-bold hover:bg-[#03c664] transition-colors shadow-md">
             Volver al Dashboard
           </Link>
         </div>
       </div>
+      <style>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slide-in {
+          animation: slideIn 0.6s ease forwards;
+        }
+      `}</style>
     </div>
   );
 };

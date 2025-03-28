@@ -5,31 +5,25 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { getUserSongs, deleteSongById, type Song } from '../firebase/songService';
 import Swal from 'sweetalert2';
+
 const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) => {
   const chordNotes = chord.keys.map(k => k.split('-')[0]);
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"];
   const hasBlackKeyAfter = [true, true, false, true, true, true, false];
   return (
-    <div style={{ position: "relative", height: "30px", width: "100%" }}>
-      
-      <div style={{ display: "flex", height: "100%", width: "100%" }}>
+    <div className="relative h-[30px] w-full">
+      <div className="flex h-full w-full">
         {whiteKeys.map((note, idx) => (
           <div
             key={`mini-white-${idx}`}
-            style={{
-              flex: 1,
-              height: "100%",
-              backgroundColor: chordNotes.includes(note) ? "var(--accent-green)" : "white",
-              border: "1px solid #4b5563",
-              borderRadius: "0 0 2px 2px",
-              position: "relative",
-              zIndex: 1,
-            }}
+            className={`flex-1 h-full relative z-[1] border border-[#4b5563] rounded-b-[2px] ${
+              chordNotes.includes(note) ? "bg-[var(--accent-green)]" : "bg-white"
+            }`}
           />
         ))}
       </div>
       
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "60%" }}>
+      <div className="absolute top-0 left-0 right-0 h-[60%]">
         {whiteKeys.map((note, idx) => {
           if (!hasBlackKeyAfter[idx]) return null;
           const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
@@ -41,17 +35,10 @@ const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) 
           return (
             <div
               key={`mini-black-${idx}`}
+              className={`absolute h-full w-[16%] z-[2] rounded-b-[2px] border-l border-r border-[#4b5563] box-border`}
               style={{
-                position: "absolute",
-                height: "100%",
                 left: `calc(${position * 100}% - 9%)`,
                 backgroundColor: isSelected ? "var(--accent-green)" : "black",
-                zIndex: 2,
-                width: "16%",
-                borderRadius: "0 0 2px 2px",
-                borderLeft: "1px solid #4b5563",
-                borderRight: "1px solid #4b5563",
-                boxSizing: "border-box",
               }}
             />
           );
@@ -60,12 +47,15 @@ const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) 
     </div>
   );
 };
+
 const LibraryPage: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibleSongs, setVisibleSongs] = useState<number>(0);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchSongs = async () => {
       if (!currentUser) return;
@@ -73,6 +63,9 @@ const LibraryPage: React.FC = () => {
         setLoading(true);
         const userSongs = await getUserSongs(currentUser.uid);
         setSongs(userSongs);
+        
+        // Reset visible songs count before starting animation
+        setVisibleSongs(0);
       } catch (err) {
         console.error('Error fetching songs:', err);
         setError('Failed to load your songs. Please try again later.');
@@ -82,6 +75,18 @@ const LibraryPage: React.FC = () => {
     };
     fetchSongs();
   }, [currentUser]);
+  
+  // Increment visible songs one by one with delay
+  useEffect(() => {
+    if (!loading && songs.length > 0 && visibleSongs < songs.length) {
+      const timer = setTimeout(() => {
+        setVisibleSongs(prev => prev + 1);
+      }, 100); // 100ms delay between each song appearance
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, songs.length, visibleSongs]);
+
   const handleDeleteSong = (songId: string, title: string) => {
     Swal.fire({
       title: 'Delete Song',
@@ -112,6 +117,7 @@ const LibraryPage: React.FC = () => {
       }
     });
   };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -120,196 +126,94 @@ const LibraryPage: React.FC = () => {
       day: 'numeric'
     });
   };
+
   return (
-    <div style={{ 
-      backgroundColor: 'var(--background-darker)',
-      minHeight: '100vh',
-      color: 'var(--text-primary)'
-    }}>
+    <div className="bg-[var(--background-darker)] min-h-screen text-[var(--text-primary)]">
       <Header />
-      <div style={{ padding: '2rem' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '2rem'
-        }}>
-          <h1 style={{ 
-            fontSize: '2.5rem',
-            color: 'var(--accent-green)',
-          }}>
+      <div className="p-4 md:p-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+          <h1 className="text-2xl md:text-4xl text-[var(--accent-green)] font-bold mb-4 sm:mb-0">
             Your Music Library
           </h1>
-          <Link to="/create" style={{ 
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            backgroundColor: 'var(--accent-green)',
-            color: '#000',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '4px',
-            textDecoration: 'none',
-            fontWeight: 'bold'
-          }}>
+          <Link 
+            to="/create" 
+            className="flex items-center gap-2 bg-[var(--accent-green)] text-black px-4 py-2 rounded-md font-bold text-sm no-underline"
+          >
             <FaPlus /> Create New Song
           </Link>
         </div>
+        
         {loading ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '3rem 0',
-            color: 'var(--text-secondary)' 
-          }}>
+          <div className="text-center py-12 text-[var(--text-secondary)]">
             Loading your songs...
           </div>
         ) : error ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '3rem 0',
-            color: '#ef4444' 
-          }}>
+          <div className="text-center py-12 text-[#ef4444]">
             {error}
           </div>
         ) : songs.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '3rem 0',
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            borderRadius: '8px'
-          }}>
-            <FaMusic style={{ fontSize: '3rem', color: 'var(--text-secondary)', marginBottom: '1rem' }} />
-            <h2 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+          <div className="text-center py-12 bg-[rgba(255,255,255,0.08)] rounded-lg">
+            <FaMusic className="text-5xl text-[var(--text-secondary)] mx-auto mb-4" />
+            <h2 className="mb-4 text-[var(--text-secondary)] text-xl">
               Your library is empty
             </h2>
-            <p style={{ marginBottom: '2rem', color: 'var(--text-secondary)' }}>
+            <p className="mb-8 text-[var(--text-secondary)]">
               Create your first song to see it here
             </p>
-            <Link to="/create" style={{ 
-              backgroundColor: 'var(--accent-green)',
-              color: '#000',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '4px',
-              textDecoration: 'none',
-              fontWeight: 'bold'
-            }}>
+            <Link 
+              to="/create" 
+              className="bg-[var(--accent-green)] text-black px-6 py-3 rounded-md no-underline font-bold"
+            >
               Create Song
             </Link>
           </div>
         ) : (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '1.5rem'
-          }}>
-            {songs.map(song => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {songs.slice(0, visibleSongs).map((song, index) => (
               <div 
                 key={song.id}
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                className="bg-[#1a223a] rounded-lg overflow-hidden  cursor-pointer shadow-md hover:-translate-y-[1px] transition-transform duration-200 opacity-0 animate-slideUp"
+                style={{ 
+                  animationDelay: `${index * 100}ms`,
+                  animationFillMode: 'forwards'
                 }}
                 onClick={() => navigate(`/song/${song.id}`)}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
               >
-                <div style={{ 
-                  position: 'relative',
-                  height: '160px',
-                  backgroundColor: '#1f2937',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '1rem'
-                }}>
-                  
-                  <div style={{ 
-                    width: '100px',
-                    height: '100px',
-                    border: '2px solid var(--accent-green)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <FaMusic style={{ fontSize: '2.5rem', color: 'var(--accent-green)' }} />
+                <div className="relative h-40 bg-[#162032] flex items-center justify-center p-4">
+                  <div className="w-24 h-24 border-2 border-[var(--accent-green)] rounded-full flex items-center justify-center">
+                    <FaMusic className="text-4xl text-[var(--accent-green)]" />
                   </div>
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
                       navigate(`/song/${song.id}`);
                     }}
-                    style={{
-                      position: 'absolute',
-                      bottom: '1rem',
-                      right: '1rem',
-                      backgroundColor: 'var(--accent-green)',
-                      color: '#000',
-                      width: '3rem',
-                      height: '3rem',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
+                    className="absolute bottom-4 right-4 bg-[var(--accent-green)] text-black w-12 h-12 rounded-full flex items-center justify-center border-none cursor-pointer"
                   >
                     <FaPlay />
                   </button>
                 </div>
-                <div style={{ padding: '1rem' }}>
-                  <h3 style={{ 
-                    fontSize: '1.25rem', 
-                    marginBottom: '0.5rem'
-                  }}>
+                <div className="p-4">
+                  <h3 className="text-xl mb-2 truncate font-medium">
                     {song.title}
                   </h3>
-                  <div style={{ 
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    marginBottom: '1rem',
-                    display: 'flex',
-                    gap: '1rem'
-                  }}>
-                    <div>Key: {song.key}</div>
-                    <div>{song.timeSignature}</div>
-                    <div>{song.tempo} BPM</div>
+                  <div className="text-[var(--text-secondary)] text-sm mb-4 flex flex-wrap gap-4">
+                    <div className="px-2 py-1 rounded bg-[#162032] inline-block">Key: {song.key}</div>
+                    <div className="px-2 py-1 rounded bg-[#162032] inline-block">{song.timeSignature}</div>
+                    <div className="px-2 py-1 rounded bg-[#162032] inline-block">{song.tempo} BPM</div>
                   </div>
-                  <div style={{ 
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '1rem',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FaClock style={{ fontSize: '0.875rem' }} />
+                  <div className="flex justify-between items-center mt-4 text-[var(--text-secondary)] text-sm">
+                    <div className="flex items-center gap-2">
+                      <FaClock className="text-xs" />
                       <span>{formatDate(song.createdAt)}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div className="flex gap-3">
                       <button
                         onClick={(event) => {
                           event.stopPropagation();
                           handleDeleteSong(song.id as string, song.title);
                         }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#ef4444',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontSize: '1rem'
-                        }}
+                        className="bg-transparent border-none text-[#ef4444] cursor-pointer flex items-center text-base"
                       >
                         <FaTrash />
                       </button>
@@ -324,4 +228,48 @@ const LibraryPage: React.FC = () => {
     </div>
   );
 };
-export default LibraryPage;
+
+// Define the animation in the document's <style> section
+// We need to add this to the component to ensure it's included
+// This creates a custom animation class that can be used with Tailwind
+const AnimationStyle = () => {
+  useEffect(() => {
+    // Create and append style element for custom animation
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+      @keyframes slideUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .animate-slideUp {
+        animation: slideUp 0.5s ease forwards;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    
+    // Cleanup
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+  
+  return null;
+};
+
+const EnhancedLibraryPage: React.FC = () => {
+  return (
+    <>
+      <AnimationStyle />
+      <LibraryPage />
+    </>
+  );
+};
+
+export default EnhancedLibraryPage;
