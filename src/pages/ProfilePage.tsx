@@ -5,44 +5,8 @@ import { FaMusic, FaClock, FaPlus, FaTrash, FaMapMarkerAlt, FaGlobe, FaCalendarA
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { getUserSongs, type Song, deleteAllUserSongs } from '../firebase/songService';
+import { getUserProfile, deleteUserProfile, type UserProfile } from '../firebase/userService';
 import Swal from 'sweetalert2';
-
-// Define UserProfile interface
-interface UserProfile {
-  displayName?: string;
-  photoURL?: string;
-  bio?: string;
-  location?: string;
-  website?: string;
-  socialLinks?: {
-    instagram?: string;
-    twitter?: string;
-    soundcloud?: string;
-    spotify?: string;
-  };
-  joinDate?: string;
-}
-
-// Add a temporary implementation of getUserProfile and deleteUserProfile
-const getUserProfile = async (uid: string): Promise<UserProfile> => {
-  // This is a temporary implementation that actually uses the uid parameter
-  console.log(`Fetching profile for user: ${uid}`);
-  return {
-    displayName: "User",
-    photoURL: "",
-    bio: "No bio available",
-    location: "Unknown",
-    website: "",
-    socialLinks: {},
-    joinDate: new Date().toISOString()
-  };
-};
-
-const deleteUserProfile = async (uid: string) => {
-  // This is a temporary implementation
-  console.log(`Deleting user profile for ${uid}`);
-  return Promise.resolve();
-};
 
 const ProfilePage: React.FC = () => {
   const [_activeTab, _setActiveTab] = useState("songs");
@@ -51,6 +15,7 @@ const ProfilePage: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (currentUser) {
@@ -79,6 +44,7 @@ const ProfilePage: React.FC = () => {
     };
     fetchUserData();
   }, [currentUser]);
+
   const handleLogout = async () => {
     try {
       const result = await Swal.fire({
@@ -108,6 +74,7 @@ const ProfilePage: React.FC = () => {
       });
     }
   };
+
   const handleDeleteAccount = async () => {
     try {
       const result = await Swal.fire({
@@ -152,6 +119,7 @@ const ProfilePage: React.FC = () => {
       });
     }
   };
+
   const formatDate = (dateString: string | number | Date) => {
     try {
       const date = new Date(dateString);
@@ -165,6 +133,7 @@ const ProfilePage: React.FC = () => {
       return "Invalid date";
     }
   };
+
   if (loading) {
     return (
       <div
@@ -181,10 +150,12 @@ const ProfilePage: React.FC = () => {
       </div>
     );
   }
+
   if (!currentUser) {
     navigate("/login");
     return null;
   }
+
   return (
     <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
       <Header/>
@@ -234,7 +205,7 @@ const ProfilePage: React.FC = () => {
           }}
         >
           <img
-            src={profileData?.photoURL ? profileData.photoURL : "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
+            src={profileData?.photoURL || "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
             alt="Profile"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
             onError={(e) => {
@@ -243,9 +214,11 @@ const ProfilePage: React.FC = () => {
           />
         </div>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>{profileData?.displayName}</h1>
+          <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>
+            {profileData?.displayName || currentUser?.displayName || "User"}
+          </h1>
           <p style={{ color: "var(--accent-green)", marginBottom: "1rem" }}>
-            @{profileData?.displayName?.toLowerCase().replace(/\s+/g, "")}
+            @{(profileData?.displayName || currentUser?.displayName || "user")?.toLowerCase().replace(/\s+/g, "")}
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
             <div>
@@ -528,7 +501,6 @@ const ProfilePage: React.FC = () => {
           )}
         </div>
       </div>
-      {}
       <div style={{ 
         display: "flex", 
         justifyContent: "center", 
