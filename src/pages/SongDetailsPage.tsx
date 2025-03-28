@@ -15,7 +15,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
   return (
     <div className="relative h-[120px] w-full max-w-[400px] mx-auto">
       <div className="flex h-full w-full">
-        {whiteKeys.map((_, idx) => (
+        {whiteKeys.map((whiteKey, idx) => (
           <div
             key={`large-white-${idx}`}
             className={`flex-1 h-full border border-gray-600 rounded-b-sm relative z-10 ${
@@ -31,7 +31,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
         ))}
       </div>
       <div className="absolute top-0 left-0 right-0 h-[60%]">
-        {whiteKeys.map((note, idx) => {
+        {whiteKeys.map((_, idx) => {
           if (!hasBlackKeyAfter[idx]) return null;
           const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
           const blackKeyIdx = [0, 1, 3, 4, 5].indexOf(idx);

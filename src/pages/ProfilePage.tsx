@@ -7,9 +7,26 @@ import { useAuth } from '../context/AuthContext';
 import { getUserSongs, type Song, deleteAllUserSongs } from '../firebase/songService';
 import Swal from 'sweetalert2';
 
+// Define UserProfile interface
+interface UserProfile {
+  displayName?: string;
+  photoURL?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  socialLinks?: {
+    instagram?: string;
+    twitter?: string;
+    soundcloud?: string;
+    spotify?: string;
+  };
+  joinDate?: string;
+}
+
 // Add a temporary implementation of getUserProfile and deleteUserProfile
-const getUserProfile = async (uid: string) => {
-  // This is a temporary implementation
+const getUserProfile = async (uid: string): Promise<UserProfile> => {
+  // This is a temporary implementation that actually uses the uid parameter
+  console.log(`Fetching profile for user: ${uid}`);
   return {
     displayName: "User",
     photoURL: "",
