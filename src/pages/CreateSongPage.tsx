@@ -62,7 +62,7 @@ export default function CreateSongPage() {
   const [key, setKey] = useState<string>("C Major")
   const [timeSignature, setTimeSignature] = useState<string>("4/4")
   const [chordProgression, setChordProgression] = useState<ChordType[]>([])
-  const [isPlaying, setIsPlaying] = useState<boolean>(false)
+  const [_isPlaying, _setIsPlaying] = useState<boolean>(false)
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [editingChordIndex, setEditingChordIndex] = useState<number | null>(null);
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
@@ -152,7 +152,7 @@ export default function CreateSongPage() {
         chords: chordProgression,
         createdAt: new Date().toISOString()
       };
-      const songId = await createSong(songData);
+      const _songId = await createSong(songData);
       Swal.fire({
         title: 'Success!',
         text: `Song "${songTitle}" saved successfully!`,
@@ -190,7 +190,7 @@ export default function CreateSongPage() {
           ))}
         </div>
         <div className="absolute top-0 left-0 right-0 h-3/5">
-          {whiteKeys.map((note, idx) => {
+          {whiteKeys.map((_, idx) => {
             if (!hasBlackKeyAfter[idx]) return null;
             const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
             const blackKeyIdx = [0, 1, 3, 4, 5].indexOf(idx);

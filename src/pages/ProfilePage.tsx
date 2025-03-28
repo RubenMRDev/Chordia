@@ -1,25 +1,11 @@
 "use client";
-import type React from "react";
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { getUserProfile, type UserProfile, deleteUserProfile } from "../firebase/userService";
-import { getUserSongs, deleteSongById, deleteAllUserSongs, type Song } from '../firebase/songService';
-import {
-  FaMusic,
-  FaMapMarkerAlt,
-  FaGlobe,
-  FaCalendarAlt,
-  FaInstagram,
-  FaTwitter,
-  FaSoundcloud,
-  FaSpotify,
-  FaPlus,
-  FaClock,
-  FaTrash,
-} from "react-icons/fa";
-import Header from "../components/Header";
-import Swal from "sweetalert2";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaUser, FaMusic, FaPlay, FaClock, FaPlus, FaPen, FaRegUserCircle, FaTrash } from 'react-icons/fa';
+import Header from '../components/Header';
+import { useAuth } from '../context/AuthContext';
+import { getUserSongs, type Song, deleteUserProfile, deleteAllUserSongs } from '../firebase/songService';
+import Swal from 'sweetalert2';
 const ProfilePage: React.FC = () => {
   const [_activeTab, _setActiveTab] = useState("songs");
   const { currentUser, logout } = useAuth();

@@ -65,8 +65,6 @@ const SongDetailsPage: React.FC = () => {
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  // Comment out unused variable
-  // const { currentUser } = useAuth();
   const { } = useAuth(); // Keep the hook call without storing the result
   const [currentChordIndex, setCurrentChordIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
