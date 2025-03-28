@@ -86,3 +86,62 @@ body {
   z-index: -1;
   overflow: hidden;
 }
+
+html, body, div, section, header, footer, h1, h2, h3, h4, h5, h6, p, span, 
+figure, img, ul, ol, li, table, tr, td, th {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+a, button, .btn, [role="button"], 
+[role="link"], [type="button"], [type="submit"], [type="reset"],
+label[for], summary {
+  cursor: pointer !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+input[type="text"], input[type="email"], input[type="password"], 
+input[type="number"], input[type="search"], input[type="tel"], 
+input[type="url"], textarea, select, [contenteditable="true"] {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+[role="textbox"], .cursor-text {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.cursor-default {
+  cursor: default !important;
+}
+
+.select-text {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+.select-none {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
