@@ -25,9 +25,12 @@ const Header: React.FC = () => {
         {currentUser ? (
           <Link to="/profile">
             <img
-              src={userProfile?.photoURL || currentUser?.photoURL || "/default-avatar.png"}
+              src={userProfile?.photoURL || currentUser?.photoURL || "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
               alt="Profile"
               className="w-10 h-10 rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp";
+              }}
             />
           </Link>
         ) : (
@@ -82,9 +85,12 @@ const Header: React.FC = () => {
           </Link>
           <Link to="/profile">
             <img
-              src={userProfile?.photoURL || currentUser.photoURL || "/default-avatar.png"}
+              src={userProfile?.photoURL || currentUser.photoURL || "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
               alt="Profile"
               className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp";
+              }}
             />
           </Link>
         </>

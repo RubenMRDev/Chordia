@@ -252,9 +252,12 @@ const ProfilePage: React.FC = () => {
           }}
         >
           <img
-            src={profileData?.photoURL || "/placeholder.svg?height=120&width=120"}
+            src={profileData?.photoURL ? profileData.photoURL : "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
             alt="Profile"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={(e) => {
+              e.currentTarget.src = "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp";
+            }}
           />
         </div>
         <div style={{ flex: 1 }}>
