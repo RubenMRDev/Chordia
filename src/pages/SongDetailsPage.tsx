@@ -73,9 +73,15 @@ const SongDetailsPage: React.FC = () => {
   const isFirstRenderRef = useRef<boolean>(true);
   const lastChordChangeRef = useRef<number | null>(null);
   const [metronomeEnabled, setMetronomeEnabled] = useState<boolean>(true);
-  const [pianoSoundEnabled, setPianoSoundEnabled] = useState<boolean>(false);
+  const [pianoSoundEnabled, setPianoSoundEnabled] = useState<boolean>(true);
   const pianoSoundsRef = useRef<{[key: string]: HTMLAudioElement}>({});
   const currentBeatRef = useRef(0);
+  const metronomeEnabledRef = useRef(metronomeEnabled);
+  
+  useEffect(() => {
+    metronomeEnabledRef.current = metronomeEnabled;
+  }, [metronomeEnabled]);
+
   useEffect(() => {
     const fetchSong = async () => {
       if (!songId) return;
@@ -150,7 +156,7 @@ const SongDetailsPage: React.FC = () => {
       const elapsed = timestamp - lastTickTimeRef.current;
       if (elapsed >= beatDuration) {
         currentBeatRef.current = (currentBeatRef.current + 1) % beatsPerMeasure;
-        if (metronomeRef.current && metronomeEnabled) {
+        if (metronomeRef.current && metronomeEnabledRef.current) {
           metronomeRef.current.currentTime = 0;
           metronomeRef.current.play().catch(e => console.error("Couldn't play metronome:", e));
         }
@@ -181,9 +187,23 @@ const SongDetailsPage: React.FC = () => {
   }, [isPlaying, song]);
   useEffect(() => {
     if (song && pianoSoundEnabled) {
-      playChordSound(song.chords[currentChordIndex]);
+      // Only play chord sound when manually changing chords or during playback,
+      // not during initial load
+      if (!isFirstRenderRef.current) {
+        playChordSound(song.chords[currentChordIndex]);
+      }
     }
   }, [currentChordIndex, song]);
+
+  // To handle clicks on chord boxes which should play sounds
+  const handleChordSelect = (index: number) => {
+    setCurrentChordIndex(index);
+    // Only play sound if piano is enabled and we're not in the initial load
+    if (song && pianoSoundEnabled && !isFirstRenderRef.current) {
+      playChordSound(song.chords[index]);
+    }
+  };
+
   const handlePlayPause = () => {
     if (!isPlaying && song) {
       setBeatCount(0);
@@ -337,7 +357,7 @@ const SongDetailsPage: React.FC = () => {
                         ? "bg-[#00E676]/20 border-2 border-[#00E676]" 
                         : "bg-[#1a2332]"
                     }`}
-                    onClick={() => setCurrentChordIndex(index)}
+                    onClick={() => handleChordSelect(index)}
                   >
                     <div className="flex justify-between items-center mb-4">
                       <div className={`font-bold ${
