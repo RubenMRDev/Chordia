@@ -5,7 +5,6 @@ import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { getUserSongs, deleteSongById, type Song } from '../firebase/songService';
 import Swal from 'sweetalert2';
-
 const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) => {
   const chordNotes = chord.keys.map(k => k.split('-')[0]);
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"];
@@ -22,7 +21,6 @@ const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) 
           />
         ))}
       </div>
-      
       <div className="absolute top-0 left-0 right-0 h-[60%]">
         {whiteKeys.map((note, idx) => {
           if (!hasBlackKeyAfter[idx]) return null;
@@ -47,7 +45,6 @@ const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) 
     </div>
   );
 };
-
 const LibraryPage: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -55,7 +52,6 @@ const LibraryPage: React.FC = () => {
   const [visibleSongs, setVisibleSongs] = useState<number>(0);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchSongs = async () => {
       if (!currentUser) return;
@@ -63,8 +59,6 @@ const LibraryPage: React.FC = () => {
         setLoading(true);
         const userSongs = await getUserSongs(currentUser.uid);
         setSongs(userSongs);
-        
-        // Reset visible songs count before starting animation
         setVisibleSongs(0);
       } catch (err) {
         console.error('Error fetching songs:', err);
@@ -75,18 +69,14 @@ const LibraryPage: React.FC = () => {
     };
     fetchSongs();
   }, [currentUser]);
-  
-  // Increment visible songs one by one with delay
   useEffect(() => {
     if (!loading && songs.length > 0 && visibleSongs < songs.length) {
       const timer = setTimeout(() => {
         setVisibleSongs(prev => prev + 1);
-      }, 100); // 100ms delay between each song appearance
-      
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [loading, songs.length, visibleSongs]);
-
   const handleDeleteSong = (songId: string, title: string) => {
     Swal.fire({
       title: 'Delete Song',
@@ -117,7 +107,6 @@ const LibraryPage: React.FC = () => {
       }
     });
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -126,7 +115,6 @@ const LibraryPage: React.FC = () => {
       day: 'numeric'
     });
   };
-
   return (
     <div className="bg-[var(--background-darker)] min-h-screen text-[var(--text-primary)]">
       <Header />
@@ -142,7 +130,6 @@ const LibraryPage: React.FC = () => {
             <FaPlus /> Create New Song
           </Link>
         </div>
-        
         {loading ? (
           <div className="text-center py-12 text-[var(--text-secondary)]">
             Loading your songs...
@@ -228,13 +215,8 @@ const LibraryPage: React.FC = () => {
     </div>
   );
 };
-
-// Define the animation in the document's <style> section
-// We need to add this to the component to ensure it's included
-// This creates a custom animation class that can be used with Tailwind
 const AnimationStyle = () => {
   useEffect(() => {
-    // Create and append style element for custom animation
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
       @keyframes slideUp {
@@ -247,22 +229,17 @@ const AnimationStyle = () => {
           transform: translateY(0);
         }
       }
-      
       .animate-slideUp {
         animation: slideUp 0.5s ease forwards;
       }
     `;
     document.head.appendChild(styleElement);
-    
-    // Cleanup
     return () => {
       document.head.removeChild(styleElement);
     };
   }, []);
-  
   return null;
 };
-
 const EnhancedLibraryPage: React.FC = () => {
   return (
     <>
@@ -271,5 +248,4 @@ const EnhancedLibraryPage: React.FC = () => {
     </>
   );
 };
-
 export default EnhancedLibraryPage;

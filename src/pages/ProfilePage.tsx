@@ -3,8 +3,8 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getUserProfile, type UserProfile } from "../firebase/userService";
-import { getUserSongs, deleteSongById, type Song } from '../firebase/songService';
+import { getUserProfile, type UserProfile, deleteUserProfile } from "../firebase/userService";
+import { getUserSongs, deleteSongById, deleteAllUserSongs, type Song } from '../firebase/songService';
 import {
   FaMusic,
   FaBell,
@@ -72,6 +72,51 @@ const ProfilePage: React.FC = () => {
         } catch (error) {
           console.error("Error logging out:", error);
           Swal.fire("Error", "There was a problem logging out.", "error");
+        }
+      }
+    });
+  };
+  const handleDeleteAccount = () => {
+    Swal.fire({
+      title: "Delete Account?",
+      text: "This will permanently delete your account and all your songs. This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "var(--background-darker)",
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      background: "var(--background-darker)",
+      color: "var(--text-secondary)",
+      titleColor: "#dc3545",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          if (currentUser) {
+            await deleteAllUserSongs(currentUser.uid);
+            await deleteUserProfile(currentUser.uid);
+            await currentUser.delete();
+            await logout();
+            navigate("/login");
+            Swal.fire({
+              title: "Account Deleted",
+              text: "Your account has been permanently deleted.",
+              icon: "success",
+              background: "var(--background-darker)",
+              color: "var(--text-secondary)",
+            });
+          }
+        } catch (error) {
+          console.error("Error deleting account:", error);
+          setLoading(false);
+          Swal.fire({
+            title: "Error",
+            text: "There was a problem deleting your account. You may need to re-login before deleting your account.",
+            icon: "error",
+            background: "var(--background-darker)",
+            color: "var(--text-secondary)",
+          });
         }
       }
     });
@@ -447,6 +492,32 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+      {}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        padding: "2rem", 
+        borderTop: "1px solid rgba(255,255,255,0.1)",
+        marginTop: "2rem" 
+      }}>
+        <button
+          style={{
+            backgroundColor: "transparent",
+            color: "#dc3545",
+            padding: "0.75rem 1.5rem",
+            borderRadius: "4px",
+            border: "1px solid #dc3545",
+            fontWeight: "bold",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem"
+          }}
+          onClick={handleDeleteAccount}
+        >
+          <FaTrash /> Delete Account Permanently
+        </button>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import { FaMusic, FaPlay, FaUser, FaSort, FaRandom, FaClock } from 'react-icons/
 import { getAllSongs, type Song as FirebaseSong } from '../firebase/songService';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
 interface DisplaySong {
   id: string;
   title: string;
@@ -16,32 +15,24 @@ interface DisplaySong {
   userId: string;
   createdAt: string;
 }
-
 type SortMethod = 'recent' | 'random';
-
 const DiscoverPage: React.FC = () => {
   const [songs, setSongs] = useState<DisplaySong[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortMethod, setSortMethod] = useState<SortMethod>('recent');
   const [animationsReady, setAnimationsReady] = useState(false);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchAllSongs = async () => {
       try {
         setLoading(true);
         const allSongs = await getAllSongs();
-        
-        // Process songs to include username
         const songsWithUserData = await Promise.all(
           allSongs.map(async (song) => {
             let username = '@user';
-            
-            // Try to fetch the username from the users collection
             try {
               const userDoc = await getDoc(doc(db, "users", song.userId));
               if (userDoc.exists()) {
-                // Adjust this based on your user data structure
                 username = '@' + (userDoc.data().username || 
                                   userDoc.data().displayName || 
                                   userDoc.data().email?.split('@')[0] || 
@@ -50,7 +41,6 @@ const DiscoverPage: React.FC = () => {
             } catch (err) {
               console.error('Error fetching user data:', err);
             }
-            
             return {
               id: song.id || '',
               title: song.title,
@@ -63,7 +53,6 @@ const DiscoverPage: React.FC = () => {
             };
           })
         );
-        
         setSongs(sortSongs(songsWithUserData, sortMethod));
       } catch (error) {
         console.error('Error fetching songs:', error);
@@ -71,22 +60,15 @@ const DiscoverPage: React.FC = () => {
         setLoading(false);
       }
     };
-    
     fetchAllSongs();
   }, [sortMethod]);
-
   useEffect(() => {
-    // Set animations ready to false whenever songs change
     setAnimationsReady(false);
-    
-    // Trigger animations after a small delay to ensure DOM is ready
     const timer = setTimeout(() => {
       setAnimationsReady(true);
     }, 100);
-    
     return () => clearTimeout(timer);
   }, [songs]);
-
   const sortSongs = (songsToSort: DisplaySong[], method: SortMethod): DisplaySong[] => {
     switch (method) {
       case 'recent':
@@ -99,12 +81,10 @@ const DiscoverPage: React.FC = () => {
         return songsToSort;
     }
   };
-
   const handleSortChange = (method: SortMethod) => {
     setSortMethod(method);
     setSongs(sortSongs([...songs], method));
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -113,12 +93,9 @@ const DiscoverPage: React.FC = () => {
       day: 'numeric'
     });
   };
-
-  // Helper to generate staggered animation delay
   const getAnimationDelay = (index: number): string => {
     return `${index * 100}ms`;
   };
-
   return (
     <div className="bg-[#0c141c] min-h-screen text-white">
       <Header />
@@ -126,7 +103,6 @@ const DiscoverPage: React.FC = () => {
         <h1 className="text-2xl md:text-4xl text-[#04e073] mb-8 text-center font-bold">
           Discover Music From All Users
         </h1>
-        
         <div className="flex justify-center mb-8 gap-4 flex-wrap">
           <button
             onClick={() => handleSortChange('recent')}
@@ -149,7 +125,6 @@ const DiscoverPage: React.FC = () => {
             <FaRandom /> Random
           </button>
         </div>
-        
         {loading ? (
           <div className="text-center py-8">
             <p>Loading songs...</p>
@@ -202,7 +177,6 @@ const DiscoverPage: React.FC = () => {
             ))}
           </div>
         )}
-        
         <div className="text-center mt-8">
           <Link to="/dashboard" className="inline-block bg-[#04e073] text-black py-3 px-6 rounded-md no-underline font-bold hover:bg-[#03c664] transition-colors shadow-md">
             Volver al Dashboard
@@ -227,5 +201,4 @@ const DiscoverPage: React.FC = () => {
     </div>
   );
 };
-
 export default DiscoverPage;
