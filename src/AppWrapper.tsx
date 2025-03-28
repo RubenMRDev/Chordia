@@ -5,7 +5,8 @@ import { useAuth } from "./context/AuthContext"
 import App from "./App"
 
 const AppWrapper: React.FC = () => {
-  const auth = useAuth()
+  // Remove unused auth variable or use it with a void expression
+  useAuth(); // Keep the hook call without storing the result
 
   return <App />
 }

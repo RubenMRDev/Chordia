@@ -25,7 +25,6 @@ const HeaderWithConfirmation = () => {
       cancelButtonText: 'No, stay here',
       background: "var(--background-darker)",
       color: "var(--text-secondary)",
-      titleColor: "var(--accent-green)",
     }).then((result) => {
       if (result.isConfirmed && href) {
         window.location.href = href;
@@ -68,16 +67,6 @@ export default function CreateSongPage() {
   const [editingChordIndex, setEditingChordIndex] = useState<number | null>(null);
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
   const hasBlackKeyAfter = [true, true, false, true, true, true, false]
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying)
-    if (!isPlaying) {
-      console.log(
-        "Playing chord progression:",
-        chordProgression.filter((c) => c.selected).map((c) => c.keys.join(", ")),
-      )
-      setTimeout(() => setIsPlaying(false), 4000) 
-    }
-  }
   const handleOctaveChange = (newOctave: number) => {
     setOctave(newOctave)
   }
@@ -127,7 +116,6 @@ export default function CreateSongPage() {
         confirmButtonColor: "var(--accent-green)",
         background: "var(--background-darker)",
         color: "var(--text-secondary)",
-        titleColor: "var(--accent-green)",
       });
       return;
     }
@@ -139,7 +127,6 @@ export default function CreateSongPage() {
         confirmButtonColor: "var(--accent-green)",
         background: "var(--background-darker)",
         color: "var(--text-secondary)",
-        titleColor: "var(--accent-green)",
       });
       return;
     }
@@ -151,7 +138,6 @@ export default function CreateSongPage() {
         confirmButtonColor: "var(--accent-green)",
         background: "var(--background-darker)",
         color: "var(--text-secondary)",
-        titleColor: "var(--accent-green)",
       });
       return;
     }
@@ -174,7 +160,6 @@ export default function CreateSongPage() {
         confirmButtonColor: "var(--accent-green)",
         background: "var(--background-darker)",
         color: "var(--text-secondary)",
-        titleColor: "var(--accent-green)",
       }).then(() => {
         navigate('/library');
       });
@@ -187,7 +172,6 @@ export default function CreateSongPage() {
         confirmButtonColor: "var(--accent-green)",
         background: "var(--background-darker)",
         color: "var(--text-secondary)",
-        titleColor: "var(--accent-green)",
       });
     } finally {
       setIsSaving(false);

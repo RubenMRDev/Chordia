@@ -5,7 +5,7 @@ import { FaMusic } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 const Header: React.FC = () => {
   const { currentUser, userProfile } = useAuth();
-  const [activeLink, setActiveLink] = useState<string | null>(null);
+  const [_activeLink, setActiveLink] = useState<string | null>(null);
   const location = useLocation();
   const handleLinkClick = (path: string) => {
     setActiveLink(path);
