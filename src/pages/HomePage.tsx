@@ -5,7 +5,6 @@ import Features from '../components/Features';
 import Experience from '../components/Experience';
 import CallToAction from '../components/CallToAction';
 import Footer from '../components/Footer';
-
 const HomePage: React.FC = () => {
   return (
     <>
@@ -20,5 +19,4 @@ const HomePage: React.FC = () => {
     </>
   );
 };
-
 export default HomePage;

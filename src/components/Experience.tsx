@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-
 const Experience: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [detailsVisible, setDetailsVisible] = useState([false, false, false]);
   const [imageVisible, setImageVisible] = useState(false);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -18,7 +16,6 @@ const Experience: React.FC = () => {
       },
       { threshold: 0.2 }
     );
-
     const detailsObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -34,34 +31,28 @@ const Experience: React.FC = () => {
       },
       { threshold: 0.5 }
     );
-
     if (sectionRef.current) {
       observer.observe(sectionRef.current);
-      
       const details = sectionRef.current.querySelectorAll('.feature-detail');
       details.forEach(detail => {
         detailsObserver.observe(detail);
       });
     }
-
     return () => {
       observer.disconnect();
       detailsObserver.disconnect();
     };
   }, []);
-
   const slideInStyle = (isActive: boolean) => ({
     transform: isActive ? 'translateX(0)' : 'translateX(-50px)',
     opacity: isActive ? 1 : 0,
     transition: 'transform 0.6s ease-out, opacity 0.6s ease-out',
   });
-
   const slideInRightStyle = (isActive: boolean) => ({
     transform: isActive ? 'translateX(0)' : 'translateX(50px)',
     opacity: isActive ? 1 : 0,
     transition: 'transform 0.8s ease-out, opacity 0.8s ease-out',
   });
-
   return (
     <section 
       ref={sectionRef} 
@@ -75,7 +66,6 @@ const Experience: React.FC = () => {
           >
             Experience Music <span className="text-[#04e073]">Like Never Before</span>
           </h2>
-
           <div 
             className="feature-detail mb-6" 
             data-index="0" 
@@ -91,7 +81,6 @@ const Experience: React.FC = () => {
               Instantly see chord names and progressions as you play.
             </p>
           </div>
-
           <div 
             className="feature-detail mb-6" 
             data-index="1"
@@ -107,7 +96,6 @@ const Experience: React.FC = () => {
               Track your progress and get <span className="text-[#04e073]">personalized</span> recommendations.
             </p>
           </div>
-
           <div 
             className="feature-detail" 
             data-index="2"
@@ -124,7 +112,6 @@ const Experience: React.FC = () => {
             </p>
           </div>
         </div>
-
         <div 
           className="relative max-w-xl mx-auto"
           style={slideInRightStyle(imageVisible)}
@@ -140,5 +127,4 @@ const Experience: React.FC = () => {
     </section>
   );
 };
-
 export default Experience;

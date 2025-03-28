@@ -6,7 +6,6 @@ import Experience from '../components/Experience';
 import CallToAction from '../components/CallToAction';
 import Footer from '../components/Footer';
 import LandingLayout from '../components/LandingLayout';
-
 const Landing: React.FC = () => {
   return (
     <LandingLayout>
@@ -21,5 +20,4 @@ const Landing: React.FC = () => {
     </LandingLayout>
   );
 };
-
 export default Landing;

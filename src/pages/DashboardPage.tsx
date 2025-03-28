@@ -5,7 +5,6 @@ import Header from "../components/Header";
 import { getAllSongs } from '../firebase/songService';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
 interface DisplaySong {
   id: string;
   title: string;
@@ -17,24 +16,18 @@ interface DisplaySong {
   createdAt: string;
   difficulty?: number;
 }
-
 const DashboardPage: React.FC = () => {
   const [songs, setSongs] = useState<DisplaySong[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchRandomSongs = async () => {
       try {
         setLoading(true);
         const allSongs = await getAllSongs();
-        
-        // Process songs to include username
         const songsWithUserData = await Promise.all(
           allSongs.map(async (song) => {
             let username = '@user';
-            
-            // Try to fetch the username from the users collection
             try {
               const userDoc = await getDoc(doc(db, "users", song.userId));
               if (userDoc.exists()) {
@@ -46,10 +39,7 @@ const DashboardPage: React.FC = () => {
             } catch (err) {
               console.error('Error fetching user data:', err);
             }
-            
-            // Add a random difficulty level between 1-3
             const difficulty = Math.floor(Math.random() * 3) + 1;
-            
             return {
               id: song.id || '',
               title: song.title,
@@ -63,12 +53,9 @@ const DashboardPage: React.FC = () => {
             };
           })
         );
-        
-        // Get 3 random songs
         const randomSongs = [...songsWithUserData]
           .sort(() => Math.random() - 0.5)
           .slice(0, 3);
-        
         setSongs(randomSongs);
       } catch (error) {
         console.error('Error fetching songs:', error);
@@ -76,10 +63,8 @@ const DashboardPage: React.FC = () => {
         setLoading(false);
       }
     };
-    
     fetchRandomSongs();
   }, []);
-
   const renderDifficultyStars = (level: number) => {
     const stars = [];
     for (let i = 0; i < 3; i++) {
@@ -91,7 +76,6 @@ const DashboardPage: React.FC = () => {
     }
     return stars;
   };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -100,7 +84,6 @@ const DashboardPage: React.FC = () => {
       day: 'numeric'
     });
   };
-  
   return (
     <div style={{ 
       backgroundColor: 'var(--background-darker)',
@@ -108,7 +91,6 @@ const DashboardPage: React.FC = () => {
       color: 'var(--text-primary)'
     }}>
       <Header />
-      
       <section style={{ 
         padding: '4rem 2rem',
         position: 'relative',
@@ -158,7 +140,6 @@ const DashboardPage: React.FC = () => {
             </Link>
           </div>
         </div>
-        
         <div style={{ 
           position: 'absolute',
           top: 0,
@@ -171,10 +152,8 @@ const DashboardPage: React.FC = () => {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}>
-          
         </div>
       </section>
-      
       <section style={{ padding: '2rem' }}>
         <h2 style={{ 
           fontSize: '1.75rem',
@@ -183,7 +162,6 @@ const DashboardPage: React.FC = () => {
         }}>
           Random Community Songs
         </h2>
-        
         {loading ? (
           <div style={{ textAlign: 'center', padding: '1rem' }}>
             <p>Loading songs...</p>
@@ -273,7 +251,6 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
       </section>
-      
       <section style={{ 
         padding: '4rem 2rem',
         backgroundColor: 'var(--background-dark)',
@@ -328,7 +305,6 @@ const DashboardPage: React.FC = () => {
             position: 'relative',
             overflow: 'hidden'
           }}>
-            
             <div style={{ 
               position: 'absolute',
               width: '100%',
@@ -336,7 +312,6 @@ const DashboardPage: React.FC = () => {
               background: 'radial-gradient(circle, #000 60%, var(--accent-green) 100%)',
               opacity: 0.5
             }}></div>
-            
             <FaMusic style={{ 
               color: 'var(--accent-green)', 
               fontSize: '4rem',
@@ -346,7 +321,6 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
       </section>
-      
       <footer style={{ 
         backgroundColor: 'var(--background-darker)',
         padding: '3rem 2rem 1.5rem',
@@ -358,7 +332,6 @@ const DashboardPage: React.FC = () => {
           gap: '2rem',
           marginBottom: '3rem'
         }}>
-          
           <div>
             <div style={{ 
               display: 'flex', 
@@ -375,7 +348,6 @@ const DashboardPage: React.FC = () => {
               Your musical journey starts here.
             </p>
           </div>
-          
           <div>
             <h3 style={{ marginBottom: '1rem' }}>Quick Links</h3>
             <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -396,7 +368,6 @@ const DashboardPage: React.FC = () => {
               </li>
             </ul>
           </div>
-          
           <div>
             <h3 style={{ marginBottom: '1rem' }}>Resources</h3>
             <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -417,7 +388,6 @@ const DashboardPage: React.FC = () => {
               </li>
             </ul>
           </div>
-          
           <div>
             <h3 style={{ marginBottom: '1rem' }}>Connect</h3>
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -433,7 +403,6 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-        
         <div style={{ 
           textAlign: 'center',
           color: 'var(--text-secondary)',

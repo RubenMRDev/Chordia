@@ -13,7 +13,6 @@ const Header: React.FC = () => {
   return (
     <div className="w-full mt-0">
       <header className="w-full px-6 sm:px-8 md:px-16 py-4 md:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center border-white/10 bg-[var(--background-darker)] text-[var(--text-primary)]">
-        
         <div className="flex justify-between items-center w-full sm:w-auto">
           <Link
         to="/"
@@ -41,7 +40,6 @@ const Header: React.FC = () => {
         )}
           </div>
         </div>
-        
         <nav className="flex justify-center text-base sm:text-lg py-4 sm:py-0 w-full sm:w-auto">
           <div className="flex space-x-6 sm:space-x-8 md:space-x-12">
         <Link
@@ -73,7 +71,6 @@ const Header: React.FC = () => {
         </Link>
           </div>
         </nav>
-        
         <div className="hidden sm:flex items-center gap-6 pr-4">
           {currentUser ? (
         <>

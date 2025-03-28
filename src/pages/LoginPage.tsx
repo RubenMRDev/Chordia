@@ -72,7 +72,6 @@ const LoginPage: React.FC = () => {
         </div>
         <h1 style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>Welcome to Chordia</h1>
         <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem" }}>Your creative journey begins here</p>
-        
         <div
           style={{
             display: "flex",
@@ -108,7 +107,6 @@ const LoginPage: React.FC = () => {
             Register
           </Link>
         </div>
-        
         {error && (
           <div
             style={{
@@ -136,7 +134,6 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
         )}
-        
         <form onSubmit={handleSubmit}>
           <div
             style={{
@@ -258,7 +255,6 @@ const LoginPage: React.FC = () => {
             {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        
         <div style={{ marginBottom: "1.5rem" }}>
           <div
             style={{
@@ -330,7 +326,6 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
         </div>
-        
         <div style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
           Don't have an account?{" "}
           <Link to="/register" style={{ color: "var(--accent-green)", textDecoration: "none" }}>

@@ -336,11 +336,8 @@ export default function CreateSongPage() {
             </div>
           </div>
           <div className="flex flex-col justify-center my-5 overflow-hidden">
-            
             <div className="md:hidden flex flex-col gap-4">
-              
               <div className="relative flex h-24 sm:h-28 mx-auto" style={{ width: `calc(100% - 20px)` }}>
-                
                 {whiteKeys.map((note, index) => {
                   const noteWithIndex = `${note}-${index}`;
                   const isSelected = selectedKeys.includes(noteWithIndex);
@@ -356,7 +353,6 @@ export default function CreateSongPage() {
                     </div>
                   );
                 })}
-                
                 {whiteKeys.map((_, keyIndex) => {
                   if (!hasBlackKeyAfter[keyIndex]) return null;
                   const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
@@ -378,10 +374,8 @@ export default function CreateSongPage() {
                   );
                 })}
               </div>
-              
               {octave === 2 && (
                 <div className="relative flex h-24 sm:h-28 mx-auto" style={{ width: `calc(100% - 20px)` }}>
-                  
                   {whiteKeys.map((note, index) => {
                     const actualIndex = index + 7;
                     const noteWithIndex = `${note}-${actualIndex}`;
@@ -398,7 +392,6 @@ export default function CreateSongPage() {
                       </div>
                     );
                   })}
-                  
                   {whiteKeys.map((_, keyIndex) => {
                     if (!hasBlackKeyAfter[keyIndex]) return null;
                     const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
@@ -422,7 +415,6 @@ export default function CreateSongPage() {
                   })}
                 </div>
               )}
-              
               <div className="flex justify-center mt-3">
                 <button
                   onClick={handleSaveChord}
@@ -443,13 +435,11 @@ export default function CreateSongPage() {
                 )}
               </div>
             </div>
-            
             <div className="hidden md:flex flex-col justify-center mx-auto overflow-x-auto md:overflow-visible">
               <div
                 className="relative flex h-36"
                 style={{ width: octave === 1 ? `${54 * 7}px` : `${54 * 7 * octave}px` }}
               >
-                
                 {Array(octave)
                   .fill(whiteKeys)
                   .flat()
@@ -468,7 +458,6 @@ export default function CreateSongPage() {
                       </div>
                     );
                   })}
-                
                 {Array(octave)
                   .fill([...Array(7).keys()])
                   .flat()
@@ -498,7 +487,6 @@ export default function CreateSongPage() {
                     );
                   })}
               </div>
-              
               <div className="flex justify-center mt-4">
                 <button
                   onClick={handleSaveChord}

@@ -63,7 +63,6 @@ const EditProfilePage: React.FC = () => {
         color: "var(--text-primary)",
       }}
     >
-      
       <header
         style={{
           padding: "1rem 2rem",
@@ -91,7 +90,6 @@ const EditProfilePage: React.FC = () => {
           </Link>
         </div>
       </header>
-      
       <div
         style={{
           maxWidth: "800px",
@@ -121,9 +119,6 @@ const EditProfilePage: React.FC = () => {
           <h1>Edit Profile</h1>
         </div>
         <form onSubmit={handleSubmit}>
-          
-          
-          
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1.5rem" }}>Basic Information</h2>
             <div style={{ marginBottom: "1.5rem" }}>
@@ -232,7 +227,6 @@ const EditProfilePage: React.FC = () => {
               />
             </div>
           </div>
-          
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1.5rem" }}>Social Links</h2>
             <div style={{ marginBottom: "1.5rem" }}>
@@ -388,7 +382,6 @@ const EditProfilePage: React.FC = () => {
               </div>
             </div>
           </div>
-          
           <div
             style={{
               display: "flex",

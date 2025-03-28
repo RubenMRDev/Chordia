@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-
 const CallToAction: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -15,18 +13,15 @@ const CallToAction: React.FC = () => {
       },
       { threshold: 0.2 }
     );
-
     if (sectionRef.current) {
       observer.observe(sectionRef.current);
     }
-
     return () => {
       if (sectionRef.current) {
         observer.unobserve(sectionRef.current);
       }
     };
   }, []);
-
   return (
     <section ref={sectionRef} className="py-12 md:py-16 lg:py-20 text-center">
       <div className="container mx-auto px-4">
@@ -74,7 +69,6 @@ const CallToAction: React.FC = () => {
           Get Started Free
         </Link>
       </div>
-
       <style>{`
         .slide-up.animate {
           opacity: 1 !important;
@@ -84,5 +78,4 @@ const CallToAction: React.FC = () => {
     </section>
   );
 };
-
 export default CallToAction;

@@ -25,7 +25,6 @@ import {
 } from "react-icons/fa";
 import Header from "../components/Header";
 import Swal from "sweetalert2";
-
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("songs");
   const { currentUser, logout } = useAuth();
@@ -33,7 +32,6 @@ const ProfilePage: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchUserData = async () => {
       if (currentUser) {
@@ -62,7 +60,6 @@ const ProfilePage: React.FC = () => {
     };
     fetchUserData();
   }, [currentUser]);
-
   const handleLogout = async () => {
     try {
       const result = await Swal.fire({
@@ -77,7 +74,6 @@ const ProfilePage: React.FC = () => {
         background: "var(--background-darker)",
         color: "var(--text-secondary)"
       });
-      
       if (result.isConfirmed) {
         await logout();
         navigate("/login");
@@ -93,7 +89,6 @@ const ProfilePage: React.FC = () => {
       });
     }
   };
-
   const handleDeleteSong = async (songId: string) => {
     try {
       const result = await Swal.fire({
@@ -108,7 +103,6 @@ const ProfilePage: React.FC = () => {
         background: "var(--background-darker)",
         color: "var(--text-secondary)"
       });
-      
       if (result.isConfirmed && currentUser) {
         await deleteSongById(songId);
         setSongs(songs.filter(song => song.id !== songId));
@@ -132,7 +126,6 @@ const ProfilePage: React.FC = () => {
       });
     }
   };
-
   const handleDeleteAccount = async () => {
     try {
       const result = await Swal.fire({
@@ -147,21 +140,15 @@ const ProfilePage: React.FC = () => {
         background: "var(--background-darker)",
         color: "var(--text-secondary)"
       });
-      
       if (result.isConfirmed) {
         if (!currentUser) {
           throw new Error("User not authenticated");
         }
-        
         setLoading(true);
-        // First delete all user songs
         await deleteAllUserSongs(currentUser.uid);
-        // Then delete the user profile
         await deleteUserProfile(currentUser.uid);
-        // Finally delete the authentication account
         await currentUser.delete();
         await logout();
-        
         navigate("/login");
         Swal.fire({
           title: "Account Deleted",
@@ -174,7 +161,6 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
       console.error("Error deleting account:", error);
       setLoading(false);
-      
       Swal.fire({
         title: "Error",
         text: "There was a problem deleting your account. You may need to re-login before deleting your account.",
@@ -184,7 +170,6 @@ const ProfilePage: React.FC = () => {
       });
     }
   };
-
   const formatDate = (dateString: string | number | Date) => {
     try {
       const date = new Date(dateString);
@@ -198,7 +183,6 @@ const ProfilePage: React.FC = () => {
       return "Invalid date";
     }
   };
-
   if (loading) {
     return (
       <div
@@ -215,13 +199,10 @@ const ProfilePage: React.FC = () => {
       </div>
     );
   }
-
-  // If user is not logged in, redirect to login page
   if (!currentUser) {
     navigate("/login");
     return null;
   }
-
   return (
     <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
       <Header/>

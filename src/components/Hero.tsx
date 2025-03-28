@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaMusic } from 'react-icons/fa';
-
 const Hero: React.FC = () => {
   return (
     <section className="relative py-20 overflow-hidden bg-[var(--background-darker)]">
@@ -29,5 +28,4 @@ const Hero: React.FC = () => {
     </section>
   );
 };
-
 export default Hero;

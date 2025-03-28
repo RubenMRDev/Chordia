@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaBook, FaEdit, FaGraduationCap } from 'react-icons/fa';
-
 const Features: React.FC = () => {
   const [visibleItems, setVisibleItems] = useState<number[]>([]);
   const featureRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const [headingVisible, setHeadingVisible] = useState(false);
   const [subheadingVisible, setSubheadingVisible] = useState(false);
-
   const setFeatureRef = (index: number) => (el: HTMLDivElement | null) => {
     featureRefs.current[index] = el;
   };
-
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     if (typeof window !== 'undefined') {
@@ -30,7 +27,6 @@ const Features: React.FC = () => {
         sectionObserver.observe(sectionRef.current);
         observers.push(sectionObserver);
       }
-
       featureRefs.current.forEach((ref, index) => {
         if (ref) {
           const observer = new IntersectionObserver((entries) => {
@@ -53,7 +49,6 @@ const Features: React.FC = () => {
         }
       });
     }
-
     return () => {
       observers.forEach(observer => {
         if (observer) {
@@ -62,7 +57,6 @@ const Features: React.FC = () => {
       });
     };
   }, []);
-
   return (
     <section ref={sectionRef} className="py-16 bg-[var(--background-dark)]">
       <div className="container mx-auto px-4 text-center">
@@ -84,7 +78,6 @@ const Features: React.FC = () => {
         >
           Everything you need to enhance your musical journey
         </p>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div 
             ref={setFeatureRef(0)}
@@ -102,7 +95,6 @@ const Features: React.FC = () => {
               Access thousands of songs with detailed chord progressions and sheet music.
             </p>
           </div>
-          
           <div 
             ref={setFeatureRef(1)}
             className={`card p-6 rounded-lg shadow-lg transition-all duration-500 ease-out bg-[var(--card-bg)] ${
@@ -119,7 +111,6 @@ const Features: React.FC = () => {
               Create and save your own musical arrangements with our intuitive editor.
             </p>
           </div>
-          
           <div 
             ref={setFeatureRef(2)}
             className={`card p-6 rounded-lg shadow-lg transition-all duration-500 ease-out bg-[var(--card-bg)] ${
@@ -141,5 +132,4 @@ const Features: React.FC = () => {
     </section>
   );
 };
-
 export default Features;
