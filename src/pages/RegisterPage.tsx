@@ -2,7 +2,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { FaMusic, FaEnvelope, FaLock, FaUser, FaGoogle, FaFacebook, FaApple } from "react-icons/fa"
+import { FaMusic, FaEnvelope, FaLock, FaUser, FaGoogle, FaArrowLeft } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
 const RegisterPage: React.FC = () => {
   const [name, setName] = useState("")
@@ -12,7 +12,7 @@ const RegisterPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("register")
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const { register, signInWithGoogle, signInWithFacebook, error, setError } = useAuth()
+  const { register, signInWithGoogle, error, setError } = useAuth()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!agreeTerms) {
@@ -40,17 +40,6 @@ const RegisterPage: React.FC = () => {
       setIsLoading(false)
     }
   }
-  const handleFacebookSignIn = async () => {
-    try {
-      setIsLoading(true)
-      await signInWithFacebook()
-      navigate("/dashboard")
-    } catch (error) {
-      console.error("Facebook sign in error:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
   return (
     <div
       style={{
@@ -60,8 +49,29 @@ const RegisterPage: React.FC = () => {
         justifyContent: "center",
         alignItems: "center",
         padding: "1rem",
+        position: "relative",
       }}
     >
+      <Link
+        to="/"
+        style={{
+          position: "absolute",
+          top: "20px",
+          left: "20px",
+          color: "var(--text-primary)",
+          fontSize: "1rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          textDecoration: "none",
+          padding: "0.5rem 0.75rem",
+          borderRadius: "4px",
+          transition: "background-color 0.3s ease",
+        }}
+      >
+        <FaArrowLeft /> Go Back
+      </Link>
+      
       <div
         style={{
           backgroundColor: "#1a2332",
@@ -72,7 +82,12 @@ const RegisterPage: React.FC = () => {
           textAlign: "center",
         }}
       >
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ 
+          marginBottom: "1.5rem",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
           <FaMusic style={{ fontSize: "2rem", color: "var(--accent-green)" }} />
         </div>
         <h1 style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>Welcome to Chordia</h1>
@@ -304,13 +319,13 @@ const RegisterPage: React.FC = () => {
             </span>
             <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.1)" }}></div>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "center" }}>
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
               style={{
-                flex: 1,
-                padding: "0.5rem",
+                width: "100%",
+                padding: "0.75rem",
                 backgroundColor: "transparent",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "4px",
@@ -318,46 +333,12 @@ const RegisterPage: React.FC = () => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
+                gap: "0.5rem",
                 cursor: isLoading ? "not-allowed" : "pointer",
                 opacity: isLoading ? 0.7 : 1,
               }}
             >
-              <FaGoogle />
-            </button>
-            <button
-              onClick={handleFacebookSignIn}
-              disabled={isLoading}
-              style={{
-                flex: 1,
-                padding: "0.5rem",
-                backgroundColor: "transparent",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                color: "var(--text-primary)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                opacity: isLoading ? 0.7 : 1,
-              }}
-            >
-              <FaFacebook />
-            </button>
-            <button
-              style={{
-                flex: 1,
-                padding: "0.5rem",
-                backgroundColor: "transparent",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "4px",
-                color: "var(--text-primary)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
-            >
-              <FaApple />
+              <FaGoogle /> Continue with Google
             </button>
           </div>
         </div>
