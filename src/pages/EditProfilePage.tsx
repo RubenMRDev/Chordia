@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { FaMusic, FaArrowLeft, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
 import { updateUserProfile } from "../firebase/userService"
-import { uploadProfilePicture } from "../firebase/storageService";
+
 const EditProfilePage: React.FC = () => {
   const navigate = useNavigate()
   const { currentUser, userProfile } = useAuth()

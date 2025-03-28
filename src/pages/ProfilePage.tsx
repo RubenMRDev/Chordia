@@ -7,8 +7,6 @@ import { getUserProfile, type UserProfile, deleteUserProfile } from "../firebase
 import { getUserSongs, deleteSongById, deleteAllUserSongs, type Song } from '../firebase/songService';
 import {
   FaMusic,
-  FaBell,
-  FaCog,
   FaMapMarkerAlt,
   FaGlobe,
   FaCalendarAlt,
@@ -16,9 +14,6 @@ import {
   FaTwitter,
   FaSoundcloud,
   FaSpotify,
-  FaPlay,
-  FaHeart,
-  FaComment,
   FaPlus,
   FaClock,
   FaTrash,
@@ -26,7 +21,7 @@ import {
 import Header from "../components/Header";
 import Swal from "sweetalert2";
 const ProfilePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("songs");
+  const [_activeTab, _setActiveTab] = useState("songs");
   const { currentUser, logout } = useAuth();
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
@@ -83,43 +78,6 @@ const ProfilePage: React.FC = () => {
       Swal.fire({
         title: "Error",
         text: "There was a problem logging out. Please try again.",
-        icon: "error",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)",
-      });
-    }
-  };
-  const handleDeleteSong = async (songId: string) => {
-    try {
-      const result = await Swal.fire({
-        title: "Delete Song?",
-        text: "This will permanently delete this song. This action cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#dc3545",
-        cancelButtonColor: "var(--background-darker)",
-        confirmButtonText: "Delete",
-        cancelButtonText: "Cancel",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)"
-      });
-      if (result.isConfirmed && currentUser) {
-        await deleteSongById(songId);
-        setSongs(songs.filter(song => song.id !== songId));
-        Swal.fire({
-          title: "Song Deleted",
-          icon: "success",
-          background: "var(--background-darker)",
-          color: "var(--text-secondary)",
-          timer: 1500,
-          showConfirmButton: false
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting song:", error);
-      Swal.fire({
-        title: "Error",
-        text: "There was a problem deleting the song. Please try again.",
         icon: "error",
         background: "var(--background-darker)",
         color: "var(--text-secondary)",

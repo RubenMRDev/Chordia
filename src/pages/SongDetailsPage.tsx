@@ -4,6 +4,7 @@ import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward } 
 import Header from '../components/Header';
 import { getSongById, type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
+
 const LargePiano = ({ chord }: { chord: ChordType }) => {
   const chordNotes = chord.keys.map(k => {
     const note = k.split('-')[0];
@@ -14,17 +15,17 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
   return (
     <div className="relative h-[120px] w-full max-w-[400px] mx-auto">
       <div className="flex h-full w-full">
-        {whiteKeys.map((note, idx) => (
+        {whiteKeys.map((_, idx) => (
           <div
             key={`large-white-${idx}`}
             className={`flex-1 h-full border border-gray-600 rounded-b-sm relative z-10 ${
-              chordNotes.includes(note) ? "bg-[#00E676]" : "bg-white"
+              chordNotes.includes(whiteKeys[idx]) ? "bg-[#00E676]" : "bg-white"
             }`}
           >
             <div className={`absolute bottom-[5px] w-full text-center ${
-              chordNotes.includes(note) ? "text-white font-bold" : "text-black font-normal"
+              chordNotes.includes(whiteKeys[idx]) ? "text-white font-bold" : "text-black font-normal"
             }`}>
-              {note}
+              {whiteKeys[idx]}
             </div>
           </div>
         ))}
@@ -58,12 +59,15 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
     </div>
   );
 };
+
 const SongDetailsPage: React.FC = () => {
   const { songId } = useParams<{ songId: string }>();
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { currentUser } = useAuth();
+  // Comment out unused variable
+  // const { currentUser } = useAuth();
+  const { } = useAuth(); // Keep the hook call without storing the result
   const [currentChordIndex, setCurrentChordIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [beatCount, setBeatCount] = useState<number>(0);
@@ -374,4 +378,5 @@ const SongDetailsPage: React.FC = () => {
     </div>
   );
 };
+
 export default SongDetailsPage;

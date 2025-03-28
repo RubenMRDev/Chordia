@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { FaMusic, FaPlay, FaUser, FaSort, FaRandom, FaClock } from 'react-icons/fa';
-import { getAllSongs, type Song as FirebaseSong } from '../firebase/songService';
+import { FaMusic, FaPlay, FaUser, FaRandom, FaClock } from 'react-icons/fa';
+import { getAllSongs } from '../firebase/songService';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+
 interface DisplaySong {
   id: string;
   title: string;
@@ -15,13 +16,16 @@ interface DisplaySong {
   userId: string;
   createdAt: string;
 }
+
 type SortMethod = 'recent' | 'random';
+
 const DiscoverPage: React.FC = () => {
   const [songs, setSongs] = useState<DisplaySong[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortMethod, setSortMethod] = useState<SortMethod>('recent');
   const [animationsReady, setAnimationsReady] = useState(false);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchAllSongs = async () => {
       try {
@@ -62,6 +66,7 @@ const DiscoverPage: React.FC = () => {
     };
     fetchAllSongs();
   }, [sortMethod]);
+
   useEffect(() => {
     setAnimationsReady(false);
     const timer = setTimeout(() => {
@@ -69,6 +74,7 @@ const DiscoverPage: React.FC = () => {
     }, 100);
     return () => clearTimeout(timer);
   }, [songs]);
+
   const sortSongs = (songsToSort: DisplaySong[], method: SortMethod): DisplaySong[] => {
     switch (method) {
       case 'recent':
@@ -81,10 +87,12 @@ const DiscoverPage: React.FC = () => {
         return songsToSort;
     }
   };
+
   const handleSortChange = (method: SortMethod) => {
     setSortMethod(method);
     setSongs(sortSongs([...songs], method));
   };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -93,9 +101,11 @@ const DiscoverPage: React.FC = () => {
       day: 'numeric'
     });
   };
+
   const getAnimationDelay = (index: number): string => {
     return `${index * 100}ms`;
   };
+
   return (
     <div className="bg-[#0c141c] min-h-screen text-white">
       <Header />
@@ -201,4 +211,5 @@ const DiscoverPage: React.FC = () => {
     </div>
   );
 };
+
 export default DiscoverPage;

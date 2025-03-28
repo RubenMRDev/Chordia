@@ -1,50 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaMusic, FaPlay, FaEdit, FaTrash, FaClock, FaPlus } from 'react-icons/fa';
+import { FaMusic, FaPlay, FaTrash, FaClock, FaPlus } from 'react-icons/fa';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { getUserSongs, deleteSongById, type Song } from '../firebase/songService';
 import Swal from 'sweetalert2';
-const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) => {
-  const chordNotes = chord.keys.map(k => k.split('-')[0]);
-  const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"];
-  const hasBlackKeyAfter = [true, true, false, true, true, true, false];
-  return (
-    <div className="relative h-[30px] w-full">
-      <div className="flex h-full w-full">
-        {whiteKeys.map((note, idx) => (
-          <div
-            key={`mini-white-${idx}`}
-            className={`flex-1 h-full relative z-[1] border border-[#4b5563] rounded-b-[2px] ${
-              chordNotes.includes(note) ? "bg-[var(--accent-green)]" : "bg-white"
-            }`}
-          />
-        ))}
-      </div>
-      <div className="absolute top-0 left-0 right-0 h-[60%]">
-        {whiteKeys.map((note, idx) => {
-          if (!hasBlackKeyAfter[idx]) return null;
-          const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
-          const blackKeyIdx = [0, 1, 3, 4, 5].indexOf(idx);
-          if (blackKeyIdx === -1) return null;
-          const blackNote = blackKeyNames[blackKeyIdx];
-          const isSelected = chordNotes.includes(blackNote);
-          const position = (idx + 1) / whiteKeys.length;
-          return (
-            <div
-              key={`mini-black-${idx}`}
-              className={`absolute h-full w-[16%] z-[2] rounded-b-[2px] border-l border-r border-[#4b5563] box-border`}
-              style={{
-                left: `calc(${position * 100}% - 9%)`,
-                backgroundColor: isSelected ? "var(--accent-green)" : "black",
-              }}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+
+// Commenting out unused component
+// const MiniPiano = ({ chord }: { chord: { keys: string[], selected: boolean } }) => {
+//   const chordNotes = chord.keys.map(k => k.split('-')[0]);
+//   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"];
+//   const hasBlackKeyAfter = [true, true, false, true, true, false, false];
+//   return (
+//     <div className="relative h-[30px] w-full">
+//       <div className="flex h-full w-full">
+//         {whiteKeys.map((_, idx) => (
+//           <div
+//             key={`mini-white-${idx}`}
+//             className={`flex-1 h-full relative z-[1] border border-[#4b5563] rounded-b-[2px] ${
+//               chordNotes.includes(whiteKeys[idx]) ? "bg-[var(--accent-green)]" : "bg-white"
+//             }`}
+//           />
+//         ))}
+//       </div>
+//       <div className="absolute top-0 left-0 right-0 h-[60%]">
+//         {/* ...rest of component... */}
+//       </div>
+//     </div>
+//   );
+// };
+
 const LibraryPage: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -87,8 +72,8 @@ const LibraryPage: React.FC = () => {
       cancelButtonColor: '#ef4444',
       confirmButtonText: '<span style="color: black;">Yes, delete it!</span>',
       background: 'var(--background-darker)',
-      color: 'var(--text-secondary)',
-      titleColor: 'var(--accent-green)',
+      color: 'white', 
+      // Removed the invalid titleColor property
     }).then(async (result) => {
       if (result.isConfirmed) {
       try {
