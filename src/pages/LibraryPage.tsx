@@ -85,25 +85,28 @@ const LibraryPage: React.FC = () => {
       showCancelButton: true,
       confirmButtonColor: 'var(--accent-green)',
       cancelButtonColor: '#ef4444',
-      confirmButtonText: 'Yes, delete it!'
+      confirmButtonText: '<span style="color: black;">Yes, delete it!</span>',
+      background: 'var(--background-darker)',
+      color: 'var(--text-secondary)',
+      titleColor: 'var(--accent-green)',
     }).then(async (result) => {
       if (result.isConfirmed) {
-        try {
-          await deleteSongById(songId);
-          setSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
-          Swal.fire(
-            'Deleted!',
-            'Your song has been deleted.',
-            'success'
-          );
-        } catch (error) {
-          console.error('Error deleting song:', error);
-          Swal.fire(
-            'Error',
-            'There was a problem deleting your song. Please try again.',
-            'error'
-          );
-        }
+      try {
+      await deleteSongById(songId);
+      setSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
+      Swal.fire(
+      'Deleted!',
+      'Your song has been deleted.',
+      'success'
+      );
+      } catch (error) {
+      console.error('Error deleting song:', error);
+      Swal.fire(
+      'Error',
+      'There was a problem deleting your song. Please try again.',
+      'error'
+      );
+      }
       }
     });
   };
