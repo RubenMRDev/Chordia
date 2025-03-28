@@ -19,13 +19,13 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
           <div
             key={`large-white-${idx}`}
             className={`flex-1 h-full border border-gray-600 rounded-b-sm relative z-10 ${
-              chordNotes.includes(whiteKeys[idx]) ? "bg-[#00E676]" : "bg-white"
+              chordNotes.includes(whiteKey) ? "bg-[#00E676]" : "bg-white"
             }`}
           >
             <div className={`absolute bottom-[5px] w-full text-center ${
-              chordNotes.includes(whiteKeys[idx]) ? "text-white font-bold" : "text-black font-normal"
+              chordNotes.includes(whiteKey) ? "text-white font-bold" : "text-black font-normal"
             }`}>
-              {whiteKeys[idx]}
+              {whiteKey}
             </div>
           </div>
         ))}
