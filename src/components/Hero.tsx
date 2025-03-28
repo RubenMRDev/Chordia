@@ -21,7 +21,7 @@ const Hero: React.FC = () => {
           </p>
           <div className="flex gap-4">
             <Link to="/register" className="btn btn-primary no-underline">Try it Free</Link>
-            <a href="#" className="btn btn-secondary">Watch Demo</a>
+            <Link to="/demo" className="btn btn-secondary">Watch Demo</Link>
           </div>
         </div>
       </div>

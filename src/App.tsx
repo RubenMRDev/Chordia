@@ -18,6 +18,7 @@ import Experience from './components/Experience';
 import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
 import LandingLayout from './components/LandingLayout';
+import DemoPage from './pages/DemoPage';
 import "./App.css"
 
 
@@ -94,6 +95,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/demo" element={<DemoPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
