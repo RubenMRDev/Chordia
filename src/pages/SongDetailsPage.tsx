@@ -77,11 +77,9 @@ const SongDetailsPage: React.FC = () => {
   const pianoSoundsRef = useRef<{[key: string]: HTMLAudioElement}>({});
   const currentBeatRef = useRef(0);
   const metronomeEnabledRef = useRef(metronomeEnabled);
-  
   useEffect(() => {
     metronomeEnabledRef.current = metronomeEnabled;
   }, [metronomeEnabled]);
-
   useEffect(() => {
     const fetchSong = async () => {
       if (!songId) return;
@@ -187,23 +185,17 @@ const SongDetailsPage: React.FC = () => {
   }, [isPlaying, song]);
   useEffect(() => {
     if (song && pianoSoundEnabled) {
-      // Only play chord sound when manually changing chords or during playback,
-      // not during initial load
       if (!isFirstRenderRef.current) {
         playChordSound(song.chords[currentChordIndex]);
       }
     }
   }, [currentChordIndex, song]);
-
-  // To handle clicks on chord boxes which should play sounds
   const handleChordSelect = (index: number) => {
     setCurrentChordIndex(index);
-    // Only play sound if piano is enabled and we're not in the initial load
     if (song && pianoSoundEnabled && !isFirstRenderRef.current) {
       playChordSound(song.chords[index]);
     }
   };
-
   const handlePlayPause = () => {
     if (!isPlaying && song) {
       setBeatCount(0);
