@@ -25,6 +25,7 @@ import {
 } from "react-icons/fa";
 import Header from "../components/Header";
 import Swal from "sweetalert2";
+
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("songs");
   const { currentUser, logout } = useAuth();
@@ -32,6 +33,7 @@ const ProfilePage: React.FC = () => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (currentUser) {
@@ -41,86 +43,162 @@ const ProfilePage: React.FC = () => {
             getUserSongs(currentUser.uid)
           ]);
           setProfileData(profile);
-          setSongs(userSongs);
+          setSongs(userSongs || []);
         } catch (error) {
           console.error("Error fetching user data:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    fetchUserData();
-  }, [currentUser]);
-  const handleLogout = () => {
-    Swal.fire({
-      title: "Are you sure you want to log out?",
-      text: "You will be redirected to the login page.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "var(--accent-green)",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Yes, log out",
-      cancelButtonText: "Cancel",
-      background: "var(--background-darker)",
-      color: "var(--text-secondary)",
-      titleColor: "var(--accent-green)",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await logout();
-          navigate("/login");
-        } catch (error) {
-          console.error("Error logging out:", error);
-          Swal.fire("Error", "There was a problem logging out.", "error");
-        }
-      }
-    });
-  };
-  const handleDeleteAccount = () => {
-    Swal.fire({
-      title: "Delete Account?",
-      text: "This will permanently delete your account and all your songs. This action cannot be undone.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      cancelButtonColor: "var(--background-darker)",
-      confirmButtonText: "Delete",
-      cancelButtonText: "Cancel",
-      background: "var(--background-darker)",
-      color: "var(--text-secondary)",
-      titleColor: "#dc3545",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          setLoading(true);
-          if (currentUser) {
-            await deleteAllUserSongs(currentUser.uid);
-            await deleteUserProfile(currentUser.uid);
-            await currentUser.delete();
-            await logout();
-            navigate("/login");
-            Swal.fire({
-              title: "Account Deleted",
-              text: "Your account has been permanently deleted.",
-              icon: "success",
-              background: "var(--background-darker)",
-              color: "var(--text-secondary)",
-            });
-          }
-        } catch (error) {
-          console.error("Error deleting account:", error);
-          setLoading(false);
           Swal.fire({
             title: "Error",
-            text: "There was a problem deleting your account. You may need to re-login before deleting your account.",
+            text: "Failed to load profile data. Please try again later.",
             icon: "error",
             background: "var(--background-darker)",
             color: "var(--text-secondary)",
           });
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-    });
+    };
+    fetchUserData();
+  }, [currentUser]);
+
+  const handleLogout = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Are you sure you want to log out?",
+        text: "You will be redirected to the login page.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "var(--accent-green)",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, log out",
+        cancelButtonText: "Cancel",
+        background: "var(--background-darker)",
+        color: "var(--text-secondary)"
+      });
+      
+      if (result.isConfirmed) {
+        await logout();
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+      Swal.fire({
+        title: "Error",
+        text: "There was a problem logging out. Please try again.",
+        icon: "error",
+        background: "var(--background-darker)",
+        color: "var(--text-secondary)",
+      });
+    }
   };
+
+  const handleDeleteSong = async (songId: string) => {
+    try {
+      const result = await Swal.fire({
+        title: "Delete Song?",
+        text: "This will permanently delete this song. This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc3545",
+        cancelButtonColor: "var(--background-darker)",
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+        background: "var(--background-darker)",
+        color: "var(--text-secondary)"
+      });
+      
+      if (result.isConfirmed && currentUser) {
+        await deleteSongById(songId);
+        setSongs(songs.filter(song => song.id !== songId));
+        Swal.fire({
+          title: "Song Deleted",
+          icon: "success",
+          background: "var(--background-darker)",
+          color: "var(--text-secondary)",
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting song:", error);
+      Swal.fire({
+        title: "Error",
+        text: "There was a problem deleting the song. Please try again.",
+        icon: "error",
+        background: "var(--background-darker)",
+        color: "var(--text-secondary)",
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Delete Account?",
+        text: "This will permanently delete your account and all your songs. This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc3545",
+        cancelButtonColor: "var(--background-darker)",
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel",
+        background: "var(--background-darker)",
+        color: "var(--text-secondary)"
+      });
+      
+      if (result.isConfirmed) {
+        if (!currentUser) {
+          throw new Error("User not authenticated");
+        }
+        
+        setLoading(true);
+        // First delete all user songs
+        await deleteAllUserSongs(currentUser.uid);
+        // Then delete the user profile
+        await deleteUserProfile(currentUser.uid);
+        // Finally delete the authentication account
+        await currentUser.delete();
+        await logout();
+        
+        navigate("/login");
+        Swal.fire({
+          title: "Account Deleted",
+          text: "Your account has been permanently deleted.",
+          icon: "success",
+          background: "var(--background-darker)",
+          color: "var(--text-secondary)",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      setLoading(false);
+      
+      Swal.fire({
+        title: "Error",
+        text: "There was a problem deleting your account. You may need to re-login before deleting your account.",
+        icon: "error",
+        background: "var(--background-darker)",
+        color: "var(--text-secondary)",
+      });
+    }
+  };
+
+  const formatDate = (dateString: string | number | Date) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error("Invalid date:", dateString);
+      return "Invalid date";
+    }
+  };
+
   if (loading) {
     return (
       <div
@@ -137,14 +215,13 @@ const ProfilePage: React.FC = () => {
       </div>
     );
   }
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+
+  // If user is not logged in, redirect to login page
+  if (!currentUser) {
+    navigate("/login");
+    return null;
+  }
+
   return (
     <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
       <Header/>
@@ -206,16 +283,8 @@ const ProfilePage: React.FC = () => {
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
             <div>
-              <span style={{ fontWeight: "bold" }}>{profileData?.stats?.tracks || 0}</span>
+              <span style={{ fontWeight: "bold" }}>{songs.length}</span>
               <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Tracks</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: "bold" }}>{profileData?.stats?.followers || 0}</span>
-              <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Followers</span>
-            </div>
-            <div>
-              <span style={{ fontWeight: "bold" }}>{profileData?.stats?.following || 0}</span>
-              <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Following</span>
             </div>
           </div>
         </div>
