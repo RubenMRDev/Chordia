@@ -4,6 +4,7 @@ export interface ChordType {
   keys: string[];
   selected: boolean;
 }
+
 export interface Song {
   id?: string;
   userId: string;
@@ -14,6 +15,7 @@ export interface Song {
   chords: ChordType[];
   createdAt: string;
 }
+
 export const createSong = async (song: Omit<Song, "id">): Promise<string> => {
   try {
     const docRef = await addDoc(collection(db, "songs"), song);
@@ -23,6 +25,7 @@ export const createSong = async (song: Omit<Song, "id">): Promise<string> => {
     throw error;
   }
 };
+
 export const getUserSongs = async (userId: string): Promise<Song[]> => {
   try {
     const q = query(
@@ -32,7 +35,8 @@ export const getUserSongs = async (userId: string): Promise<Song[]> => {
     const querySnapshot = await getDocs(q);
     const songs: Song[] = [];
     querySnapshot.forEach((doc) => {
-      songs.push({ id: doc.id, ...doc.data() } as Song);
+      const data = doc.data() as Omit<Song, 'id'>;
+      songs.push({ id: doc.id, ...data });
     });
     return songs.sort((a, b) => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -42,11 +46,13 @@ export const getUserSongs = async (userId: string): Promise<Song[]> => {
     throw error;
   }
 };
+
 export const getSongById = async (songId: string): Promise<Song | null> => {
   try {
     const songDoc = await getDoc(doc(db, "songs", songId));
     if (songDoc.exists()) {
-      return { id: songDoc.id, ...songDoc.data() } as Song;
+      const data = songDoc.data() as Omit<Song, 'id'>;
+      return { id: songDoc.id, ...data };
     } else {
       return null;
     }
@@ -55,6 +61,7 @@ export const getSongById = async (songId: string): Promise<Song | null> => {
     throw error;
   }
 };
+
 export const deleteSongById = async (songId: string): Promise<void> => {
   try {
     await deleteDoc(doc(db, "songs", songId));
@@ -63,6 +70,7 @@ export const deleteSongById = async (songId: string): Promise<void> => {
     throw error;
   }
 };
+
 export const getAllSongs = async (): Promise<Song[]> => {
   try {
     const q = query(
@@ -72,7 +80,8 @@ export const getAllSongs = async (): Promise<Song[]> => {
     const querySnapshot = await getDocs(q);
     const songs: Song[] = [];
     querySnapshot.forEach((doc) => {
-      songs.push({ id: doc.id, ...doc.data() } as Song);
+      const data = doc.data() as Omit<Song, 'id'>;
+      songs.push({ id: doc.id, ...data });
     });
     return songs;
   } catch (error) {
@@ -80,11 +89,17 @@ export const getAllSongs = async (): Promise<Song[]> => {
     throw error;
   }
 };
+
 export const deleteAllUserSongs = async (userId: string): Promise<void> => {
   try {
     const songsRef = collection(db, 'songs');
     const q = query(songsRef, where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return;
+    }
+
     const batch = writeBatch(db);
     querySnapshot.forEach((doc) => {
       batch.delete(doc.ref);

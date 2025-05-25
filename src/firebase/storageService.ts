@@ -30,6 +30,10 @@ export const uploadSongCover = async (songId: string, file: File): Promise<strin
     throw new Error("User not authenticated");
   }
 
+  if (!songId) {
+    throw new Error("Song ID is required");
+  }
+
   const userId = auth.currentUser.uid;
   const storageRef = ref(storage, `songs/${userId}/${songId}/cover`);
 
