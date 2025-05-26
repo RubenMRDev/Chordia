@@ -1,8 +1,9 @@
-export default {
+// jest.config.js
+module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'js'],
-  testMatch: ['**/__tests__/**/*.test.ts'],
+  moduleFileExtensions: ['ts', 'tsx', 'js'],
+  testMatch: ['**/__tests__/**/*.test.{ts,tsx}', '**/components/**/*.test.{ts,tsx}'],
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'

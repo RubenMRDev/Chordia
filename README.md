@@ -134,6 +134,45 @@ chordia-landing/
 - **Collaborative Editing**: Allow multiple users to work on compositions simultaneously
 - **Audio Export**: Enable exporting compositions as MIDI or audio files
 
+<h1>🧪 Testing</h1>
+
+Chordia includes comprehensive test suites for both frontend and backend components to ensure reliability and stability.
+
+### Running Tests
+
+To run all tests, use the following command:
+
+```bash
+npm test
+# or
+yarn test
+```
+
+### Test Structure
+
+```
+chordia-landing/
+├── src/              
+│   ├── __tests__/     # Frontend component tests
+│   │   ├── components/   # Component-specific tests
+│   │   ├── pages/        # Page-specific tests
+│   │   └── utils/        # Utility function tests
+│   │
+│   ├── firebase/      
+│       └── __tests__/    # Backend/Firebase service tests
+```
+
+### Test Coverage
+
+<table align="center">
+  <tr>
+    <th style="text-align:center; font-size:20px;">Test Results</th>
+  </tr>
+  <tr>
+    <td><img src="https://res.cloudinary.com/doy4x4chv/image/upload/v1748262462/dfbf276d-cb40-4d34-bb79-dfc30257db78.png" alt="Chordia Test Results" width="600"></td>
+  </tr>
+</table>
+
 <h1>📜 License</h1>
 
 This project is licensed under the MIT License - see the LICENSE file for details.

@@ -1,8 +1,11 @@
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 import type { DocumentSnapshot, QueryDocumentSnapshot, DocumentData } from '@firebase/firestore';
+import { TextEncoder, TextDecoder } from 'util';
 
 // Silence console.error during tests
+global.TextEncoder = TextEncoder as any;
+global.TextDecoder = TextDecoder as any;
 beforeAll(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -10,6 +13,7 @@ beforeAll(() => {
 afterAll(() => {
   jest.restoreAllMocks();
 });
+
 import type { 
   MockDocumentReference, 
   MockDocumentSnapshot, 
@@ -18,8 +22,8 @@ import type {
   MockFirestore,
   MockWriteBatch,
   MockStorageReference,
-  FirestoreMock,
-  MockFunction
+  FirestoreMocks,
+  JestMockFn
 } from './types/firebase-jest';
 
 // Mock refs and snapshots
@@ -121,18 +125,18 @@ jest.mock('firebase/auth', () => ({
   signOut: jest.fn()
 }));
 
-const collection = jest.fn().mockReturnValue(mockCollectionRef) as unknown as MockFunction<[string], MockCollectionReference>;
-const doc = jest.fn().mockReturnValue(mockDocRef) as unknown as MockFunction<[MockCollectionReference, string], MockDocumentReference>;
-const addDoc = jest.fn().mockImplementation(() => Promise.resolve(mockDocRef)) as unknown as MockFunction<[MockCollectionReference, DocumentData], Promise<MockDocumentReference>>;
-const setDoc = jest.fn().mockImplementation(() => Promise.resolve()) as unknown as MockFunction<[MockDocumentReference, DocumentData], Promise<void>>;
-const getDoc = jest.fn().mockImplementation(() => Promise.resolve(mockDocumentSnapshot)) as unknown as MockFunction<[MockDocumentReference], Promise<MockDocumentSnapshot>>;
-const getDocs = jest.fn().mockImplementation(() => Promise.resolve(mockQuerySnapshot)) as unknown as MockFunction<[MockCollectionReference], Promise<MockQuerySnapshot>>;
-const updateDoc = jest.fn().mockImplementation(() => Promise.resolve()) as unknown as MockFunction<[MockDocumentReference, Partial<DocumentData>], Promise<void>>;
-const deleteDoc = jest.fn().mockImplementation(() => Promise.resolve()) as unknown as MockFunction<[MockDocumentReference], Promise<void>>;
-const writeBatch = jest.fn().mockReturnValue(mockBatch) as unknown as MockFunction<[], MockWriteBatch>;
-const query = jest.fn().mockReturnValue(mockCollectionRef) as unknown as MockFunction;
-const where = jest.fn().mockReturnValue({}) as unknown as MockFunction;
-const orderBy = jest.fn().mockReturnValue({}) as unknown as MockFunction;
+const collection = jest.fn().mockReturnValue(mockCollectionRef) as unknown as JestMockFn<[string], MockCollectionReference>;
+const doc = jest.fn().mockReturnValue(mockDocRef) as unknown as JestMockFn<[MockCollectionReference, string], MockDocumentReference>;
+const addDoc = jest.fn().mockImplementation(() => Promise.resolve(mockDocRef)) as unknown as JestMockFn<[MockCollectionReference, DocumentData], Promise<MockDocumentReference>>;
+const setDoc = jest.fn().mockImplementation(() => Promise.resolve()) as unknown as JestMockFn<[MockDocumentReference, DocumentData], Promise<void>>;
+const getDoc = jest.fn().mockImplementation(() => Promise.resolve(mockDocumentSnapshot)) as unknown as JestMockFn<[MockDocumentReference], Promise<MockDocumentSnapshot>>;
+const getDocs = jest.fn().mockImplementation(() => Promise.resolve(mockQuerySnapshot)) as unknown as JestMockFn<[MockCollectionReference], Promise<MockQuerySnapshot>>;
+const updateDoc = jest.fn().mockImplementation(() => Promise.resolve()) as unknown as JestMockFn<[MockDocumentReference, Partial<DocumentData>], Promise<void>>;
+const deleteDoc = jest.fn().mockImplementation(() => Promise.resolve()) as unknown as JestMockFn<[MockDocumentReference], Promise<void>>;
+const writeBatch = jest.fn().mockReturnValue(mockBatch) as unknown as JestMockFn<[], MockWriteBatch>;
+const query = jest.fn().mockReturnValue(mockCollectionRef) as unknown as JestMockFn;
+const where = jest.fn().mockReturnValue({}) as unknown as JestMockFn;
+const orderBy = jest.fn().mockReturnValue({}) as unknown as JestMockFn;
 
 const firestoreMocks = {
   collection,
