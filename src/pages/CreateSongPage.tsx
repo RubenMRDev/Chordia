@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import Header from "../components/Header"
 import { useAuth } from "../context/AuthContext"
-import { createSong } from "../firebase/songService"
+import { createSong } from '../api/songApi'
 import Swal from 'sweetalert2'
 interface ChordType {
   keys: string[] 

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward } from 'react-icons/fa';
 import Header from '../components/Header';
-import { getSongById, type Song, type ChordType } from '../firebase/songService';
+import { getSongById } from '../api/songApi';
+import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {

@@ -22,3 +22,36 @@ declare module 'firebase/storage' {
   export function uploadBytes(ref: any, file: File): Promise<UploadResult>;
   export function getDownloadURL(ref: any): Promise<string>;
 }
+
+export interface ChordType {
+  keys: string[];
+  selected: boolean;
+}
+
+export interface Song {
+  id?: string;
+  userId: string;
+  title: string;
+  tempo: number;
+  key: string;
+  timeSignature: string;
+  chords: ChordType[];
+  createdAt: string;
+}
+
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  joinDate: string;
+  socialLinks?: {
+    instagram?: string;
+    twitter?: string;
+    soundcloud?: string;
+    spotify?: string;
+  };
+}

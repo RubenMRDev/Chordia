@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import { FaMusic, FaPlay, FaUser, FaRandom, FaClock } from 'react-icons/fa';
-import { getAllSongs } from '../firebase/songService';
+import { getAllSongs } from '../api/songApi';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
