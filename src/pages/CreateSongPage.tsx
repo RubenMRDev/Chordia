@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext"
 import { createSong } from '../api/songApi'
 import Swal from 'sweetalert2'
 import { usePiano } from '../hooks/usePiano'
+import AIChordGenerator from '../components/AIChordGenerator'
 
 interface ChordType {
   keys: string[] 
@@ -105,6 +106,7 @@ export default function CreateSongPage() {
   const [selectedKeyType, setSelectedKeyType] = useState<"major" | "minor">("major");
   const [selectedCircleKey, setSelectedCircleKey] = useState<string>("C");
   const [selectedCircleChords, setSelectedCircleChords] = useState<string[]>([]);
+  const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState<boolean>(false);
   
   // Piano hook
   const { isReady: pianoReady, playNote: playPianoNote } = usePiano();
@@ -573,6 +575,10 @@ export default function CreateSongPage() {
     );
   };
 
+  const handleAIGeneratedChords = (chords: ChordType[]) => {
+    setChordProgression(prev => [...prev, ...chords]);
+  };
+
   // Generar notas para el piano
   const whiteKeysWithOctaves = generateNotesWithOctaves(octave);
   const blackKeysWithOctaves = generateBlackKeysWithOctaves(octave);
@@ -671,27 +677,35 @@ export default function CreateSongPage() {
             <span className="text-emerald-500 text-base font-medium">
               Select Chords
             </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsAdvancedMode(false)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  !isAdvancedMode 
-                    ? "bg-emerald-500 text-white" 
-                    : "bg-gray-600 text-gray-300 hover:bg-gray-500"
-                }`}
-              >
-                Simple
-              </button>
-              <button
-                onClick={() => setIsAdvancedMode(true)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  isAdvancedMode 
-                    ? "bg-emerald-500 text-white" 
-                    : "bg-gray-600 text-gray-300 hover:bg-gray-500"
-                }`}
-              >
-                Advanced
-              </button>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+              <div className="flex flex-row gap-2 flex-1">
+                <button
+                  onClick={() => setIsAdvancedMode(false)}
+                  className={`flex-1 px-3 py-1 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${
+                    !isAdvancedMode 
+                      ? "bg-emerald-500 text-white" 
+                      : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                  }`}
+                >
+                  Simple
+                </button>
+                <button
+                  onClick={() => setIsAdvancedMode(true)}
+                  className={`flex-1 px-3 py-1 rounded-md text-sm font-semibold transition-colors whitespace-nowrap ${
+                    isAdvancedMode 
+                      ? "bg-emerald-500 text-white" 
+                      : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                  }`}
+                >
+                  Advanced
+                </button>
+                <button
+                  onClick={() => setIsAIGeneratorOpen(true)}
+                  className="flex-1 px-3 py-1 rounded-md text-sm font-semibold transition-colors bg-cyan-500 hover:bg-cyan-600 text-white whitespace-nowrap"
+                >
+                  IA Generate
+                </button>
+              </div>
             </div>
           </div>
           
@@ -1026,6 +1040,13 @@ export default function CreateSongPage() {
         </button>
       </div>
     </div>
+
+    {/* AI Chord Generator Modal */}
+    <AIChordGenerator
+      isOpen={isAIGeneratorOpen}
+      onClose={() => setIsAIGeneratorOpen(false)}
+      onChordsGenerated={handleAIGeneratedChords}
+    />
     </>
   )
 }
