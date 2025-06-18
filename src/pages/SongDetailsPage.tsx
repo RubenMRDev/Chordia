@@ -276,11 +276,23 @@ const SongDetailsPage: React.FC = () => {
   };
 
   const playChordSound = useCallback(async (chord: ChordType) => {
-    if (!pianoSoundEnabled || !pianoReady) return;
+    console.log('playChordSound called with:', { chord, pianoSoundEnabled, pianoReady });
+    if (!pianoSoundEnabled || !pianoReady) {
+      console.log('Piano not ready:', { pianoSoundEnabled, pianoReady });
+      return;
+    }
     try {
-      // Usa la nota completa con octava
-      const notes = chord.keys;
-      await playPianoChord(notes, "4n", 0.6);
+      // Extrae solo los nombres de las notas sin octava
+      const noteNames = chord.keys.map(key => {
+        // Extrae el nombre de la nota sin octava (e.g., "C4" -> "C", "F#5" -> "F#")
+        return key.replace(/\d/g, '');
+      });
+      
+      console.log('Playing chord:', chord.keys, '-> Notes for piano:', noteNames);
+      
+      // Reproduce el acorde con las notas simples - el pianoService se encargará de las octavas
+      await playPianoChord(noteNames, "4n", 0.6);
+      console.log('Chord played successfully');
     } catch (error) {
       console.error('Error playing chord sound:', error);
     }
@@ -300,6 +312,10 @@ const SongDetailsPage: React.FC = () => {
       setBeatCount(0);
       currentBeatRef.current = 0;
       isFirstRenderRef.current = false;
+      // Play the first chord immediately when starting playback
+      if (pianoSoundEnabled && pianoReady) {
+        playChordSound(song.chords[0]);
+      }
     }
     const tick = (timestamp: number) => {
       if (!lastTickTimeRef.current) {
@@ -338,17 +354,17 @@ const SongDetailsPage: React.FC = () => {
       isFirstRenderRef.current = true;
       // Don't stop piano sounds here - let the play/pause handler manage that
     };
-  }, [isPlaying, song, pianoSoundEnabled, playChordSound]);
+  }, [isPlaying, song, pianoSoundEnabled, playChordSound, pianoReady]);
 
   useEffect(() => {
-    if (song && pianoSoundEnabled && !isFirstRenderRef.current) {
+    if (song && pianoSoundEnabled && pianoReady && !isFirstRenderRef.current && isPlaying) {
       playChordSound(song.chords[currentChordIndex]);
     }
-  }, [currentChordIndex, song, pianoSoundEnabled, playChordSound]);
+  }, [currentChordIndex, song, pianoSoundEnabled, playChordSound, pianoReady, isPlaying]);
 
   const handleChordSelect = (index: number) => {
     setCurrentChordIndex(index);
-    if (song && pianoSoundEnabled && !isFirstRenderRef.current) {
+    if (song && pianoSoundEnabled && pianoReady) {
       playChordSound(song.chords[index]);
     }
   };
@@ -357,7 +373,10 @@ const SongDetailsPage: React.FC = () => {
     if (!isPlaying && song) {
       setBeatCount(0);
       lastTickTimeRef.current = null;
-      // Don't stop sounds when starting playback
+      // Play the current chord immediately when starting playback
+      if (pianoSoundEnabled && pianoReady) {
+        playChordSound(song.chords[currentChordIndex]);
+      }
     } else {
       // Stop all piano sounds when pausing
       stopAllPianoSounds();
@@ -371,6 +390,11 @@ const SongDetailsPage: React.FC = () => {
       const nextIndex = prev + 1;
       return nextIndex >= song.chords.length ? 0 : nextIndex;
     });
+    // Play the next chord sound
+    if (pianoSoundEnabled && pianoReady) {
+      const nextIndex = (currentChordIndex + 1) % song.chords.length;
+      playChordSound(song.chords[nextIndex]);
+    }
   };
 
   const handlePrevChord = () => {
@@ -379,6 +403,11 @@ const SongDetailsPage: React.FC = () => {
       const nextIndex = prev - 1;
       return nextIndex < 0 ? song.chords.length - 1 : nextIndex;
     });
+    // Play the previous chord sound
+    if (pianoSoundEnabled && pianoReady) {
+      const prevIndex = currentChordIndex - 1 < 0 ? song.chords.length - 1 : currentChordIndex - 1;
+      playChordSound(song.chords[prevIndex]);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -873,6 +902,11 @@ const SongDetailsPage: React.FC = () => {
       stopAllPianoSounds();
     }
   }, [isPlayYourselfMode, isDemoMode, isPlaying, stopAllPianoSounds]);
+
+  // Debug piano state
+  useEffect(() => {
+    console.log('Piano state changed:', { pianoReady, pianoSoundEnabled });
+  }, [pianoReady, pianoSoundEnabled]);
 
   return (
     <div className="bg-[#0a101b] min-h-screen text-white">
