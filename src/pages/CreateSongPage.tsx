@@ -112,10 +112,34 @@ export default function CreateSongPage() {
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
   const hasBlackKeyAfter = [true, true, false, true, true, true, false]
 
+  // Función para generar notas con octavas correctas
+  const generateNotesWithOctaves = (octaveCount: number): string[] => {
+    const notes: string[] = [];
+    for (let oct = 4; oct < 4 + octaveCount; oct++) {
+      whiteKeys.forEach(note => {
+        notes.push(`${note}${oct}`);
+      });
+    }
+    return notes;
+  };
+
+  // Función para generar teclas negras con octavas correctas
+  const generateBlackKeysWithOctaves = (octaveCount: number): string[] => {
+    const blackKeys = ["C#", "D#", "F#", "G#", "A#"];
+    const notes: string[] = [];
+    for (let oct = 4; oct < 4 + octaveCount; oct++) {
+      blackKeys.forEach(note => {
+        notes.push(`${note}${oct}`);
+      });
+    }
+    return notes;
+  };
+
   const handleOctaveChange = (newOctave: number) => {
     setOctave(newOctave)
   }
-  const handleKeyClick = async (note: string, index: number) => {
+  
+  const handleKeyClick = async (note: string) => {
     // Play piano sound when key is clicked
     if (pianoReady) {
       try {
@@ -126,14 +150,14 @@ export default function CreateSongPage() {
     }
     
     setSelectedKeys(prev => {
-      const noteWithIndex = `${note}-${index}`;
-      if (prev.includes(noteWithIndex)) {
-        return prev.filter(key => key !== noteWithIndex);
+      if (prev.includes(note)) {
+        return prev.filter(key => key !== note);
       } else {
-        return [...prev, noteWithIndex];
+        return [...prev, note];
       }
     });
   };
+  
   const handleSaveChord = () => {
     if (selectedKeys.length > 0) {
       if (editingChordIndex !== null) {
@@ -150,17 +174,21 @@ export default function CreateSongPage() {
       setSelectedKeys([]);
     }
   }
+  
   const handleEditChord = (index: number) => {
     setEditingChordIndex(index);
     setSelectedKeys(chordProgression[index].keys);
   }
+  
   const handleDeleteChord = (index: number) => {
     setChordProgression(prev => prev.filter((_, i) => i !== index));
   }
+  
   const handleCancelEdit = () => {
     setEditingChordIndex(null);
     setSelectedKeys([]);
   }
+  
   const handleSaveSong = async () => {
     if (!songTitle.trim()) {
       Swal.fire({
@@ -232,38 +260,123 @@ export default function CreateSongPage() {
       setIsSaving(false);
     }
   };
-  const MiniPiano = ({ chord }: { chord: ChordType }) => {
-    const chordNotes = chord.keys.map(k => k.split('-')[0]);
-    return (
-      <div className="relative h-10 w-full">
-        <div className="flex h-full w-full">
-          {whiteKeys.map((note, idx) => (
-            <div
-              key={`mini-white-${idx}`}
-              className={`flex-1 h-full ${chordNotes.includes(note) ? "bg-emerald-500" : "bg-white"} border border-gray-600 rounded-b-sm relative z-10`}
-            />
-          ))}
-        </div>
-        <div className="absolute top-0 left-0 right-0 h-3/5">
+  
+  const MiniPiano = ({ chord, pianoClassName = '' }: { chord: ChordType, pianoClassName?: string }) => {
+    // Detectar si el acorde tiene notas de 2 octavas
+    const octaves = [...new Set(chord.keys.map(k => k.slice(-1)))].sort();
+    const hasTwoOctaves = octaves.length > 1;
+    
+    // Separar notas por octava
+    const notesByOctave: { [key: string]: string[] } = {};
+    chord.keys.forEach(note => {
+      const octave = note.slice(-1);
+      const noteName = note.replace(/\d/g, '');
+      if (!notesByOctave[octave]) {
+        notesByOctave[octave] = [];
+      }
+      notesByOctave[octave].push(noteName);
+    });
+
+    // Estilos comunes
+    const pianoBg = "bg-[#232e3a]";
+    const whiteKeyBase = "border border-gray-700 h-full transition-colors duration-150";
+    const whiteKeySelected = "bg-emerald-500 shadow-[0_2px_8px_#10b98155] border-emerald-600";
+    const whiteKeyUnselected = "bg-white hover:bg-gray-200";
+    const blackKeyBase = "absolute top-0 rounded-b-md border-x border-gray-800 z-20 transition-colors duration-150";
+    const blackKeySelected = "bg-emerald-500 shadow-[0_2px_8px_#10b98155] border-emerald-600";
+    const blackKeyUnselected = "bg-black";
+    const pianoShadow = "rounded-lg shadow-lg";
+
+    // Para 2 octavas: 14 teclas blancas, 10 negras
+    const whiteKeys2Oct = [
+      ...whiteKeys.map(n => n + '4'),
+      ...whiteKeys.map(n => n + '5')
+    ];
+    // Índices de teclas blancas donde va cada negra (centrada entre dos blancas)
+    const blackKeys2Oct = [
+      { note: 'C#4', idx: 0 }, { note: 'D#4', idx: 1 },
+      { note: 'F#4', idx: 3 }, { note: 'G#4', idx: 4 }, { note: 'A#4', idx: 5 },
+      { note: 'C#5', idx: 7 }, { note: 'D#5', idx: 8 },
+      { note: 'F#5', idx: 10 }, { note: 'G#5', idx: 11 }, { note: 'A#5', idx: 12 }
+    ];
+
+    const renderSingleOctave = (octaveNotes: string[], octaveLabel?: string) => (
+      <div className={`relative w-full h-12 md:h-10 flex flex-col items-center ${pianoShadow} ${pianoBg} py-1 px-2 ${pianoClassName}`}>
+        {octaveLabel && (
+          <div className="text-center mb-1">
+            <span className="text-emerald-400 text-xs font-medium">{octaveLabel}</span>
+          </div>
+        )}
+        <div className="relative w-full h-full">
+          <div className="grid grid-cols-7 w-full h-full">
+            {whiteKeys.map((note, idx) => (
+              <div
+                key={`mini-white-${idx}`}
+                className={`${whiteKeyBase} ${octaveNotes.includes(note) ? whiteKeySelected : whiteKeyUnselected} rounded-b-md relative z-10`}
+                style={{ minWidth: 0 }}
+              />
+            ))}
+          </div>
+          {/* Teclas negras */}
           {whiteKeys.map((_, idx) => {
             if (!hasBlackKeyAfter[idx]) return null;
             const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
             const blackKeyIdx = [0, 1, 3, 4, 5].indexOf(idx);
             if (blackKeyIdx === -1) return null;
             const blackNote = blackKeyNames[blackKeyIdx];
-            const isSelected = chordNotes.includes(blackNote);
-            const position = (idx + 1) / whiteKeys.length;
+            const isSelected = octaveNotes.includes(blackNote);
+            // Posición relativa al grid de 7 columnas
+            const left = ((idx + 1) / 7) * 100;
             return (
               <div
                 key={`mini-black-${idx}`}
-                className={`absolute h-full ${isSelected ? "bg-emerald-500" : "bg-black"} z-20 w-4/25 rounded-b-sm border-x border-gray-600 box-border`}
-                style={{ left: `calc(${position * 100}% - 9%)` }}
+                className={`${blackKeyBase} ${isSelected ? blackKeySelected : blackKeyUnselected}`}
+                style={{ left: `calc(${left}% - 7%)`, width: '12%', height: '65%' }}
               />
             );
           })}
         </div>
       </div>
     );
+
+    const renderTwoOctaves = () => {
+      // Notas seleccionadas por nombre y octava
+      const selectedNotes = chord.keys;
+      return (
+        <div className={`relative w-full h-12 md:h-10 flex flex-col items-center ${pianoShadow} ${pianoBg} py-1 px-2 ${pianoClassName}`}>
+          <div className="relative w-full h-full">
+            <div className="grid grid-cols-14 w-full h-full">
+              {whiteKeys2Oct.map((note, idx) => {
+                const isSelected = selectedNotes.includes(note);
+                return (
+                  <div
+                    key={`mini-white2oct-${idx}`}
+                    className={`${whiteKeyBase} ${isSelected ? whiteKeySelected : whiteKeyUnselected} rounded-b-md relative z-10`}
+                    style={{ minWidth: 0 }}
+                  />
+                );
+              })}
+            </div>
+            {/* 10 teclas negras */}
+            {blackKeys2Oct.map((b, idx) => {
+              const isSelected = selectedNotes.includes(b.note);
+              // Centrar la tecla negra entre dos teclas blancas
+              const left = `calc(${((b.idx + 1) / 14) * 100}% - 3.5%)`;
+              return (
+                <div
+                  key={`mini-black2oct-${idx}`}
+                  className={`${blackKeyBase} ${isSelected ? blackKeySelected : blackKeyUnselected}`}
+                  style={{ left, width: '7%', height: '55%' }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    // Si tiene 2 octavas, mostrar una fila de 14 teclas blancas, sino mostrar 1 octava
+    return hasTwoOctaves ? renderTwoOctaves() : renderSingleOctave(chord.keys.map(k => k.replace(/\d/g, '')));
   };
 
   const handleCircleChordSelect = (chord: string) => {
@@ -279,37 +392,37 @@ export default function CreateSongPage() {
   const handleAddCircleChords = () => {
     if (selectedCircleChords.length > 0) {
       const newChords: ChordType[] = selectedCircleChords.map(chord => {
-        // Convert chord names to piano keys (simplified mapping)
+        // Convert chord names to piano keys with correct octaves
         const chordToKeys: { [key: string]: string[] } = {
-          "C": ["C-0", "E-2", "G-4"],
-          "F": ["F-3", "A-5", "C-0"],
-          "G": ["G-4", "B-6", "D-1"],
-          "D": ["D-1", "F#-3", "A-5"],
-          "A": ["A-5", "C#-0", "E-2"],
-          "E": ["E-2", "G#-4", "B-6"],
-          "B": ["B-6", "D#-1", "F#-3"],
-          "F#": ["F#-3", "A#-5", "C#-0"],
-          "C#": ["C#-0", "E#-2", "G#-4"],
-          "Bb": ["Bb-5", "D-1", "F-3"],
-          "Eb": ["Eb-2", "G-4", "Bb-5"],
-          "Ab": ["Ab-4", "C-0", "Eb-2"],
-          "Db": ["Db-1", "F-3", "Ab-4"],
-          "Am": ["A-5", "C-0", "E-2"],
-          "Dm": ["D-1", "F-3", "A-5"],
-          "Em": ["E-2", "G-4", "B-6"],
-          "Bm": ["B-6", "D-1", "F#-3"],
-          "F#m": ["F#-3", "A-5", "C#-0"],
-          "C#m": ["C#-0", "E-2", "G#-4"],
-          "G#m": ["G#-4", "B-6", "D#-1"],
-          "Gm": ["G-4", "Bb-5", "D-1"],
-          "Cm": ["C-0", "Eb-2", "G-4"],
-          "Fm": ["F-3", "Ab-4", "C-0"],
-          "Bbm": ["Bb-5", "Db-1", "F-3"],
-          "Ebm": ["Eb-2", "Gb-4", "Bb-5"]
+          "C": ["C4", "E4", "G4"],
+          "F": ["F4", "A4", "C5"],
+          "G": ["G4", "B4", "D5"],
+          "D": ["D4", "F#4", "A4"],
+          "A": ["A4", "C#5", "E5"],
+          "E": ["E4", "G#4", "B4"],
+          "B": ["B4", "D#5", "F#5"],
+          "F#": ["F#4", "A#4", "C#5"],
+          "C#": ["C#4", "E#4", "G#4"],
+          "Bb": ["Bb4", "D5", "F5"],
+          "Eb": ["Eb4", "G4", "Bb4"],
+          "Ab": ["Ab4", "C5", "Eb5"],
+          "Db": ["Db4", "F4", "Ab4"],
+          "Am": ["A4", "C5", "E5"],
+          "Dm": ["D4", "F4", "A4"],
+          "Em": ["E4", "G4", "B4"],
+          "Bm": ["B4", "D5", "F#5"],
+          "F#m": ["F#4", "A4", "C#5"],
+          "C#m": ["C#4", "E4", "G#4"],
+          "G#m": ["G#4", "B4", "D#5"],
+          "Gm": ["G4", "Bb4", "D5"],
+          "Cm": ["C4", "Eb4", "G4"],
+          "Fm": ["F4", "Ab4", "C5"],
+          "Bbm": ["Bb4", "Db5", "F5"],
+          "Ebm": ["Eb4", "Gb4", "Bb4"]
         };
         
         return {
-          keys: chordToKeys[chord] || ["C-0", "E-2", "G-4"], // Default to C major if not found
+          keys: chordToKeys[chord] || ["C4", "E4", "G4"], // Default to C major if not found
           selected: true
         };
       });
@@ -332,39 +445,39 @@ export default function CreateSongPage() {
     // Estado para acorde seleccionado
     const [selectedCircleChord, setSelectedCircleChord] = useState<string | null>(null);
 
-    // Mapeo de acordes a teclas (igual que antes, pero con más bemoles)
+    // Mapeo de acordes a teclas con octavas correctas
     const chordToKeys: { [key: string]: string[] } = {
-      "C": ["C-0", "E-2", "G-4"],
-      "G": ["G-4", "B-6", "D-1"],
-      "D": ["D-1", "F#-3", "A-5"],
-      "A": ["A-5", "C#-0", "E-2"],
-      "E": ["E-2", "G#-4", "B-6"],
-      "B": ["B-6", "D#-1", "F#-3"],
-      "F#": ["F#-3", "A#-5", "C#-0"],
-      "Db": ["Db-1", "F-3", "Ab-4"],
-      "Ab": ["Ab-4", "C-0", "Eb-2"],
-      "Eb": ["Eb-2", "G-4", "Bb-5"],
-      "Bb": ["Bb-5", "D-1", "F-3"],
-      "F": ["F-3", "A-5", "C-0"],
-      "Am": ["A-5", "C-0", "E-2"],
-      "Em": ["E-2", "G-4", "B-6"],
-      "Bm": ["B-6", "D-1", "F#-3"],
-      "F#m": ["F#-3", "A-5", "C#-0"],
-      "C#m": ["C#-0", "E-2", "G#-4"],
-      "G#m": ["G#-4", "B-6", "D#-1"],
-      "Ebm": ["Eb-2", "Gb-4", "Bb-5"],
-      "Bbm": ["Bb-5", "Db-1", "F-3"],
-      "Fm": ["F-3", "Ab-4", "C-0"],
-      "Cm": ["C-0", "Eb-2", "G-4"],
-      "Gm": ["G-4", "Bb-5", "D-1"],
-      "Dm": ["D-1", "F-3", "A-5"]
+      "C": ["C4", "E4", "G4"],
+      "G": ["G4", "B4", "D5"],
+      "D": ["D4", "F#4", "A4"],
+      "A": ["A4", "C#5", "E5"],
+      "E": ["E4", "G#4", "B4"],
+      "B": ["B4", "D#5", "F#5"],
+      "F#": ["F#4", "A#4", "C#5"],
+      "Db": ["Db4", "F4", "Ab4"],
+      "Ab": ["Ab4", "C5", "Eb5"],
+      "Eb": ["Eb4", "G4", "Bb4"],
+      "Bb": ["Bb4", "D5", "F5"],
+      "F": ["F4", "A4", "C5"],
+      "Am": ["A4", "C5", "E5"],
+      "Em": ["E4", "G4", "B4"],
+      "Bm": ["B4", "D5", "F#5"],
+      "F#m": ["F#4", "A4", "C#5"],
+      "C#m": ["C#4", "E4", "G#4"],
+      "G#m": ["G#4", "B4", "D#5"],
+      "Ebm": ["Eb4", "Gb4", "Bb4"],
+      "Bbm": ["Bb4", "Db5", "F5"],
+      "Fm": ["F4", "Ab4", "C5"],
+      "Cm": ["C4", "Eb4", "G4"],
+      "Gm": ["G4", "Bb4", "D5"],
+      "Dm": ["D4", "F4", "A4"]
     };
 
     const handleAddChord = () => {
       if (selectedCircleChord) {
         setChordProgression(prev => [
           ...prev,
-          { keys: chordToKeys[selectedCircleChord] || ["C-0", "E-2", "G-4"], selected: true }
+          { keys: chordToKeys[selectedCircleChord] || ["C4", "E4", "G4"], selected: true }
         ]);
         setSelectedCircleChord(null);
       }
@@ -459,6 +572,10 @@ export default function CreateSongPage() {
       </div>
     );
   };
+
+  // Generar notas para el piano
+  const whiteKeysWithOctaves = generateNotesWithOctaves(octave);
+  const blackKeysWithOctaves = generateBlackKeysWithOctaves(octave);
 
   return (
     <>
@@ -598,83 +715,89 @@ export default function CreateSongPage() {
               </div>
               <div className="flex flex-col justify-center my-5 overflow-hidden">
                 <div className="md:hidden flex flex-col gap-4">
+                  {/* Primera octava */}
+                  <div className="text-center mb-2">
+                    <span className="text-emerald-400 text-sm font-medium">Octave 4 (C4 - B4)</span>
+                  </div>
                   <div className="relative flex h-24 sm:h-28 mx-auto" style={{ width: `calc(100% - 20px)` }}>
-                    {whiteKeys.map((note, index) => {
-                      const noteWithIndex = `${note}-${index}`;
-                      const isSelected = selectedKeys.includes(noteWithIndex);
+                    {whiteKeysWithOctaves.slice(0, 7).map((note, index) => {
+                      const isSelected = selectedKeys.includes(note);
+                      const noteName = note.replace(/\d/g, '');
                       return (
                         <div
                           key={`white-${index}`}
-                          onClick={() => handleKeyClick(note, index)}
+                          onClick={() => handleKeyClick(note)}
                           className={`flex-1 h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
                         >
                           <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full text-[10px] sm:text-xs`}>
-                            {note}
+                            {noteName}
                           </div>
                         </div>
                       );
                     })}
-                    {whiteKeys.map((_, keyIndex) => {
+                    {whiteKeysWithOctaves.slice(0, 7).map((_, keyIndex) => {
                       if (!hasBlackKeyAfter[keyIndex]) return null;
                       const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
                       const blackKeyIndex = [0, 1, 3, 4, 5].indexOf(keyIndex);
-                      const note = blackKeyNames[blackKeyIndex];
-                      const noteWithIndex = `${note}-${keyIndex}`;  
-                      const isSelected = selectedKeys.includes(noteWithIndex);
+                      const note = blackKeyNames[blackKeyIndex] + "4";
+                      const isSelected = selectedKeys.includes(note);
                       return (
                         <div
                           key={`black-${keyIndex}`}
-                          onClick={() => handleKeyClick(note, keyIndex)}
+                          onClick={() => handleKeyClick(note)}
                           className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-emerald-500' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
                           style={{ left: `calc(${(keyIndex + 1) * 100 / 7}% - 4%)` }}
                         >
                           <div className="text-white text-center absolute bottom-1 w-full text-[8px] sm:text-[10px]">
-                            {note}
+                            {note.replace(/\d/g, '')}
                           </div>
                         </div>
                       );
                     })}
                   </div>
+                  {/* Segunda octava (si está seleccionada) */}
                   {octave === 2 && (
-                    <div className="relative flex h-24 sm:h-28 mx-auto" style={{ width: `calc(100% - 20px)` }}>
-                      {whiteKeys.map((note, index) => {
-                        const actualIndex = index + 7;
-                        const noteWithIndex = `${note}-${actualIndex}`;
-                        const isSelected = selectedKeys.includes(noteWithIndex);
-                        return (
-                          <div
-                            key={`white-${actualIndex}`}
-                            onClick={() => handleKeyClick(note, actualIndex)}
-                            className={`flex-1 h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
-                          >
-                            <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full text-[10px] sm:text-xs`}>
-                              {note}
+                    <>
+                      <div className="text-center mb-2">
+                        <span className="text-emerald-400 text-sm font-medium">Octave 5 (C5 - B5)</span>
+                      </div>
+                      <div className="relative flex h-24 sm:h-28 mx-auto" style={{ width: `calc(100% - 20px)` }}>
+                        {whiteKeysWithOctaves.slice(7, 14).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          return (
+                            <div
+                              key={`white-${index + 7}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`flex-1 h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                            >
+                              <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full text-[10px] sm:text-xs`}>
+                                {noteName}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                      {whiteKeys.map((_, keyIndex) => {
-                        if (!hasBlackKeyAfter[keyIndex]) return null;
-                        const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
-                        const blackKeyIndex = [0, 1, 3, 4, 5].indexOf(keyIndex);
-                        const note = blackKeyNames[blackKeyIndex];
-                        const actualIndex = keyIndex + 10;
-                        const noteWithIndex = `${note}-${actualIndex}`;
-                        const isSelected = selectedKeys.includes(noteWithIndex);
-                        return (
-                          <div
-                            key={`black-${actualIndex}`}
-                            onClick={() => handleKeyClick(note, actualIndex)}
-                            className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-emerald-500' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
-                            style={{ left: `calc(${(keyIndex + 1) * 100 / 7}% - 4%)` }}
-                          >
-                            <div className="text-white text-center absolute bottom-1 w-full text-[8px] sm:text-[10px]">
-                              {note}
+                          );
+                        })}
+                        {whiteKeysWithOctaves.slice(7, 14).map((_, keyIndex) => {
+                          if (!hasBlackKeyAfter[keyIndex]) return null;
+                          const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
+                          const blackKeyIndex = [0, 1, 3, 4, 5].indexOf(keyIndex);
+                          const note = blackKeyNames[blackKeyIndex] + "5";
+                          const isSelected = selectedKeys.includes(note);
+                          return (
+                            <div
+                              key={`black-${keyIndex + 7}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-emerald-500' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
+                              style={{ left: `calc(${(keyIndex + 1) * 100 / 7}% - 4%)` }}
+                            >
+                              <div className="text-white text-center absolute bottom-1 w-full text-[8px] sm:text-[10px]">
+                                {note.replace(/\d/g, '')}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                   <div className="flex justify-center mt-3">
                     <button
@@ -697,57 +820,138 @@ export default function CreateSongPage() {
                   </div>
                 </div>
                 <div className="hidden md:flex flex-col justify-center mx-auto overflow-x-auto md:overflow-visible">
-                  <div
-                    className="relative flex h-36"
-                    style={{ width: octave === 1 ? `${54 * 7}px` : `${54 * 7 * octave}px` }}
-                  >
-                    {Array(octave)
-                      .fill(whiteKeys)
-                      .flat()
-                      .map((note, index) => {
-                        const noteWithIndex = `${note}-${index}`;
-                        const isSelected = selectedKeys.includes(noteWithIndex);
-                        return (
-                          <div
-                            key={`white-${index}`}
-                            onClick={() => handleKeyClick(note, index)}
-                            className={`w-[54px] h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
-                          >
-                            <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full`}>
-                              {note}
+                  {octave === 1 ? (
+                    <>
+                      <div className="text-center mb-3">
+                        <span className="text-emerald-400 text-sm font-medium">Octave 4 (C4 - B4)</span>
+                      </div>
+                      <div className="relative flex h-36" style={{ width: `${54 * 7}px` }}>
+                        {/* Teclas blancas */}
+                        {whiteKeysWithOctaves.slice(0, 7).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          return (
+                            <div
+                              key={`white-${index}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`w-[54px] h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                            >
+                              <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full`}>
+                                {noteName}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    {Array(octave)
-                      .fill([...Array(7).keys()])
-                      .flat()
-                      .map((keyIndex, octaveIndex) => {
-                        const actualKeyIndex = keyIndex % 7;
-                        if (!hasBlackKeyAfter[actualKeyIndex]) {
-                          return null;
-                        }
-                        const octaveOffset = Math.floor(octaveIndex / 7);
-                        const position = (octaveIndex % 7) + (octaveOffset * 7);
-                        const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
-                        const blackKeyIndex = [0, 1, 3, 4, 5].indexOf(actualKeyIndex);
-                        const note = blackKeyNames[blackKeyIndex];
-                        const noteWithIndex = `${note}-${octaveOffset * 10 + actualKeyIndex}`;
-                        const isSelected = selectedKeys.includes(noteWithIndex);
-                        return (
-                          <div
-                            key={`black-${octaveIndex}`}
-                            onClick={() => handleKeyClick(note, octaveOffset * 10 + actualKeyIndex)}
-                            className={`w-8 h-[90px] ${isSelected ? 'bg-emerald-500' : 'bg-black'} absolute top-0 z-20 rounded-b-md cursor-pointer transition-colors`}
-                            style={{ left: `${position * 54 + 36}px` }}
-                          >
-                            <div className="text-white text-center absolute bottom-1 w-full text-xs">
-                              {note}
+                          );
+                        })}
+                        {/* Teclas negras */}
+                        {blackKeysWithOctaves.slice(0, 5).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          const blackKeyPositions = [0, 1, 3, 4, 5];
+                          const position = blackKeyPositions[index];
+                          
+                          return (
+                            <div
+                              key={`black-${index}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`w-8 h-[90px] ${isSelected ? 'bg-emerald-500' : 'bg-black'} absolute top-0 z-20 rounded-b-md cursor-pointer transition-colors`}
+                              style={{ left: `${position * 54 + 36}px` }}
+                            >
+                              <div className="text-white text-center absolute bottom-1 w-full text-xs">
+                                {noteName}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Primera octava */}
+                      <div className="text-center mb-3">
+                        <span className="text-emerald-400 text-sm font-medium">Octave 4 (C4 - B4)</span>
+                      </div>
+                      <div className="relative flex h-36 mb-4" style={{ width: `${54 * 7}px` }}>
+                        {/* Teclas blancas */}
+                        {whiteKeysWithOctaves.slice(0, 7).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          return (
+                            <div
+                              key={`white-${index}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`w-[54px] h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                            >
+                              <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full`}>
+                                {noteName}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {/* Teclas negras */}
+                        {blackKeysWithOctaves.slice(0, 5).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          const blackKeyPositions = [0, 1, 3, 4, 5];
+                          const position = blackKeyPositions[index];
+                          
+                          return (
+                            <div
+                              key={`black-${index}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`w-8 h-[90px] ${isSelected ? 'bg-emerald-500' : 'bg-black'} absolute top-0 z-20 rounded-b-md cursor-pointer transition-colors`}
+                              style={{ left: `${position * 54 + 36}px` }}
+                            >
+                              <div className="text-white text-center absolute bottom-1 w-full text-xs">
+                                {noteName}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Segunda octava */}
+                      <div className="text-center mb-3">
+                        <span className="text-emerald-400 text-sm font-medium">Octave 5 (C5 - B5)</span>
+                      </div>
+                      <div className="relative flex h-36" style={{ width: `${54 * 7}px` }}>
+                        {/* Teclas blancas */}
+                        {whiteKeysWithOctaves.slice(7, 14).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          return (
+                            <div
+                              key={`white-${index + 7}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`w-[54px] h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                            >
+                              <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full`}>
+                                {noteName}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {/* Teclas negras */}
+                        {blackKeysWithOctaves.slice(5, 10).map((note, index) => {
+                          const isSelected = selectedKeys.includes(note);
+                          const noteName = note.replace(/\d/g, '');
+                          const blackKeyPositions = [0, 1, 3, 4, 5];
+                          const position = blackKeyPositions[index];
+                          
+                          return (
+                            <div
+                              key={`black-${index + 5}`}
+                              onClick={() => handleKeyClick(note)}
+                              className={`w-8 h-[90px] ${isSelected ? 'bg-emerald-500' : 'bg-black'} absolute top-0 z-20 rounded-b-md cursor-pointer transition-colors`}
+                              style={{ left: `${position * 54 + 36}px` }}
+                            >
+                              <div className="text-white text-center absolute bottom-1 w-full text-xs">
+                                {noteName}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-center mt-4">
                     <button
                       onClick={handleSaveChord}
@@ -779,29 +983,35 @@ export default function CreateSongPage() {
             </span>
           </div>
           {chordProgression.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
-              {chordProgression.map((chord, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-700 rounded-md p-2 text-center"
-                >
-                  <MiniPiano chord={chord} />
-                  <div className="flex justify-between mt-2 gap-1.5">
-                    <button
-                      onClick={() => handleEditChord(index)}
-                      className="bg-emerald-500 text-white border-none rounded-md py-1 px-2 cursor-pointer flex-1 text-xs"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteChord(index)}
-                      className="bg-red-500 text-white border-none rounded-md py-1 px-2 cursor-pointer flex-1 text-xs"
-                    >
-                      Delete
-                    </button>
+            <div className="flex flex-wrap gap-4">
+              {chordProgression.map((chord, index) => {
+                const octaves = [...new Set(chord.keys.map(k => k.slice(-1)))];
+                const isDouble = octaves.length > 1;
+                return (
+                  <div
+                    key={index}
+                    className={`bg-gray-700 rounded-md p-3 text-center flex flex-col items-center justify-between ${isDouble ? 'max-w-[640px]' : 'max-w-[320px]'} w-full`}
+                  >
+                    <div className="w-full">
+                      <MiniPiano chord={chord} pianoClassName="h-20 md:h-24 w-full" />
+                    </div>
+                    <div className="flex justify-between mt-3 gap-2 w-full">
+                      <button
+                        onClick={() => handleEditChord(index)}
+                        className="bg-emerald-500 text-white border-none rounded-md py-2 px-3 cursor-pointer flex-1 text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteChord(index)}
+                        className="bg-red-500 text-white border-none rounded-md py-2 px-3 cursor-pointer flex-1 text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-center italic text-gray-400">No chords created.</p>

@@ -10,51 +10,74 @@ import { useMIDI } from '../hooks/useMIDI';
 import { usePiano } from '../hooks/usePiano';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {
-  const chordNotes = chord.keys.map(k => {
-    const note = k.split('-')[0];
-    return note.includes('s') ? note.replace('s', '#') : note;
+  // Encuentra la nota más baja de todos los acordes (por octava)
+  const allNotes = chord.keys;
+  const midiNumbers = allNotes.map(key => {
+    // Convierte nota+octava a número MIDI
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const match = key.match(/^([A-G]#?)(\d)$/);
+    if (!match) return 60; // fallback C4
+    const noteIdx = noteNames.indexOf(match[1]);
+    const octave = parseInt(match[2]);
+    return (octave + 1) * 12 + noteIdx;
   });
-  const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"];
-  const hasBlackKeyAfter = [true, true, false, true, true, true, false];
+  const minMidi = Math.min(...midiNumbers);
+  // Calcula la raíz de la octava más baja (C de esa octava)
+  const minOctave = Math.floor(minMidi / 12) - 1;
+  // Rango de 2 octavas
+  const octavesToShow = [minOctave, minOctave + 1];
+  // Genera todas las teclas de esas 2 octavas
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  const blackNotes = ['C#', 'D#', 'F#', 'G#', 'A#'];
+  const keysToShow: { note: string, midi: number, isWhite: boolean, key: string }[] = [];
+  octavesToShow.forEach(octave => {
+    noteNames.forEach(note => {
+      const isWhite = whiteNotes.includes(note);
+      const midi = (octave + 1) * 12 + noteNames.indexOf(note);
+      keysToShow.push({ note, midi, isWhite, key: `${note}${octave}` });
+    });
+  });
+  // Para resaltar solo las teclas exactas
+  const chordSet = new Set(chord.keys);
+
+  // Filtrar blancas y negras
+  const whiteKeys = keysToShow.filter(k => k.isWhite);
+  const blackKeys = keysToShow.filter(k => !k.isWhite);
+
   return (
-    <div className="relative h-[120px] w-full max-w-[400px] mx-auto">
-      <div className="flex h-full w-full">
-        {whiteKeys.map((whiteKey, idx) => (
+    <div className="relative h-[120px] w-full max-w-[500px] mx-auto">
+      {/* Teclas blancas */}
+      <div className="flex h-full w-full relative z-10">
+        {whiteKeys.map((k, idx) => (
           <div
-            key={`large-white-${idx}`}
-            className={`flex-1 h-full border border-gray-600 rounded-b-sm relative z-10 ${
-              chordNotes.includes(whiteKey) ? "bg-[#00E676]" : "bg-white"
-            }`}
+            key={`white-${k.key}`}
+            className={`flex-1 h-full border border-gray-600 rounded-b-sm relative ${chordSet.has(k.key) ? "bg-[#00E676]" : "bg-white"}`}
           >
-            <div className={`absolute bottom-[5px] w-full text-center ${
-              chordNotes.includes(whiteKey) ? "text-white font-bold" : "text-black font-normal"
-            }`}>
-              {whiteKey}
-            </div>
+            <div className={`absolute bottom-[5px] w-full text-center text-xs ${chordSet.has(k.key) ? "text-white font-bold" : "text-black font-normal"}`}>{k.key}</div>
           </div>
         ))}
       </div>
-      <div className="absolute top-0 left-0 right-0 h-[60%]">
-        {whiteKeys.map((_, idx) => {
-          if (!hasBlackKeyAfter[idx]) return null;
-          const blackKeyNames = ["C#", "D#", "F#", "G#", "A#"];
-          const blackKeyIdx = [0, 1, 3, 4, 5].indexOf(idx);
-          if (blackKeyIdx === -1) return null;
-          const blackNote = blackKeyNames[blackKeyIdx];
-          const isSelected = chordNotes.includes(blackNote);
-          const position = (idx + 1) / whiteKeys.length;
+      {/* Teclas negras */}
+      <div className="absolute top-0 left-0 h-[60%] w-full z-20 pointer-events-none">
+        {blackKeys.map((k, idx) => {
+          // Encuentra la posición entre las blancas
+          // C# va entre C y D, D# entre D y E, F# entre F y G, etc
+          // Buscamos el índice de la blanca anterior
+          const whiteIdx = whiteKeys.findIndex(wk => wk.midi > k.midi) - 1;
+          if (whiteIdx < 0) return null;
+          // Calcula el ancho de cada blanca
+          const whiteWidth = 100 / whiteKeys.length;
+          // Posiciona la negra centrada entre las dos blancas
+          const left = `calc(${whiteIdx * whiteWidth}% + ${whiteWidth * 0.65}%)`;
           return (
             <div
-              key={`large-black-${idx}`}
-              className={`absolute h-full w-[16%] z-20 border-x border-gray-600 rounded-b-sm box-border ${
-                isSelected ? "bg-[#00E676]" : "bg-black"
-              }`}
-              style={{ left: `calc(${position * 100}% - 9%)` }}
+              key={`black-${k.key}`}
+              className={`absolute h-full w-[6%] border-x border-gray-600 rounded-b-sm box-border ${chordSet.has(k.key) ? "bg-[#00E676]" : "bg-black"}`}
+              style={{ left }}
             >
-              {isSelected && (
-                <div className="absolute bottom-[5px] w-full text-center text-white font-bold text-xs">
-                  {blackNote}
-                </div>
+              {chordSet.has(k.key) && (
+                <div className="absolute bottom-[5px] w-full text-center text-white font-bold text-xs">{k.key}</div>
               )}
             </div>
           );
@@ -175,6 +198,55 @@ const SongDetailsPage: React.FC = () => {
     '0': 84, // C6
   };
 
+  // Generate dynamic key mapping based on song's chord octaves
+  const generateDynamicKeyMapping = useCallback(() => {
+    if (!song) return demoKeyMapping;
+    
+    // Extract all octaves from all chords in the song
+    const allOctaves: number[] = [];
+    song.chords.forEach(chord => {
+      chord.keys.forEach(key => {
+        const octaveMatch = key.match(/\d+/);
+        if (octaveMatch) {
+          allOctaves.push(parseInt(octaveMatch[0]));
+        }
+      });
+    });
+    
+    if (allOctaves.length === 0) return demoKeyMapping;
+    
+    const minOctave = Math.min(...allOctaves);
+    const maxOctave = Math.max(...allOctaves);
+    
+    // If the song only uses one octave, use a simplified mapping
+    if (minOctave === maxOctave) {
+      return {
+        'a': 60, // C4
+        'w': 61, // C#4
+        's': 62, // D4
+        'e': 63, // D#4
+        'd': 64, // E4
+        'f': 65, // F4
+        't': 66, // F#4
+        'g': 67, // G4
+        'y': 68, // G#4
+        'h': 69, // A4
+        'u': 70, // A#4
+        'j': 71, // B4
+        'k': 72, // C5
+        'o': 73, // C#5
+        'l': 74, // D5
+        'p': 75, // D#5
+        ';': 76, // E5
+      };
+    }
+    
+    // If the song uses multiple octaves, use the full mapping
+    return demoKeyMapping;
+  }, [song]);
+
+  const currentKeyMapping = generateDynamicKeyMapping();
+
   useEffect(() => {
     metronomeEnabledRef.current = metronomeEnabled;
   }, [metronomeEnabled]);
@@ -205,14 +277,9 @@ const SongDetailsPage: React.FC = () => {
 
   const playChordSound = useCallback(async (chord: ChordType) => {
     if (!pianoSoundEnabled || !pianoReady) return;
-    
     try {
-      // Extract note names from chord keys
-      const notes = chord.keys.map(key => {
-        const note = key.split('-')[0];
-        return note.replace('#', 's'); // Convert # to s for consistency
-      });
-      
+      // Usa la nota completa con octava
+      const notes = chord.keys;
       await playPianoChord(notes, "4n", 0.6);
     } catch (error) {
       console.error('Error playing chord sound:', error);
@@ -328,15 +395,9 @@ const SongDetailsPage: React.FC = () => {
     const noteNames = new Set<string>();
     
     chord.keys.forEach(key => {
-      const note = key.split('-')[0];
-      // Handle both 's' and '#' formats consistently
-      let normalizedNote = note;
-      if (note.includes('s')) {
-        normalizedNote = note.replace('s', '#');
-      } else if (note.includes('#')) {
-        normalizedNote = note; // Keep as is
-      }
-      noteNames.add(normalizedNote);
+      // Extract note name without octave (e.g., "C4" -> "C", "F#5" -> "F#")
+      const noteName = key.replace(/\d/g, '');
+      noteNames.add(noteName);
     });
     
     console.log('Chord to note names:', chord.keys, '->', Array.from(noteNames));
@@ -363,60 +424,24 @@ const SongDetailsPage: React.FC = () => {
     return Math.floor(midiNote / 12) - 1; // MIDI note 60 = C4
   };
 
-  // Check if pressed keys match the current chord (note names only, no octave)
+  // Check if pressed keys match the current chord (note names + octave, exact match)
   const checkChordMatch = useCallback((pressedKeys: Set<number>, targetChord: ChordType): boolean => {
-    const targetNoteNames = chordToNoteNames(targetChord);
-    
-    // Group pressed keys by note name (without octave)
-    const pressedNotesByType = new Map<string, number[]>();
-    Array.from(pressedKeys).forEach(midiNote => {
-      const noteName = midiNoteToNoteNameOnly(midiNote);
-      if (!pressedNotesByType.has(noteName)) {
-        pressedNotesByType.set(noteName, []);
-      }
-      pressedNotesByType.get(noteName)!.push(midiNote);
-    });
-    
-    const pressedNoteNames = new Set(pressedNotesByType.keys());
-    
-    console.log('=== CHORD MATCH DEBUG ===');
-    console.log('Target chord keys:', targetChord.keys);
-    console.log('Target note names:', Array.from(targetNoteNames));
-    console.log('Pressed MIDI notes:', Array.from(pressedKeys));
-    console.log('Pressed note names:', Array.from(pressedNoteNames));
-    console.log('Pressed notes by type:', Object.fromEntries(pressedNotesByType));
-    console.log('Pressed note names (detailed):', Array.from(pressedKeys).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)}) -> ${midiNoteToNoteNameOnly(n)}`));
-    
-    // Check if all target notes are pressed (this is the main requirement)
-    let allTargetNotesPressed = true;
-    const missingNotes: string[] = [];
-    
-    for (const noteName of targetNoteNames) {
-      if (!pressedNoteNames.has(noteName)) {
-        console.log(`❌ Missing target note: ${noteName}`);
-        missingNotes.push(noteName);
-        allTargetNotesPressed = false;
-      } else {
-        const octaves = pressedNotesByType.get(noteName)!;
-        console.log(`✅ Found target note: ${noteName} in octaves:`, octaves.map(n => getOctaveFromMidiNote(n)));
-      }
+    // Convert chord keys to MIDI numbers
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const chordMIDINotes = new Set(
+      targetChord.keys.map(key => {
+        const match = key.match(/^([A-G]#?)(\d)$/);
+        if (!match) return null;
+        const noteIdx = noteNames.indexOf(match[1]);
+        const octave = parseInt(match[2]);
+        return (octave + 1) * 12 + noteIdx;
+      }).filter(n => n !== null)
+    );
+    // Compare sets
+    if (pressedKeys.size !== chordMIDINotes.size) return false;
+    for (const midi of chordMIDINotes) {
+      if (!pressedKeys.has(midi as number)) return false;
     }
-    
-    if (!allTargetNotesPressed) {
-      console.log('❌ Chord match failed: Missing notes:', missingNotes);
-      console.log('=== END CHORD MATCH DEBUG ===');
-      return false;
-    }
-    
-    // Optional: Check for extra notes (can be disabled for more flexibility)
-    const extraNotes = Array.from(pressedNoteNames).filter(pressedNote => !targetNoteNames.has(pressedNote));
-    
-    if (extraNotes.length > 0) {
-      console.log('⚠️ Extra notes detected:', extraNotes);
-    }
-    
-    console.log('✅ Chord match successful!');
-    console.log('=== END CHORD MATCH DEBUG ===');
     return true;
   }, []);
 
@@ -425,7 +450,7 @@ const SongDetailsPage: React.FC = () => {
     if (!isDemoMode || !song) return;
     
     const key = event.key.toLowerCase();
-    const midiNote = demoKeyMapping[key];
+    const midiNote = currentKeyMapping[key];
     
     if (midiNote !== undefined) {
       event.preventDefault();
@@ -489,7 +514,7 @@ const SongDetailsPage: React.FC = () => {
     if (!isDemoMode) return;
     
     const key = event.key.toLowerCase();
-    const midiNote = demoKeyMapping[key];
+    const midiNote = currentKeyMapping[key];
     
     if (midiNote !== undefined) {
       event.preventDefault();
@@ -1036,12 +1061,46 @@ const SongDetailsPage: React.FC = () => {
                           Demo Mode - Use your computer keyboard
                         </div>
                         <div className="text-xs text-[#a0aec0] mb-2">
-                          <div className="font-bold text-[#00E676] mb-1">Lower Octave (C3-C4):</div>
-                          <div>Z X C V B N M , . / 1 2 3</div>
-                          <div className="font-bold text-[#00E676] mb-1 mt-2">Middle Octave (C4-E5):</div>
-                          <div>A S D F G H J K L (white keys) | W E T Y U O P (black keys)</div>
-                          <div className="font-bold text-[#00E676] mb-1 mt-2">Upper Octave (C5-C6):</div>
-                          <div>Q R I [ ] \ 4 5 6 7 8 9 0</div>
+                          {(() => {
+                            if (!song) return null;
+                            
+                            // Extract all octaves from all chords in the song
+                            const allOctaves: number[] = [];
+                            song.chords.forEach(chord => {
+                              chord.keys.forEach(key => {
+                                const octaveMatch = key.match(/\d+/);
+                                if (octaveMatch) {
+                                  allOctaves.push(parseInt(octaveMatch[0]));
+                                }
+                              });
+                            });
+                            
+                            if (allOctaves.length === 0) return null;
+                            
+                            const minOctave = Math.min(...allOctaves);
+                            const maxOctave = Math.max(...allOctaves);
+                            
+                            if (minOctave === maxOctave) {
+                              return (
+                                <>
+                                  <div className="font-bold text-[#00E676] mb-1">Single Octave ({minOctave}):</div>
+                                  <div>A S D F G H J K L (white keys) | W E T Y U O P (black keys)</div>
+                                </>
+                              );
+                            } else {
+                              return (
+                                <>
+                                  <div className="font-bold text-[#00E676] mb-1">Multiple Octaves ({minOctave}-{maxOctave}):</div>
+                                  <div className="font-bold text-[#00E676] mb-1">Lower Octave ({minOctave}):</div>
+                                  <div>Z X C V B N M , . / 1 2 3</div>
+                                  <div className="font-bold text-[#00E676] mb-1 mt-2">Middle Octave (4-5):</div>
+                                  <div>A S D F G H J K L (white keys) | W E T Y U O P (black keys)</div>
+                                  <div className="font-bold text-[#00E676] mb-1 mt-2">Upper Octave (5-6):</div>
+                                  <div>Q R I [ ] \ 4 5 6 7 8 9 0</div>
+                                </>
+                              );
+                            }
+                          })()}
                         </div>
                         <div className="text-xs text-[#a0aec0]">
                           Play the highlighted chord in any octave to advance
