@@ -8,7 +8,7 @@ import { updateUserProfile } from '../api/userApi'
 
 const EditProfilePage: React.FC = () => {
   const navigate = useNavigate()
-  const { currentUser, userProfile } = useAuth()
+  const { currentUser, userProfile, updateProfileInContext } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: userProfile?.displayName || currentUser?.displayName || "",
@@ -48,6 +48,9 @@ const EditProfilePage: React.FC = () => {
           spotify: formData.spotify,
         },
       })
+      if (typeof updateProfileInContext === 'function') {
+        await updateProfileInContext();
+      }
       navigate("/profile")
     } catch (error) {
       console.error("Error updating profile:", error)

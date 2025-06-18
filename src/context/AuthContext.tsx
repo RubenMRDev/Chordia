@@ -27,6 +27,7 @@ interface AuthContextType {
   signInWithFacebook: () => Promise<void>
   error: string | null
   setError: (error: string | null) => void
+  updateProfileInContext: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -54,10 +55,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const fetchUserProfile = async () => {
       if (currentUser) {
         try {
-          const profile = await getUserProfile(currentUser.uid)
-          if (profile) {
-            setUserProfile(profile)
+          let profile = await getUserProfile(currentUser.uid)
+          if (!profile) {
+            // Si no existe perfil, creamos uno con valores vacíos excepto displayName y email
+            profile = {
+              uid: currentUser.uid,
+              displayName: currentUser.displayName || "",
+              email: currentUser.email || "",
+              photoURL: currentUser.photoURL || "",
+              bio: "",
+              location: "",
+              website: "",
+              joinDate: new Date().toISOString(),
+              socialLinks: {
+                instagram: "",
+                twitter: "",
+                soundcloud: "",
+                spotify: ""
+              }
+            }
+            await createUserProfile(profile)
           }
+          setUserProfile(profile)
         } catch (error) {
           console.error("Error fetching user profile:", error)
         }
@@ -82,19 +101,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null)
       const result = await createUserWithEmailAndPassword(auth, email, password)
-      
       if (result.user) {
         await updateProfile(result.user, {
           displayName: name,
         })
-
-        
         await createUserProfile({
           uid: result.user.uid,
-          displayName: name,
+          displayName: name || "",
           email: result.user.email || "",
           photoURL: result.user.photoURL || "",
+          bio: "",
+          location: "",
+          website: "",
           joinDate: new Date().toISOString(),
+          socialLinks: {
+            instagram: "",
+            twitter: "",
+            soundcloud: "",
+            spotify: ""
+          }
         })
       }
     } catch (error) {
@@ -140,15 +165,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setError(null)
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
-
-      
       if (result.user) {
         await createUserProfile({
           uid: result.user.uid,
-          displayName: result.user.displayName || "User",
+          displayName: result.user.displayName || "",
           email: result.user.email || "",
           photoURL: result.user.photoURL || "",
+          bio: "",
+          location: "",
+          website: "",
           joinDate: new Date().toISOString(),
+          socialLinks: {
+            instagram: "",
+            twitter: "",
+            soundcloud: "",
+            spotify: ""
+          }
         })
       }
     } catch (error) {
@@ -166,15 +198,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setError(null)
       const provider = new FacebookAuthProvider()
       const result = await signInWithPopup(auth, provider)
-
-      
       if (result.user) {
         await createUserProfile({
           uid: result.user.uid,
-          displayName: result.user.displayName || "User",
+          displayName: result.user.displayName || "",
           email: result.user.email || "",
           photoURL: result.user.photoURL || "",
+          bio: "",
+          location: "",
+          website: "",
           joinDate: new Date().toISOString(),
+          socialLinks: {
+            instagram: "",
+            twitter: "",
+            soundcloud: "",
+            spotify: ""
+          }
         })
       }
     } catch (error) {
@@ -184,6 +223,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setError("An unknown error occurred")
       }
       throw error
+    }
+  }
+
+  async function updateProfileInContext() {
+    if (currentUser) {
+      try {
+        const profile = await getUserProfile(currentUser.uid);
+        if (profile) {
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error("Error updating user profile in context:", error);
+      }
     }
   }
 
@@ -198,6 +250,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signInWithFacebook,
     error,
     setError,
+    updateProfileInContext,
   }
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>

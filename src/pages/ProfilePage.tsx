@@ -11,28 +11,23 @@ import type { Song, UserProfile } from '../types/firebase';
 
 const ProfilePage: React.FC = () => {
   const [_activeTab, _setActiveTab] = useState("songs");
-  const { currentUser, logout } = useAuth();
-  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const { currentUser, logout, userProfile } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserSongs = async () => {
       if (currentUser) {
         try {
-          const [profile, userSongs] = await Promise.all([
-            getUserProfile(currentUser.uid),
-            getUserSongs(currentUser.uid)
-          ]);
-          setProfileData(profile);
+          const userSongs = await getUserSongs(currentUser.uid);
           const filteredSongs = (userSongs || []).filter((song: Song) => song.userId === currentUser.uid);
           setSongs(filteredSongs);
         } catch (error) {
-          console.error("Error fetching user data:", error);
+          console.error("Error fetching user songs:", error);
           Swal.fire({
             title: "Error",
-            text: "Failed to load profile data. Please try again later.",
+            text: "Failed to load songs. Please try again later.",
             icon: "error",
             background: "var(--background-darker)",
             color: "var(--text-secondary)",
@@ -44,7 +39,7 @@ const ProfilePage: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchUserData();
+    fetchUserSongs();
   }, [currentUser]);
 
   const handleLogout = async () => {
@@ -207,7 +202,7 @@ const ProfilePage: React.FC = () => {
           }}
         >
           <img
-            src={profileData?.photoURL || "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
+            src={userProfile?.photoURL || currentUser?.photoURL || "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
             alt="Profile"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
             onError={(e) => {
@@ -217,10 +212,10 @@ const ProfilePage: React.FC = () => {
         </div>
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>
-            {profileData?.displayName || currentUser?.displayName || "User"}
+            {userProfile?.displayName || currentUser?.displayName || "User"}
           </h1>
           <p style={{ color: "var(--accent-green)", marginBottom: "1rem" }}>
-            @{(profileData?.displayName || currentUser?.displayName || "user")?.toLowerCase().replace(/\s+/g, "")}
+            @{(userProfile?.displayName || currentUser?.displayName || "user")?.toLowerCase().replace(/\s+/g, "")}
           </p>
           <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
             <div>
@@ -273,7 +268,7 @@ const ProfilePage: React.FC = () => {
           >
             <h2 style={{ marginBottom: "1rem" }}>About</h2>
             <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem", lineHeight: 1.6 }}>
-              {profileData?.bio || "No bio yet"}
+              {userProfile?.bio || "No bio yet"}
             </p>
             <div
               style={{
@@ -284,7 +279,7 @@ const ProfilePage: React.FC = () => {
               }}
             >
               <FaMapMarkerAlt style={{ marginRight: "0.75rem" }} />
-              {profileData?.location || "No location set"}
+              {userProfile?.location || "No location set"}
             </div>
             <div
               style={{
@@ -296,18 +291,18 @@ const ProfilePage: React.FC = () => {
             >
               <FaGlobe style={{ marginRight: "0.75rem" }} />
               <a
-                href={`https://${profileData?.website || ""}`}
+                href={`https://${userProfile?.website || ""}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: "var(--accent-green)", textDecoration: "none" }}
               >
-                {profileData?.website || "No website set"}
+                {userProfile?.website || "No website set"}
               </a>
             </div>
             <div style={{ display: "flex", alignItems: "center", color: "var(--text-secondary)" }}>
               <FaCalendarAlt style={{ marginRight: "0.75rem" }} />
               Joined{" "}
-              {new Date(profileData?.joinDate || Date.now()).toLocaleDateString("en-US", {
+              {new Date(userProfile?.joinDate || Date.now()).toLocaleDateString("en-US", {
                 month: "long",
                 year: "numeric",
               })}
@@ -322,9 +317,9 @@ const ProfilePage: React.FC = () => {
           >
             <h2 style={{ marginBottom: "1rem" }}>Social Links</h2>
             <div style={{ display: "flex", gap: "1rem" }}>
-              {profileData?.socialLinks?.instagram && (
+              {userProfile?.socialLinks?.instagram && (
                 <a
-                  href={`https://instagram.com/${profileData.socialLinks.instagram}`}
+                  href={`https://instagram.com/${userProfile.socialLinks.instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
@@ -332,9 +327,9 @@ const ProfilePage: React.FC = () => {
                   <FaInstagram />
                 </a>
               )}
-              {profileData?.socialLinks?.twitter && (
+              {userProfile?.socialLinks?.twitter && (
                 <a
-                  href={`https://twitter.com/${profileData.socialLinks.twitter}`}
+                  href={`https://twitter.com/${userProfile.socialLinks.twitter}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
@@ -342,9 +337,9 @@ const ProfilePage: React.FC = () => {
                   <FaTwitter />
                 </a>
               )}
-              {profileData?.socialLinks?.soundcloud && (
+              {userProfile?.socialLinks?.soundcloud && (
                 <a
-                  href={`https://soundcloud.com/${profileData.socialLinks.soundcloud}`}
+                  href={`https://soundcloud.com/${userProfile.socialLinks.soundcloud}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
@@ -352,9 +347,9 @@ const ProfilePage: React.FC = () => {
                   <FaSoundcloud />
                 </a>
               )}
-              {profileData?.socialLinks?.spotify && (
+              {userProfile?.socialLinks?.spotify && (
                 <a
-                  href={`https://open.spotify.com/artist/${profileData.socialLinks.spotify}`}
+                  href={`https://open.spotify.com/artist/${userProfile.socialLinks.spotify}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
