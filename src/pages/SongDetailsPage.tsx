@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward } from 'react-icons/fa';
+import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward, FaKeyboard } from 'react-icons/fa';
 import Header from '../components/Header';
+import MIDITroubleshooting from '../components/MIDITroubleshooting';
 import { getSongById } from '../api/songApi';
 import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
+import { useMIDI } from '../hooks/useMIDI';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {
   const chordNotes = chord.keys.map(k => {
@@ -80,9 +82,56 @@ const SongDetailsPage: React.FC = () => {
   const pianoSoundsRef = useRef<{[key: string]: HTMLAudioElement}>({});
   const currentBeatRef = useRef(0);
   const metronomeEnabledRef = useRef(metronomeEnabled);
+  
+  // Play Yourself state
+  const [isPlayYourselfMode, setIsPlayYourselfMode] = useState<boolean>(false);
+  const [pressedKeys, setPressedKeys] = useState<Set<number>>(new Set());
+  const [showMIDIDialog, setShowMIDIDialog] = useState<boolean>(false);
+  const [midiAccessRequested, setMidiAccessRequested] = useState<boolean>(false);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+  
+  // MIDI hook
+  const {
+    isSupported: midiSupported,
+    devices: midiDevices,
+    isConnected: midiConnected,
+    currentDevice: midiCurrentDevice,
+    error: midiError,
+    isInitializing: midiInitializing,
+    requestMIDIAccess,
+    connectToDevice,
+    setupMIDIHandler,
+    disconnectDevice,
+    refreshDevices,
+    midiNoteToNoteName,
+  } = useMIDI();
+
+  // Demo mode keyboard mapping
+  const demoKeyMapping: { [key: string]: number } = {
+    'a': 60, // C4
+    'w': 61, // C#4
+    's': 62, // D4
+    'e': 63, // D#4
+    'd': 64, // E4
+    'f': 65, // F4
+    't': 66, // F#4
+    'g': 67, // G4
+    'y': 68, // G#4
+    'h': 69, // A4
+    'u': 70, // A#4
+    'j': 71, // B4
+    'k': 72, // C5
+    'o': 73, // C#5
+    'l': 74, // D5
+    'p': 75, // D#5
+    ';': 76, // E5
+  };
+
   useEffect(() => {
     metronomeEnabledRef.current = metronomeEnabled;
   }, [metronomeEnabled]);
+
   useEffect(() => {
     const fetchSong = async () => {
       if (!songId) return;
@@ -99,10 +148,12 @@ const SongDetailsPage: React.FC = () => {
     };
     fetchSong();
   }, [songId]);
+
   const getBeatsPerMeasure = (timeSignature: string = "4/4") => {
     const [numerator] = timeSignature.split('/').map(Number);
     return numerator;
   };
+
   useEffect(() => {
     if (pianoSoundEnabled) {
       const notes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"];
@@ -113,7 +164,8 @@ const SongDetailsPage: React.FC = () => {
       });
     }
   }, [pianoSoundEnabled]);
-  const playChordSound = (chord: ChordType) => {
+
+  const playChordSound = useCallback((chord: ChordType) => {
     if (!pianoSoundEnabled) return;
     Object.values(pianoSoundsRef.current).forEach(audio => {
       audio.pause();
@@ -127,13 +179,15 @@ const SongDetailsPage: React.FC = () => {
         audioClone.play().catch(e => console.error(`Couldn't play piano sound for ${formattedNote}:`, e));
       }
     });
-  };
+  }, [pianoSoundEnabled]);
+
   const stopAllPianoSounds = () => {
     Object.values(pianoSoundsRef.current).forEach(audio => {
       audio.pause();
       audio.currentTime = 0;
     });
   };
+
   useEffect(() => {
     if (!isPlaying || !song) return;
     const tempo = song.tempo || 120;
@@ -186,6 +240,7 @@ const SongDetailsPage: React.FC = () => {
       stopAllPianoSounds();
     };
   }, [isPlaying, song]);
+
   useEffect(() => {
     if (song && pianoSoundEnabled) {
       if (!isFirstRenderRef.current) {
@@ -193,12 +248,14 @@ const SongDetailsPage: React.FC = () => {
       }
     }
   }, [currentChordIndex, song]);
+
   const handleChordSelect = (index: number) => {
     setCurrentChordIndex(index);
     if (song && pianoSoundEnabled && !isFirstRenderRef.current) {
       playChordSound(song.chords[index]);
     }
   };
+
   const handlePlayPause = () => {
     if (!isPlaying && song) {
       setBeatCount(0);
@@ -208,6 +265,7 @@ const SongDetailsPage: React.FC = () => {
     }
     setIsPlaying(prev => !prev);
   };
+
   const handleNextChord = () => {
     if (!song) return;
     setCurrentChordIndex(prev => {
@@ -215,6 +273,7 @@ const SongDetailsPage: React.FC = () => {
       return nextIndex >= song.chords.length ? 0 : nextIndex;
     });
   };
+
   const handlePrevChord = () => {
     if (!song) return;
     setCurrentChordIndex(prev => {
@@ -222,6 +281,7 @@ const SongDetailsPage: React.FC = () => {
       return nextIndex < 0 ? song.chords.length - 1 : nextIndex;
     });
   };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -230,6 +290,308 @@ const SongDetailsPage: React.FC = () => {
       day: 'numeric'
     });
   };
+
+  // Convert chord keys to note names (without octave) for comparison
+  const chordToNoteNames = (chord: ChordType): Set<string> => {
+    const noteNames = new Set<string>();
+    
+    chord.keys.forEach(key => {
+      const note = key.split('-')[0];
+      // Convert 's' to '#' for consistency
+      const normalizedNote = note.replace('s', '#');
+      noteNames.add(normalizedNote);
+    });
+    
+    console.log('Chord to note names:', chord.keys, '->', Array.from(noteNames));
+    return noteNames;
+  };
+
+  // Convert MIDI note number to note name (without octave)
+  const midiNoteToNoteNameOnly = (midiNote: number): string => {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const noteIndex = midiNote % 12;
+    return noteNames[noteIndex];
+  };
+
+  // Check if pressed keys match the current chord (note names only, no octave)
+  const checkChordMatch = useCallback((pressedKeys: Set<number>, targetChord: ChordType): boolean => {
+    const targetNoteNames = chordToNoteNames(targetChord);
+    const pressedNoteNames = new Set(Array.from(pressedKeys).map(n => midiNoteToNoteNameOnly(n)));
+    
+    console.log('Checking chord match (note names only):');
+    console.log('Target note names:', Array.from(targetNoteNames));
+    console.log('Pressed note names:', Array.from(pressedNoteNames));
+    
+    // Check if all target notes are pressed (this is the main requirement)
+    let allTargetNotesPressed = true;
+    for (const noteName of targetNoteNames) {
+      if (!pressedNoteNames.has(noteName)) {
+        console.log(`Missing target note: ${noteName}`);
+        allTargetNotesPressed = false;
+        break;
+      }
+    }
+    
+    if (!allTargetNotesPressed) {
+      console.log('❌ Chord match failed: Not all target notes are pressed');
+      return false;
+    }
+    
+    // Optional: Check for extra notes (can be disabled for more flexibility)
+    const hasExtraNotes = Array.from(pressedNoteNames).some(pressedNote => !targetNoteNames.has(pressedNote));
+    
+    if (hasExtraNotes) {
+      console.log('⚠️ Extra notes detected, but chord still matches (flexible mode)');
+    }
+    
+    console.log('✅ Chord match successful!');
+    return true;
+  }, []);
+
+  // Handle keyboard events for demo mode
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (!isDemoMode || !song) return;
+    
+    const key = event.key.toLowerCase();
+    const midiNote = demoKeyMapping[key];
+    
+    if (midiNote !== undefined) {
+      event.preventDefault();
+      console.log(`Demo mode - Key pressed: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteName(midiNote)})`);
+      
+      setPressedKeys(prev => {
+        const newPressedKeys = new Set(prev);
+        newPressedKeys.add(midiNote);
+        
+        console.log('Current pressed keys:', Array.from(newPressedKeys).map(n => `${n}(${midiNoteToNoteName(n)})`));
+        console.log('Current chord index:', currentChordIndex);
+        console.log('Current chord:', song.chords[currentChordIndex]);
+        
+        // Check if the pressed keys match the current chord
+        if (checkChordMatch(newPressedKeys, song.chords[currentChordIndex])) {
+          console.log('🎉 Demo mode: Chord matched! Advancing to next chord...');
+          
+          // Play success sound
+          if (pianoSoundEnabled) {
+            playChordSound(song.chords[currentChordIndex]);
+          }
+          
+          // Move to next chord immediately (no setTimeout to avoid race conditions)
+          const nextIndex = (currentChordIndex + 1) % song.chords.length;
+          console.log(`Advancing from chord ${currentChordIndex + 1} to chord ${nextIndex + 1} (index: ${currentChordIndex} -> ${nextIndex})`);
+          setCurrentChordIndex(nextIndex);
+          
+          // Clear pressed keys immediately
+          return new Set();
+        }
+        
+        return newPressedKeys;
+      });
+    }
+  }, [isDemoMode, song, currentChordIndex, pianoSoundEnabled, playChordSound, checkChordMatch, midiNoteToNoteName]);
+
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    if (!isDemoMode) return;
+    
+    const key = event.key.toLowerCase();
+    const midiNote = demoKeyMapping[key];
+    
+    if (midiNote !== undefined) {
+      event.preventDefault();
+      console.log(`Demo mode - Key released: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteName(midiNote)})`);
+      
+      setPressedKeys(prev => {
+        const newPressedKeys = new Set(prev);
+        newPressedKeys.delete(midiNote);
+        return newPressedKeys;
+      });
+    }
+  }, [isDemoMode, midiNoteToNoteName]);
+
+  // Handle MIDI messages
+  const handleMIDIMessage = useCallback((event: WebMidi.MIDIMessageEvent) => {
+    if (!isPlayYourselfMode || !song) return;
+    
+    const [status, note, velocity] = event.data;
+    const isNoteOn = (status & 0xF0) === 0x90;
+    const isNoteOff = (status & 0xF0) === 0x80;
+    
+    console.log(`MIDI message: status=${status}, note=${note}, velocity=${velocity}, isNoteOn=${isNoteOn}, isNoteOff=${isNoteOff}`);
+    
+    if (isNoteOn && velocity > 0) {
+      console.log(`MIDI - Note pressed: ${note} (${midiNoteToNoteName(note)})`);
+      
+      setPressedKeys(prev => {
+        const newPressedKeys = new Set(prev);
+        newPressedKeys.add(note);
+        
+        console.log('Current pressed keys:', Array.from(newPressedKeys).map(n => `${n}(${midiNoteToNoteName(n)})`));
+        console.log('Current chord index:', currentChordIndex);
+        console.log('Current chord:', song.chords[currentChordIndex]);
+        
+        // Check if the pressed keys match the current chord
+        if (checkChordMatch(newPressedKeys, song.chords[currentChordIndex])) {
+          console.log('🎉 MIDI: Chord matched! Advancing to next chord...');
+          
+          // Play success sound
+          if (pianoSoundEnabled) {
+            playChordSound(song.chords[currentChordIndex]);
+          }
+          
+          // Move to next chord immediately (no setTimeout to avoid race conditions)
+          const nextIndex = (currentChordIndex + 1) % song.chords.length;
+          console.log(`Advancing from chord ${currentChordIndex + 1} to chord ${nextIndex + 1} (index: ${currentChordIndex} -> ${nextIndex})`);
+          setCurrentChordIndex(nextIndex);
+          
+          // Clear pressed keys immediately
+          return new Set();
+        }
+        
+        return newPressedKeys;
+      });
+    } else if (isNoteOff || (isNoteOn && velocity === 0)) {
+      console.log(`MIDI - Note released: ${note} (${midiNoteToNoteName(note)})`);
+      
+      setPressedKeys(prev => {
+        const newPressedKeys = new Set(prev);
+        newPressedKeys.delete(note);
+        return newPressedKeys;
+      });
+    }
+  }, [isPlayYourselfMode, song, currentChordIndex, pianoSoundEnabled, playChordSound, checkChordMatch, midiNoteToNoteName]);
+
+  // Set up keyboard event listeners for demo mode
+  useEffect(() => {
+    if (isDemoMode) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('keyup', handleKeyUp);
+      
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('keyup', handleKeyUp);
+      };
+    }
+  }, [isDemoMode, handleKeyDown, handleKeyUp]);
+
+  // Initialize MIDI when Play Yourself mode is activated
+  useEffect(() => {
+    if (isPlayYourselfMode && !midiAccessRequested) {
+      setMidiAccessRequested(true);
+      requestMIDIAccess().then(success => {
+        if (success && midiDevices.length > 0) {
+          // Auto-connect to the first available device
+          connectToDevice(midiDevices[0].id);
+        }
+      });
+    }
+  }, [isPlayYourselfMode, midiAccessRequested, midiDevices, requestMIDIAccess, connectToDevice]);
+
+  // Set up MIDI handler when device is connected
+  useEffect(() => {
+    if (midiCurrentDevice && isPlayYourselfMode) {
+      setupMIDIHandler(handleMIDIMessage);
+    }
+  }, [midiCurrentDevice, isPlayYourselfMode, setupMIDIHandler, handleMIDIMessage]);
+
+  // Clean up when exiting Play Yourself mode
+  useEffect(() => {
+    if (!isPlayYourselfMode) {
+      setPressedKeys(new Set());
+      disconnectDevice();
+      setMidiAccessRequested(false);
+    }
+  }, [isPlayYourselfMode, disconnectDevice]);
+
+  // Reset chord index when entering Play Yourself mode
+  const resetChordIndex = useCallback(() => {
+    console.log('🔄 Resetting chord index to 0');
+    setCurrentChordIndex(0);
+    setPressedKeys(new Set());
+  }, []);
+
+  // Reset chord index when Play Yourself mode is activated
+  useEffect(() => {
+    if (isPlayYourselfMode && !isDemoMode) {
+      console.log('🎯 Play Yourself mode activated - resetting chord index');
+      resetChordIndex();
+    }
+  }, [isPlayYourselfMode, isDemoMode, resetChordIndex]);
+
+  // Reset chord index when demo mode is activated
+  useEffect(() => {
+    if (isDemoMode) {
+      console.log('🎯 Demo mode activated - resetting chord index');
+      resetChordIndex();
+    }
+  }, [isDemoMode, resetChordIndex]);
+
+  // Handle Play Yourself mode toggle
+  const handlePlayYourselfToggle = () => {
+    if (!midiSupported) {
+      // If MIDI is not supported, offer demo mode
+      setIsDemoMode(true);
+      setIsPlayYourselfMode(true);
+      resetChordIndex();
+      if (isPlaying) {
+        setIsPlaying(false);
+      }
+      return;
+    }
+    
+    if (!midiConnected && !midiAccessRequested) {
+      setShowMIDIDialog(true);
+      return;
+    }
+    
+    setIsPlayYourselfMode(prev => !prev);
+    if (!isPlayYourselfMode) {
+      resetChordIndex();
+    }
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+  };
+
+  // Handle demo mode toggle
+  const handleDemoModeToggle = () => {
+    setIsDemoMode(prev => !prev);
+    if (!isDemoMode) {
+      setIsPlayYourselfMode(true);
+      resetChordIndex();
+      if (isPlaying) {
+        setIsPlaying(false);
+      }
+    }
+  };
+
+  // Handle MIDI device selection
+  const handleMIDIDeviceSelect = (deviceId: string) => {
+    connectToDevice(deviceId);
+    setShowMIDIDialog(false);
+    setIsPlayYourselfMode(true);
+    setIsDemoMode(false);
+    resetChordIndex();
+  };
+
+  // Test function to verify chord conversion
+  const testChordConversion = useCallback(() => {
+    if (!song) return;
+    
+    console.log('=== CHORD CONVERSION TEST ===');
+    song.chords.forEach((chord, index) => {
+      const noteNames = chordToNoteNames(chord);
+      console.log(`Chord ${index + 1}:`, chord.keys, '-> Note names:', Array.from(noteNames));
+    });
+    console.log('=== END TEST ===');
+  }, [song, chordToNoteNames]);
+
+  // Run test when song loads
+  useEffect(() => {
+    if (song && song.chords.length > 0) {
+      testChordConversion();
+    }
+  }, [song, testChordConversion]);
+
   return (
     <div className="bg-[#0a101b] min-h-screen text-white">
       <Header />
@@ -313,6 +675,150 @@ const SongDetailsPage: React.FC = () => {
                     {pianoSoundEnabled ? 'Piano Sound: ON' : 'Piano Sound: OFF'}
                   </button>
                 </div>
+                
+                {/* Play Yourself Button */}
+                <button
+                  onClick={handlePlayYourselfToggle}
+                  disabled={midiInitializing}
+                  className={`w-full px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                    isPlayYourselfMode 
+                      ? "bg-[#00E676] text-black" 
+                      : "bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676]"
+                  } ${midiInitializing ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <FaKeyboard />
+                  {midiInitializing ? 'Detecting MIDI...' : (isPlayYourselfMode ? 'Exit Play Yourself' : 'Play Yourself')}
+                </button>
+                
+                {/* MIDI Debug Information */}
+                {midiError && (
+                  <div className="w-full p-3 bg-red-900/20 border border-red-500 rounded text-sm text-red-300">
+                    <div className="font-bold mb-1">MIDI Error:</div>
+                    <div>{midiError}</div>
+                  </div>
+                )}
+                
+                {/* MIDI Status Information */}
+                {!isPlayYourselfMode && midiSupported && (
+                  <div className="w-full p-3 bg-[#0f1624] border border-[#a0aec0] rounded text-sm">
+                    <div className="font-bold mb-2 text-[#00E676]">MIDI Status:</div>
+                    <div className="space-y-1 text-xs text-[#a0aec0]">
+                      <div>• Browser Support: {midiSupported ? '✅ Supported' : '❌ Not Supported'}</div>
+                      <div>• Devices Found: {midiDevices.length}</div>
+                      <div>• Connection Status: {midiConnected ? '✅ Connected' : '❌ Not Connected'}</div>
+                      {midiDevices.length > 0 && (
+                        <div className="mt-2">
+                          <div className="font-medium text-white mb-1">Available Devices:</div>
+                          {midiDevices.map(device => (
+                            <div key={device.id} className="ml-2 text-xs">
+                              • {device.name} ({device.manufacturer}) - {device.state}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={refreshDevices}
+                      className="mt-2 w-full p-2 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
+                    >
+                      Refresh MIDI Devices
+                    </button>
+                  </div>
+                )}
+                
+                {/* MIDI Troubleshooting */}
+                {!isPlayYourselfMode && (midiError || midiDevices.length === 0) && (
+                  <MIDITroubleshooting
+                    midiSupported={midiSupported}
+                    midiDevices={midiDevices}
+                    midiError={midiError}
+                    onRefresh={refreshDevices}
+                  />
+                )}
+                
+                {isPlayYourselfMode && (
+                  <div className="w-full text-center">
+                    {isDemoMode ? (
+                      <>
+                        <div className="text-sm text-[#a0aec0] mb-2">
+                          Demo Mode - Use your computer keyboard
+                        </div>
+                        <div className="text-xs text-[#a0aec0] mb-2">
+                          Keys: A S D F G H J K L (white keys) | W E T Y U O P (black keys)
+                        </div>
+                        <div className="text-xs text-[#a0aec0]">
+                          Play the highlighted chord to advance
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-sm text-[#a0aec0] mb-2">
+                          {midiCurrentDevice ? (
+                            <>Connected to: {midiCurrentDevice.name}</>
+                          ) : (
+                            <>No MIDI device connected</>
+                          )}
+                        </div>
+                        <div className="text-xs text-[#a0aec0]">
+                          Play the highlighted chord on your MIDI keyboard to advance
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Debug Information */}
+                    <div className="mt-4 p-3 bg-[#0f1624] border border-[#a0aec0] rounded text-xs">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="font-bold text-[#00E676]">Debug Info:</div>
+                        <button
+                          onClick={() => setShowDebugInfo(prev => !prev)}
+                          className="px-2 py-1 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
+                        >
+                          {showDebugInfo ? 'Hide' : 'Show'} Debug
+                        </button>
+                      </div>
+                      
+                      {showDebugInfo && (
+                        <>
+                          <div className="space-y-1 text-[#a0aec0]">
+                            <div>Current Chord: {currentChordIndex + 1} of {song?.chords.length}</div>
+                            <div>Chord Index: {currentChordIndex}</div>
+                            <div>Expected Notes: {song?.chords[currentChordIndex]?.keys.join(', ')}</div>
+                            <div>Expected Note Names: {song?.chords[currentChordIndex] ? Array.from(chordToNoteNames(song.chords[currentChordIndex])).join(', ') : ''}</div>
+                            <div>Pressed Keys: {Array.from(pressedKeys).map(n => midiNoteToNoteName(n)).join(', ') || 'None'}</div>
+                            <div>Pressed Note Names: {Array.from(pressedKeys).map(n => midiNoteToNoteNameOnly(n)).join(', ') || 'None'}</div>
+                            <div>Keys Count: {pressedKeys.size}</div>
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={testChordConversion}
+                              className="flex-1 p-2 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
+                            >
+                              Test Chord Conversion
+                            </button>
+                            <button
+                              onClick={resetChordIndex}
+                              className="flex-1 p-2 bg-yellow-600 text-white rounded text-xs font-bold hover:bg-yellow-700 transition-colors"
+                            >
+                              Reset to Chord 1
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Demo Mode Button (only show if MIDI is supported) */}
+                {midiSupported && !isPlayYourselfMode && (
+                  <button
+                    onClick={handleDemoModeToggle}
+                    className="w-full px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676]"
+                  >
+                    <FaKeyboard />
+                    Try Demo Mode
+                  </button>
+                )}
+                
                 <div className="flex gap-4">
                   <button
                     onClick={handlePrevChord}
@@ -371,6 +877,64 @@ const SongDetailsPage: React.FC = () => {
                 ))}
               </div>
             </div>
+            
+            {/* MIDI Device Selection Dialog */}
+            {showMIDIDialog && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-[#1a2332] rounded-lg p-6 max-w-md w-full mx-4">
+                  <h3 className="text-xl font-bold mb-4 text-[#00E676]">
+                    Select MIDI Device
+                  </h3>
+                  {midiDevices.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-[#a0aec0] mb-4">No MIDI devices found</p>
+                      <p className="text-sm text-[#a0aec0] mb-6">
+                        Please connect a MIDI keyboard or other MIDI device and refresh the page.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setShowMIDIDialog(false);
+                          handleDemoModeToggle();
+                        }}
+                        className="w-full p-3 bg-[#00E676] text-black rounded font-bold hover:bg-[#00D666] transition-colors"
+                      >
+                        Try Demo Mode Instead
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2 mb-4">
+                        {midiDevices.map(device => (
+                          <button
+                            key={device.id}
+                            onClick={() => handleMIDIDeviceSelect(device.id)}
+                            className="w-full p-3 text-left bg-[#0f1624] rounded border border-[#a0aec0] hover:border-[#00E676] transition-colors"
+                          >
+                            <div className="font-medium text-white">{device.name}</div>
+                            <div className="text-sm text-[#a0aec0]">{device.manufacturer}</div>
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowMIDIDialog(false);
+                          handleDemoModeToggle();
+                        }}
+                        className="w-full p-3 bg-[#0f1624] text-[#a0aec0] rounded border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676] transition-colors"
+                      >
+                        Try Demo Mode Instead
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setShowMIDIDialog(false)}
+                    className="w-full mt-4 p-3 bg-[#0f1624] text-[#a0aec0] rounded border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
