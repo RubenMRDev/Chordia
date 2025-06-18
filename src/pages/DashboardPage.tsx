@@ -208,7 +208,7 @@ const DashboardPage: React.FC = () => {
               gap: '1.5rem',
             }}
           >
-            {songs.map((song) => (
+            {songs.map((song: DisplaySong) => (
               <div
                 key={song.id}
                 style={{
@@ -537,7 +537,7 @@ const DashboardPage: React.FC = () => {
             fontSize: '0.875rem',
           }}
         >
-          &copy; 2023 Chordia. All rights reserved.
+          &copy; {new Date().getFullYear()} Chordia. All rights reserved.
         </div>
       </footer>
     </div>
