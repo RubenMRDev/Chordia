@@ -5,6 +5,8 @@ import Features from '../components/Features';
 import Experience from '../components/Experience';
 import CallToAction from '../components/CallToAction';
 import Footer from '../components/Footer';
+import PianoTest from '../components/PianoTest';
+
 const HomePage: React.FC = () => {
   return (
     <>
@@ -14,9 +16,14 @@ const HomePage: React.FC = () => {
         <Features />
         <Experience />
         <CallToAction />
+        {/* Temporary Piano Test Component */}
+        <div className="container mx-auto px-4 py-8">
+          <PianoTest />
+        </div>
       </main>
       <Footer />
     </>
   );
 };
+
 export default HomePage;

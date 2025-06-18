@@ -1,0 +1,64 @@
+import { useState, useEffect, useCallback } from 'react';
+import pianoService from '../services/pianoService';
+
+interface UsePianoReturn {
+  isReady: boolean;
+  isLoading: boolean;
+  playNote: (note: string, duration?: string, velocity?: number) => Promise<void>;
+  playChord: (notes: string[], duration?: string, velocity?: number) => Promise<void>;
+  stopAllNotes: () => void;
+  initialize: () => Promise<void>;
+}
+
+export const usePiano = (): UsePianoReturn => {
+  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const initialize = useCallback(async () => {
+    if (isReady || isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      await pianoService.initialize();
+      setIsReady(true);
+    } catch (error) {
+      console.error('Failed to initialize piano:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isReady, isLoading]);
+
+  const playNote = useCallback(async (note: string, duration: string = "8n", velocity: number = 0.8) => {
+    if (!isReady) {
+      await initialize();
+    }
+    await pianoService.playNote(note, duration, velocity);
+  }, [isReady, initialize]);
+
+  const playChord = useCallback(async (notes: string[], duration: string = "4n", velocity: number = 0.6) => {
+    if (!isReady) {
+      await initialize();
+    }
+    await pianoService.playChord(notes, duration, velocity);
+  }, [isReady, initialize]);
+
+  const stopAllNotes = useCallback(() => {
+    pianoService.stopAllNotes();
+  }, []);
+
+  // Auto-initialize when hook is first used
+  useEffect(() => {
+    if (!isReady && !isLoading) {
+      initialize();
+    }
+  }, [isReady, isLoading, initialize]);
+
+  return {
+    isReady,
+    isLoading,
+    playNote,
+    playChord,
+    stopAllNotes,
+    initialize
+  };
+}; 

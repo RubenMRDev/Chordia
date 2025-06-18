@@ -2,7 +2,8 @@
   "name": "chordia-landing",
   "private": true,
   "version": "0.0.0",
-  "type": "module",  "scripts": {
+  "type": "module",
+  "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -21,6 +22,7 @@
     "react-router-dom": "^7.4.0",
     "sweetalert2": "^11.17.2",
     "tailwindcss": "^4.0.17",
+    "tone": "^15.1.22",
     "vitest": "^3.1.4"
   },
   "devDependencies": {

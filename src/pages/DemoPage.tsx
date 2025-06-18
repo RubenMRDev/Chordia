@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom"
 import Header from "../components/Header"
 import { FaTimes, FaPlay, FaPause, FaArrowRight, FaArrowLeft, FaQuestion, FaLightbulb, FaMusic } from "react-icons/fa"
 import Swal from 'sweetalert2'
+import { usePiano } from '../hooks/usePiano'
+
 interface ChordType {
   keys: string[] 
   selected: boolean
@@ -29,10 +31,13 @@ const DemoPage = () => {
   const [currentTutorialStep, setCurrentTutorialStep] = useState<number>(0);
   const [highlightArea, setHighlightArea] = useState<string | null>(null);
   const metronomeRef = useRef<HTMLAudioElement | null>(null);
-  const pianoSoundsRef = useRef<{[key: string]: HTMLAudioElement}>({});
   const playbackIntervalRef = useRef<number | null>(null);
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
   const hasBlackKeyAfter = [true, true, false, true, true, true, false]
+  
+  // Piano hook
+  const { isReady: pianoReady, playNote: playPianoNote, playChord: playPianoChord, stopAllNotes } = usePiano();
+
   const tutorialSteps: TutorialStep[] = [
     {
       title: "Welcome to Chordia Demo!",
@@ -75,7 +80,6 @@ const DemoPage = () => {
       try {
         const audio = new Audio(`/piano-sounds/${note}.mp3`);
         audio.preload = "auto";
-        pianoSoundsRef.current[note] = audio;
       } catch (error) {
         console.error(`Failed to load piano sound for ${note}:`, error);
       }
@@ -83,10 +87,6 @@ const DemoPage = () => {
     metronomeRef.current = new Audio("/metronome-click.mp3");
     metronomeRef.current.preload = "auto";
     return () => {
-      Object.values(pianoSoundsRef.current).forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
-      });
       if (metronomeRef.current) {
         metronomeRef.current.pause();
         metronomeRef.current.currentTime = 0;
@@ -134,27 +134,15 @@ const DemoPage = () => {
       if (alreadySelectedIndex >= 0) {
         return prev.filter((_, idx) => idx !== alreadySelectedIndex);
       } else {
-        playPianoSound(note);
+        playPianoNote(note);
         return [...prev, noteWithIndex];
       }
     });
   };
-  const playPianoSound = (note: string) => {
-    const formattedNote = note.replace('#', 's');
-    if (pianoSoundsRef.current[formattedNote]) {
-      try {
-        const audioClone = pianoSoundsRef.current[formattedNote].cloneNode(true) as HTMLAudioElement;
-        audioClone.volume = 0.7;
-        audioClone.play().catch(e => console.error(`Couldn't play piano sound:`, e));
-      } catch (error) {
-        console.error(`Error playing piano sound:`, error);
-      }
-    }
-  };
   const playChordSound = (chord: ChordType) => {
     chord.keys.forEach(key => {
       const note = key.split('-')[0];
-      playPianoSound(note);
+      playPianoNote(note);
     });
   };
   const handleSaveChord = () => {
@@ -226,10 +214,7 @@ const DemoPage = () => {
       clearInterval(playbackIntervalRef.current);
       playbackIntervalRef.current = null;
     }
-    Object.values(pianoSoundsRef.current).forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
-    });
+    stopAllNotes();
   };
   const handlePlayPause = () => {
     if (isPlaying) {

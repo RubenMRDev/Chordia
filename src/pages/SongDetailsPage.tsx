@@ -7,6 +7,7 @@ import { getSongById } from '../api/songApi';
 import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
 import { useMIDI } from '../hooks/useMIDI';
+import { usePiano } from '../hooks/usePiano';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {
   const chordNotes = chord.keys.map(k => {
@@ -79,7 +80,6 @@ const SongDetailsPage: React.FC = () => {
   const lastChordChangeRef = useRef<number | null>(null);
   const [metronomeEnabled, setMetronomeEnabled] = useState<boolean>(true);
   const [pianoSoundEnabled, setPianoSoundEnabled] = useState<boolean>(true);
-  const pianoSoundsRef = useRef<{[key: string]: HTMLAudioElement}>({});
   const currentBeatRef = useRef(0);
   const metronomeEnabledRef = useRef(metronomeEnabled);
   
@@ -90,6 +90,9 @@ const SongDetailsPage: React.FC = () => {
   const [midiAccessRequested, setMidiAccessRequested] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+  
+  // Piano hook
+  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes } = usePiano();
   
   // MIDI hook
   const {
@@ -154,39 +157,25 @@ const SongDetailsPage: React.FC = () => {
     return numerator;
   };
 
-  useEffect(() => {
-    if (pianoSoundEnabled) {
-      const notes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"];
-      notes.forEach(note => {
-        const audio = new Audio(`/piano-sounds/${note}.mp3`);
-        audio.preload = "auto";
-        pianoSoundsRef.current[note] = audio;
+  const playChordSound = useCallback(async (chord: ChordType) => {
+    if (!pianoSoundEnabled || !pianoReady) return;
+    
+    try {
+      // Extract note names from chord keys
+      const notes = chord.keys.map(key => {
+        const note = key.split('-')[0];
+        return note.replace('#', 's'); // Convert # to s for consistency
       });
+      
+      await playPianoChord(notes, "4n", 0.6);
+    } catch (error) {
+      console.error('Error playing chord sound:', error);
     }
-  }, [pianoSoundEnabled]);
+  }, [pianoSoundEnabled, pianoReady, playPianoChord]);
 
-  const playChordSound = useCallback((chord: ChordType) => {
-    if (!pianoSoundEnabled) return;
-    Object.values(pianoSoundsRef.current).forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
-    });
-    chord.keys.forEach(key => {
-      const note = key.split('-')[0];
-      const formattedNote = note.replace('#', 's');
-      if (pianoSoundsRef.current[formattedNote]) {
-        const audioClone = pianoSoundsRef.current[formattedNote].cloneNode(true) as HTMLAudioElement;
-        audioClone.play().catch(e => console.error(`Couldn't play piano sound for ${formattedNote}:`, e));
-      }
-    });
-  }, [pianoSoundEnabled]);
-
-  const stopAllPianoSounds = () => {
-    Object.values(pianoSoundsRef.current).forEach(audio => {
-      audio.pause();
-      audio.currentTime = 0;
-    });
-  };
+  const stopAllPianoSounds = useCallback(() => {
+    stopAllNotes();
+  }, [stopAllNotes]);
 
   useEffect(() => {
     if (!isPlaying || !song) return;

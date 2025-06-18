@@ -5,6 +5,7 @@ import Header from "../components/Header"
 import { useAuth } from "../context/AuthContext"
 import { createSong } from '../api/songApi'
 import Swal from 'sweetalert2'
+import { usePiano } from '../hooks/usePiano'
 
 interface ChordType {
   keys: string[] 
@@ -105,13 +106,25 @@ export default function CreateSongPage() {
   const [selectedCircleKey, setSelectedCircleKey] = useState<string>("C");
   const [selectedCircleChords, setSelectedCircleChords] = useState<string[]>([]);
   
+  // Piano hook
+  const { isReady: pianoReady, playNote: playPianoNote } = usePiano();
+  
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
   const hasBlackKeyAfter = [true, true, false, true, true, true, false]
 
   const handleOctaveChange = (newOctave: number) => {
     setOctave(newOctave)
   }
-  const handleKeyClick = (note: string, index: number) => {
+  const handleKeyClick = async (note: string, index: number) => {
+    // Play piano sound when key is clicked
+    if (pianoReady) {
+      try {
+        await playPianoNote(note, "8n", 0.7);
+      } catch (error) {
+        console.error('Error playing piano note:', error);
+      }
+    }
+    
     setSelectedKeys(prev => {
       const noteWithIndex = `${note}-${index}`;
       if (prev.includes(noteWithIndex)) {
