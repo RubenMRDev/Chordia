@@ -36,16 +36,21 @@ const LibraryPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [visibleSongs, setVisibleSongs] = useState<number>(0);
+  const [animationsReady, setAnimationsReady] = useState<boolean>(false);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+
+  // Efecto para cargar las canciones
   useEffect(() => {
     const fetchSongs = async () => {
       if (!currentUser) return;
       try {
         setLoading(true);
+        setError(null);
         const userSongs = await getUserSongs(currentUser.uid);
         setSongs(userSongs);
-        setVisibleSongs(0);
+        setVisibleSongs(userSongs.length); // Mostrar todas las canciones inmediatamente
+        setAnimationsReady(true);
       } catch (err) {
         console.error('Error fetching songs:', err);
         setError('Failed to load your songs. Please try again later.');
@@ -55,14 +60,33 @@ const LibraryPage: React.FC = () => {
     };
     fetchSongs();
   }, [currentUser]);
+
+  // Efecto para agregar los estilos de animación
   useEffect(() => {
-    if (!loading && songs.length > 0 && visibleSongs < songs.length) {
-      const timer = setTimeout(() => {
-        setVisibleSongs(prev => prev + 1);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, songs.length, visibleSongs]);
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = `
+      @keyframes slideUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-slideUp {
+        animation: slideUp 0.5s ease forwards;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    return () => {
+      if (document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
+    };
+  }, []);
+
   const handleDeleteSong = (songId: string, title: string) => {
     Swal.fire({
       title: 'Delete Song',
@@ -74,28 +98,28 @@ const LibraryPage: React.FC = () => {
       confirmButtonText: '<span style="color: black;">Yes, delete it!</span>',
       background: 'var(--background-darker)',
       color: 'white', 
-      // Removed the invalid titleColor property
     }).then(async (result) => {
       if (result.isConfirmed) {
-      try {
-      await deleteSongById(songId);
-      setSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
-      Swal.fire(
-      'Deleted!',
-      'Your song has been deleted.',
-      'success'
-      );
-      } catch (error) {
-      console.error('Error deleting song:', error);
-      Swal.fire(
-      'Error',
-      'There was a problem deleting your song. Please try again.',
-      'error'
-      );
-      }
+        try {
+          await deleteSongById(songId);
+          setSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
+          Swal.fire(
+            'Deleted!',
+            'Your song has been deleted.',
+            'success'
+          );
+        } catch (error) {
+          console.error('Error deleting song:', error);
+          Swal.fire(
+            'Error',
+            'There was a problem deleting your song. Please try again.',
+            'error'
+          );
+        }
       }
     });
   };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -104,6 +128,7 @@ const LibraryPage: React.FC = () => {
       day: 'numeric'
     });
   };
+
   return (
     <div className="bg-[var(--background-darker)] min-h-screen text-[var(--text-primary)]">
       <Header />
@@ -148,7 +173,7 @@ const LibraryPage: React.FC = () => {
             {songs.slice(0, visibleSongs).map((song, index) => (
               <div 
                 key={song.id}
-                className="bg-[#1a223a] rounded-lg overflow-hidden  cursor-pointer shadow-md hover:-translate-y-[1px] transition-transform duration-200 opacity-0 animate-slideUp"
+                className="bg-[#1a223a] rounded-lg overflow-hidden cursor-pointer shadow-md hover:-translate-y-[1px] transition-transform duration-200 opacity-0 animate-slideUp"
                 style={{ 
                   animationDelay: `${index * 100}ms`,
                   animationFillMode: 'forwards'
@@ -204,37 +229,5 @@ const LibraryPage: React.FC = () => {
     </div>
   );
 };
-const AnimationStyle = () => {
-  useEffect(() => {
-    const styleElement = document.createElement('style');
-    styleElement.innerHTML = `
-      @keyframes slideUp {
-        0% {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      .animate-slideUp {
-        animation: slideUp 0.5s ease forwards;
-      }
-    `;
-    document.head.appendChild(styleElement);
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
-  return null;
-};
-const EnhancedLibraryPage: React.FC = () => {
-  return (
-    <>
-      <AnimationStyle />
-      <LibraryPage />
-    </>
-  );
-};
-export default EnhancedLibraryPage;
+
+export default LibraryPage;
