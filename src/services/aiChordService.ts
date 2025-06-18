@@ -145,7 +145,42 @@ const chordToKeys: { [key: string]: string[] } = {
   "Cmaj11": ["C4", "E4", "G4", "B4", "D5", "F5"],
   "Fmaj11": ["F4", "A4", "C5", "E5", "G5", "Bb5"],
   "Cmaj13": ["C4", "E4", "G4", "B4", "D5", "A5"],
-  "Fmaj13": ["F4", "A4", "C5", "E5", "G5", "D6"]
+  "Fmaj13": ["F4", "A4", "C5", "E5", "G5", "D6"],
+  // Disminuidos (dim) y disminuidos séptima (dim7)
+  "Cdim": ["C4", "Eb4", "Gb4"],
+  "Cdim7": ["C4", "Eb4", "Gb4", "Bbb4"],
+  "C#dim": ["C#4", "E4", "G4"],
+  "C#dim7": ["C#4", "E4", "G4", "Bb4"],
+  "Dbdim": ["Db4", "E4", "G4"],
+  "Dbdim7": ["Db4", "E4", "G4", "Bbb4"],
+  "Ddim": ["D4", "F4", "Ab4"],
+  "Ddim7": ["D4", "F4", "Ab4", "Cb5"],
+  "D#dim": ["D#4", "F#4", "A4"],
+  "D#dim7": ["D#4", "F#4", "A4", "C5"],
+  "Ebdim": ["Eb4", "Gb4", "A4"],
+  "Ebdim7": ["Eb4", "Gb4", "A4", "Cb5"],
+  "Edim": ["E4", "G4", "Bb4"],
+  "Edim7": ["E4", "G4", "Bb4", "Db5"],
+  "Fdim": ["F4", "Ab4", "B4"],
+  "Fdim7": ["F4", "Ab4", "B4", "D4"],
+  "F#dim": ["F#4", "A4", "C5"],
+  "F#dim7": ["F#4", "A4", "C5", "Eb5"],
+  "Gbdim": ["Gb4", "A4", "C5"],
+  "Gbdim7": ["Gb4", "A4", "C5", "Ebb5"],
+  "Gdim": ["G4", "Bb4", "Db5"],
+  "Gdim7": ["G4", "Bb4", "Db5", "E5"],
+  "G#dim": ["G#4", "B4", "D5"],
+  "G#dim7": ["G#4", "B4", "D5", "F5"],
+  "Abdim": ["Ab4", "B4", "D5"],
+  "Abdim7": ["Ab4", "B4", "D5", "F5"],
+  "Adim": ["A4", "C5", "Eb5"],
+  "Adim7": ["A4", "C5", "Eb5", "Gb5"],
+  "A#dim": ["A#4", "C#5", "E5"],
+  "A#dim7": ["A#4", "C#5", "E5", "G5"],
+  "Bbdim": ["Bb4", "Db5", "E5"],
+  "Bbdim7": ["Bb4", "Db5", "E5", "G5"],
+  "Bdim": ["B4", "D5", "F5"],
+  "Bdim7": ["B4", "D5", "F5", "Ab5"],
 };
 
 class AIChordService {
@@ -265,6 +300,8 @@ Use only standard chord notation (C, Cm, F, G, Am, etc.).`;
       .replace(/♭/g, "b")
       .replace(/min7$/i, "m7")
       .replace(/min$/i, "m")
+      .replace(/dim7$/i, "dim7")
+      .replace(/dim$/i, "dim")
       .replace(/maj7$/i, "maj7")
       .replace(/maj9$/i, "maj9")
       .replace(/maj11$/i, "maj11")
