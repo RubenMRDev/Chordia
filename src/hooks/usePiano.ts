@@ -4,7 +4,7 @@ import pianoService from '../services/pianoService';
 interface UsePianoReturn {
   isReady: boolean;
   isLoading: boolean;
-  playNote: (note: string, duration?: string, velocity?: number) => Promise<void>;
+  playNote: (note: string, duration?: string, velocity?: number, octave?: number) => Promise<void>;
   playChord: (notes: string[], duration?: string, velocity?: number) => Promise<void>;
   stopAllNotes: () => void;
   initialize: () => Promise<void>;
@@ -28,11 +28,11 @@ export const usePiano = (): UsePianoReturn => {
     }
   }, [isReady, isLoading]);
 
-  const playNote = useCallback(async (note: string, duration: string = "8n", velocity: number = 0.8) => {
+  const playNote = useCallback(async (note: string, duration: string = "8n", velocity: number = 0.8, octave?: number) => {
     if (!isReady) {
       await initialize();
     }
-    await pianoService.playNote(note, duration, velocity);
+    await pianoService.playNote(note, duration, velocity, octave);
   }, [isReady, initialize]);
 
   const playChord = useCallback(async (notes: string[], duration: string = "4n", velocity: number = 0.6) => {

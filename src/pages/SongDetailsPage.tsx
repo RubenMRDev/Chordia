@@ -119,9 +119,28 @@ const SongDetailsPage: React.FC = () => {
   
   // Ref to track timeout for chord detection
   const chordCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to track key release timeouts
+  const keyReleaseTimeoutsRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
 
-  // Demo mode keyboard mapping
+  // Demo mode keyboard mapping with multiple octaves
   const demoKeyMapping: { [key: string]: number } = {
+    // Lower octave (C3 to E4)
+    'z': 48, // C3
+    'x': 49, // C#3
+    'c': 50, // D3
+    'v': 51, // D#3
+    'b': 52, // E3
+    'n': 53, // F3
+    'm': 54, // F#3
+    ',': 55, // G3
+    '.': 56, // G#3
+    '/': 57, // A3
+    '1': 58, // A#3
+    '2': 59, // B3
+    '3': 60, // C4
+    
+    // Middle octave (C4 to E5) - original mapping
     'a': 60, // C4
     'w': 61, // C#4
     's': 62, // D4
@@ -139,6 +158,21 @@ const SongDetailsPage: React.FC = () => {
     'l': 74, // D5
     'p': 75, // D#5
     ';': 76, // E5
+    
+    // Upper octave (C5 to E6)
+    'q': 72, // C5
+    'r': 73, // C#5
+    'i': 74, // D5
+    '[': 75, // D#5
+    ']': 76, // E5
+    '\\': 77, // F5
+    '4': 78, // F#5
+    '5': 79, // G5
+    '6': 80, // G#5
+    '7': 81, // A5
+    '8': 82, // A#5
+    '9': 83, // B5
+    '0': 84, // C6
   };
 
   useEffect(() => {
@@ -316,17 +350,42 @@ const SongDetailsPage: React.FC = () => {
     return noteNames[noteIndex];
   };
 
+  // Convert MIDI note number to note name with octave
+  const midiNoteToNoteNameWithOctave = (midiNote: number): string => {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const noteIndex = midiNote % 12;
+    const octave = Math.floor(midiNote / 12) - 1; // MIDI note 60 = C4
+    return `${noteNames[noteIndex]}${octave}`;
+  };
+
+  // Get octave from MIDI note number
+  const getOctaveFromMidiNote = (midiNote: number): number => {
+    return Math.floor(midiNote / 12) - 1; // MIDI note 60 = C4
+  };
+
   // Check if pressed keys match the current chord (note names only, no octave)
   const checkChordMatch = useCallback((pressedKeys: Set<number>, targetChord: ChordType): boolean => {
     const targetNoteNames = chordToNoteNames(targetChord);
-    const pressedNoteNames = new Set(Array.from(pressedKeys).map(n => midiNoteToNoteNameOnly(n)));
+    
+    // Group pressed keys by note name (without octave)
+    const pressedNotesByType = new Map<string, number[]>();
+    Array.from(pressedKeys).forEach(midiNote => {
+      const noteName = midiNoteToNoteNameOnly(midiNote);
+      if (!pressedNotesByType.has(noteName)) {
+        pressedNotesByType.set(noteName, []);
+      }
+      pressedNotesByType.get(noteName)!.push(midiNote);
+    });
+    
+    const pressedNoteNames = new Set(pressedNotesByType.keys());
     
     console.log('=== CHORD MATCH DEBUG ===');
     console.log('Target chord keys:', targetChord.keys);
     console.log('Target note names:', Array.from(targetNoteNames));
     console.log('Pressed MIDI notes:', Array.from(pressedKeys));
     console.log('Pressed note names:', Array.from(pressedNoteNames));
-    console.log('Pressed note names (detailed):', Array.from(pressedKeys).map(n => `${n}(${midiNoteToNoteName(n)}) -> ${midiNoteToNoteNameOnly(n)}`));
+    console.log('Pressed notes by type:', Object.fromEntries(pressedNotesByType));
+    console.log('Pressed note names (detailed):', Array.from(pressedKeys).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)}) -> ${midiNoteToNoteNameOnly(n)}`));
     
     // Check if all target notes are pressed (this is the main requirement)
     let allTargetNotesPressed = true;
@@ -338,7 +397,8 @@ const SongDetailsPage: React.FC = () => {
         missingNotes.push(noteName);
         allTargetNotesPressed = false;
       } else {
-        console.log(`✅ Found target note: ${noteName}`);
+        const octaves = pressedNotesByType.get(noteName)!;
+        console.log(`✅ Found target note: ${noteName} in octaves:`, octaves.map(n => getOctaveFromMidiNote(n)));
       }
     }
     
@@ -369,13 +429,20 @@ const SongDetailsPage: React.FC = () => {
     
     if (midiNote !== undefined) {
       event.preventDefault();
-      console.log(`Demo mode - Key pressed: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteName(midiNote)})`);
+      console.log(`Demo mode - Key pressed: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteNameWithOctave(midiNote)})`);
+      
+      // Clear any existing release timeout for this key
+      if (keyReleaseTimeoutsRef.current.has(midiNote)) {
+        clearTimeout(keyReleaseTimeoutsRef.current.get(midiNote)!);
+        keyReleaseTimeoutsRef.current.delete(midiNote);
+      }
       
       // Always play the note when pressed (for better user feedback)
       if (pianoReady) {
         const noteName = midiNoteToNoteName(midiNote);
         const noteWithoutOctave = noteName.replace(/\d/g, ''); // Remove octave number
-        playPianoNote(noteWithoutOctave, "8n", 0.7).catch(e => 
+        const octave = getOctaveFromMidiNote(midiNote);
+        playPianoNote(noteWithoutOctave, "8n", 0.7, octave).catch(e => 
           console.error('Error playing note:', e)
         );
       }
@@ -384,23 +451,21 @@ const SongDetailsPage: React.FC = () => {
       pressedKeysRef.current.add(midiNote);
       setPressedKeys(new Set(pressedKeysRef.current));
       
-      console.log('Current pressed keys (ref):', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteName(n)})`));
+      console.log('Current pressed keys (ref):', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)})`));
       console.log('Current chord index:', currentChordIndex);
       console.log('Current chord:', song.chords[currentChordIndex]);
       
-      // Clear any existing timeout
+      // Clear any existing chord check timeout
       if (chordCheckTimeoutRef.current) {
         clearTimeout(chordCheckTimeoutRef.current);
       }
       
       // Use a small timeout to allow all notes of the chord to be registered
       chordCheckTimeoutRef.current = setTimeout(() => {
-        console.log('Checking chord match after timeout with keys:', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteName(n)})`));
+        console.log('Checking chord match after timeout with keys:', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)})`));
         
         if (checkChordMatch(pressedKeysRef.current, song.chords[currentChordIndex])) {
           console.log('🎉 Demo mode: Chord matched! Advancing to next chord...');
-          
-          // Remove chord playback - only advance to next chord
           
           // Move to next chord immediately
           const nextIndex = (currentChordIndex + 1) % song.chords.length;
@@ -410,11 +475,15 @@ const SongDetailsPage: React.FC = () => {
           // Clear pressed keys immediately
           pressedKeysRef.current.clear();
           setPressedKeys(new Set());
+          
+          // Clear all key release timeouts
+          keyReleaseTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+          keyReleaseTimeoutsRef.current.clear();
         }
         chordCheckTimeoutRef.current = null;
-      }, 100); // Small delay to allow all notes to be registered
+      }, 150); // Slightly longer delay to ensure all keys are registered
     }
-  }, [isDemoMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, pianoReady, playPianoNote]);
+  }, [isDemoMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, playPianoNote]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (!isDemoMode) return;
@@ -424,13 +493,19 @@ const SongDetailsPage: React.FC = () => {
     
     if (midiNote !== undefined) {
       event.preventDefault();
-      console.log(`Demo mode - Key released: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteName(midiNote)})`);
+      console.log(`Demo mode - Key released: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteNameWithOctave(midiNote)})`);
       
-      // Update both the ref and the state
-      pressedKeysRef.current.delete(midiNote);
-      setPressedKeys(new Set(pressedKeysRef.current));
+      // Set a timeout to actually release the key after a delay
+      const releaseTimeout = setTimeout(() => {
+        console.log(`Actually releasing key: ${midiNote} (${midiNoteToNoteNameWithOctave(midiNote)})`);
+        pressedKeysRef.current.delete(midiNote);
+        setPressedKeys(new Set(pressedKeysRef.current));
+        keyReleaseTimeoutsRef.current.delete(midiNote);
+      }, 200); // Delay key release to allow chord checking
+      
+      keyReleaseTimeoutsRef.current.set(midiNote, releaseTimeout);
     }
-  }, [isDemoMode, midiNoteToNoteName]);
+  }, [isDemoMode, midiNoteToNoteNameWithOctave]);
 
   // Handle MIDI messages
   const handleMIDIMessage = useCallback((event: WebMidi.MIDIMessageEvent) => {
@@ -443,13 +518,14 @@ const SongDetailsPage: React.FC = () => {
     console.log(`MIDI message: status=${status}, note=${note}, velocity=${velocity}, isNoteOn=${isNoteOn}, isNoteOff=${isNoteOff}`);
     
     if (isNoteOn && velocity > 0) {
-      console.log(`MIDI - Note pressed: ${note} (${midiNoteToNoteName(note)})`);
+      console.log(`MIDI - Note pressed: ${note} (${midiNoteToNoteNameWithOctave(note)})`);
       
       // Always play the note when pressed (for better user feedback)
       if (pianoReady) {
         const noteName = midiNoteToNoteName(note);
         const noteWithoutOctave = noteName.replace(/\d/g, ''); // Remove octave number
-        playPianoNote(noteWithoutOctave, "8n", velocity / 127).catch(e => 
+        const octave = getOctaveFromMidiNote(note);
+        playPianoNote(noteWithoutOctave, "8n", velocity / 127, octave).catch(e => 
           console.error('Error playing note:', e)
         );
       }
@@ -458,7 +534,7 @@ const SongDetailsPage: React.FC = () => {
       pressedKeysRef.current.add(note);
       setPressedKeys(new Set(pressedKeysRef.current));
       
-      console.log('Current pressed keys (ref):', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteName(n)})`));
+      console.log('Current pressed keys (ref):', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)})`));
       console.log('Current chord index:', currentChordIndex);
       console.log('Current chord:', song.chords[currentChordIndex]);
       
@@ -469,12 +545,10 @@ const SongDetailsPage: React.FC = () => {
       
       // Use a small timeout to allow all notes of the chord to be registered
       chordCheckTimeoutRef.current = setTimeout(() => {
-        console.log('Checking chord match after timeout with keys:', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteName(n)})`));
+        console.log('Checking chord match after timeout with keys:', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)})`));
         
         if (checkChordMatch(pressedKeysRef.current, song.chords[currentChordIndex])) {
           console.log('🎉 MIDI: Chord matched! Advancing to next chord...');
-          
-          // Remove chord playback - only advance to next chord
           
           // Move to next chord immediately
           const nextIndex = (currentChordIndex + 1) % song.chords.length;
@@ -486,15 +560,21 @@ const SongDetailsPage: React.FC = () => {
           setPressedKeys(new Set());
         }
         chordCheckTimeoutRef.current = null;
-      }, 100); // Small delay to allow all notes to be registered
+      }, 150); // Slightly longer delay to ensure all keys are registered
     } else if (isNoteOff || (isNoteOn && velocity === 0)) {
-      console.log(`MIDI - Note released: ${note} (${midiNoteToNoteName(note)})`);
+      console.log(`MIDI - Note released: ${note} (${midiNoteToNoteNameWithOctave(note)})`);
       
-      // Update both the ref and the state
-      pressedKeysRef.current.delete(note);
-      setPressedKeys(new Set(pressedKeysRef.current));
+      // Set a timeout to actually release the key after a delay
+      const releaseTimeout = setTimeout(() => {
+        console.log(`Actually releasing MIDI key: ${note} (${midiNoteToNoteNameWithOctave(note)})`);
+        pressedKeysRef.current.delete(note);
+        setPressedKeys(new Set(pressedKeysRef.current));
+        keyReleaseTimeoutsRef.current.delete(note);
+      }, 200); // Delay key release to allow chord checking
+      
+      keyReleaseTimeoutsRef.current.set(note, releaseTimeout);
     }
-  }, [isPlayYourselfMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, pianoReady, playPianoNote]);
+  }, [isPlayYourselfMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, playPianoNote]);
 
   // Set up keyboard event listeners for demo mode
   useEffect(() => {
@@ -588,6 +668,9 @@ const SongDetailsPage: React.FC = () => {
         clearTimeout(chordCheckTimeoutRef.current);
         chordCheckTimeoutRef.current = null;
       }
+      // Clear all key release timeouts
+      keyReleaseTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      keyReleaseTimeoutsRef.current.clear();
     }
   }, []); // Empty dependency array - only run on mount/unmount
 
@@ -601,6 +684,9 @@ const SongDetailsPage: React.FC = () => {
         clearTimeout(chordCheckTimeoutRef.current);
         chordCheckTimeoutRef.current = null;
       }
+      // Clear all key release timeouts
+      keyReleaseTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      keyReleaseTimeoutsRef.current.clear();
       disconnectDevice();
       setMidiAccessRequested(false);
       setMidiActive(false);
@@ -619,6 +705,9 @@ const SongDetailsPage: React.FC = () => {
       clearTimeout(chordCheckTimeoutRef.current);
       chordCheckTimeoutRef.current = null;
     }
+    // Clear all key release timeouts
+    keyReleaseTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+    keyReleaseTimeoutsRef.current.clear();
     // Stop all piano sounds when resetting
     stopAllPianoSounds();
   }, [stopAllPianoSounds]);
@@ -947,10 +1036,15 @@ const SongDetailsPage: React.FC = () => {
                           Demo Mode - Use your computer keyboard
                         </div>
                         <div className="text-xs text-[#a0aec0] mb-2">
-                          Keys: A S D F G H J K L (white keys) | W E T Y U O P (black keys)
+                          <div className="font-bold text-[#00E676] mb-1">Lower Octave (C3-C4):</div>
+                          <div>Z X C V B N M , . / 1 2 3</div>
+                          <div className="font-bold text-[#00E676] mb-1 mt-2">Middle Octave (C4-E5):</div>
+                          <div>A S D F G H J K L (white keys) | W E T Y U O P (black keys)</div>
+                          <div className="font-bold text-[#00E676] mb-1 mt-2">Upper Octave (C5-C6):</div>
+                          <div>Q R I [ ] \ 4 5 6 7 8 9 0</div>
                         </div>
                         <div className="text-xs text-[#a0aec0]">
-                          Play the highlighted chord to advance
+                          Play the highlighted chord in any octave to advance
                         </div>
                       </>
                     ) : (
@@ -963,7 +1057,7 @@ const SongDetailsPage: React.FC = () => {
                           )}
                         </div>
                         <div className="text-xs text-[#a0aec0]">
-                          Play the highlighted chord on your MIDI keyboard to advance
+                          Play the highlighted chord on your MIDI keyboard in any octave to advance
                         </div>
                       </>
                     )}
@@ -987,22 +1081,21 @@ const SongDetailsPage: React.FC = () => {
                             <div>Chord Index: {currentChordIndex}</div>
                             <div>Expected Notes: {song?.chords[currentChordIndex]?.keys.join(', ')}</div>
                             <div>Expected Note Names: {song?.chords[currentChordIndex] ? Array.from(chordToNoteNames(song.chords[currentChordIndex])).join(', ') : ''}</div>
-                            <div>Pressed Keys: {Array.from(pressedKeys).map(n => midiNoteToNoteName(n)).join(', ') || 'None'}</div>
-                            <div>Pressed Note Names: {Array.from(pressedKeys).map(n => midiNoteToNoteNameOnly(n)).join(', ') || 'None'}</div>
+                            <div>Pressed Keys: {Array.from(pressedKeys).map(n => midiNoteToNoteNameWithOctave(n)).join(', ') || 'None'}</div>
+                            <div>Pressed Note Names: {(() => {
+                              const notesByType = new Map<string, number[]>();
+                              Array.from(pressedKeys).forEach(note => {
+                                const noteName = midiNoteToNoteNameOnly(note);
+                                if (!notesByType.has(noteName)) {
+                                  notesByType.set(noteName, []);
+                                }
+                                notesByType.get(noteName)!.push(note);
+                              });
+                              return Array.from(notesByType.entries()).map(([noteName, midiNotes]) => 
+                                `${noteName}(${midiNotes.length})`
+                              ).join(', ') || 'None';
+                            })()}</div>
                             <div>Keys Count: {pressedKeys.size}</div>
-                            <div className="mt-2 p-2 bg-[#1a2332] rounded border border-[#a0aec0]">
-                              <div className="font-bold text-[#00E676] mb-1">MIDI Note Mapping:</div>
-                              <div className="text-xs space-y-1">
-                                {Array.from(pressedKeys).map(n => (
-                                  <div key={n} className="flex justify-between">
-                                    <span>MIDI {n}</span>
-                                    <span>→ {midiNoteToNoteName(n)}</span>
-                                    <span>→ {midiNoteToNoteNameOnly(n)}</span>
-                                  </div>
-                                ))}
-                                {pressedKeys.size === 0 && <div className="text-[#a0aec0]">No keys pressed</div>}
-                              </div>
-                            </div>
                           </div>
                           <div className="flex gap-2 mt-2">
                             <button

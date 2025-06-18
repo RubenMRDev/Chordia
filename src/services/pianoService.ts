@@ -56,7 +56,7 @@ class PianoService {
     }
   }
 
-  async playNote(note: string, duration: string = "8n", velocity: number = 0.8): Promise<void> {
+  async playNote(note: string, duration: string = "8n", velocity: number = 0.8, octave?: number): Promise<void> {
     if (!this.isInitialized) {
       await this.initialize();
     }
@@ -68,7 +68,7 @@ class PianoService {
 
     try {
       // Convert note format (e.g., "C", "Cs", "D" to "C4", "C#4", "D4")
-      const normalizedNote = this.normalizeNote(note);
+      const normalizedNote = this.normalizeNote(note, octave);
       this.piano.triggerAttackRelease(normalizedNote, duration, undefined, velocity);
     } catch (error) {
       console.error(`Error playing note ${note}:`, error);
@@ -111,19 +111,22 @@ class PianoService {
     }
   }
 
-  private normalizeNote(note: string): string {
+  private normalizeNote(note: string, octave?: number): string {
+    // Use provided octave or default to 4
+    const targetOctave = octave !== undefined ? octave : 4;
+    
     // Convert note format from "C", "Cs", "D", etc. to "C4", "C#4", "D4", etc.
     const noteMap: { [key: string]: string } = {
-      'C': 'C4', 'Cs': 'C#4', 'C#': 'C#4',
-      'D': 'D4', 'Ds': 'D#4', 'D#': 'D#4',
-      'E': 'E4', 'Es': 'E#4', 'E#': 'E#4',
-      'F': 'F4', 'Fs': 'F#4', 'F#': 'F#4',
-      'G': 'G4', 'Gs': 'G#4', 'G#': 'G#4',
-      'A': 'A4', 'As': 'A#4', 'A#': 'A#4',
-      'B': 'B4', 'Bs': 'B#4', 'B#': 'B#4',
+      'C': `C${targetOctave}`, 'Cs': `C#${targetOctave}`, 'C#': `C#${targetOctave}`,
+      'D': `D${targetOctave}`, 'Ds': `D#${targetOctave}`, 'D#': `D#${targetOctave}`,
+      'E': `E${targetOctave}`, 'Es': `E#${targetOctave}`, 'E#': `E#${targetOctave}`,
+      'F': `F${targetOctave}`, 'Fs': `F#${targetOctave}`, 'F#': `F#${targetOctave}`,
+      'G': `G${targetOctave}`, 'Gs': `G#${targetOctave}`, 'G#': `G#${targetOctave}`,
+      'A': `A${targetOctave}`, 'As': `A#${targetOctave}`, 'A#': `A#${targetOctave}`,
+      'B': `B${targetOctave}`, 'Bs': `B#${targetOctave}`, 'B#': `B#${targetOctave}`,
     };
 
-    return noteMap[note] || 'C4'; // Default to C4 if note not found
+    return noteMap[note] || `C${targetOctave}`; // Default to C in target octave if note not found
   }
 
   // Method to get available notes for testing
