@@ -29,6 +29,5 @@ export async function getUserSongs(userId: string) {
 }
 
 export async function deleteAllUserSongs(userId: string) {
-  // Suponiendo que el backend tenga un endpoint para esto, si no, habría que implementarlo
   await fetch(`${API_URL}/songs/user/${userId}`, { method: 'DELETE' });
 } 

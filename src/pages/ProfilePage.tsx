@@ -26,7 +26,8 @@ const ProfilePage: React.FC = () => {
             getUserSongs(currentUser.uid)
           ]);
           setProfileData(profile);
-          setSongs(userSongs || []);
+          const filteredSongs = (userSongs || []).filter((song: Song) => song.userId === currentUser.uid);
+          setSongs(filteredSongs);
         } catch (error) {
           console.error("Error fetching user data:", error);
           Swal.fire({

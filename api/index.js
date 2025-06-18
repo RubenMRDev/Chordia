@@ -6,11 +6,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Obtener todas las canciones
+// Obtener todas las canciones (o solo las de un usuario si se pasa userId)
 app.get('/songs', async (req, res) => {
-  const snapshot = await db.collection('songs').get();
-  const songs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  res.json(songs);
+  try {
+    const { userId } = req.query;
+    let snapshot;
+    if (userId) {
+      snapshot = await db.collection('songs').where('userId', '==', userId).get();
+    } else {
+      snapshot = await db.collection('songs').get();
+    }
+    const songs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(songs);
+  } catch (error) {
+    res.status(500).send('Server error');
+  }
 });
 
 // Obtener una canción por ID
@@ -87,6 +97,22 @@ app.get('/users', async (req, res) => {
     const snapshot = await db.collection('users').get();
     const users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     res.json(users);
+  } catch (error) {
+    res.status(500).send('Server error');
+  }
+});
+
+// Eliminar todas las canciones de un usuario
+app.delete('/songs/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const snapshot = await db.collection('songs').where('userId', '==', userId).get();
+    const batch = db.batch();
+    snapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+    res.send('All user songs deleted');
   } catch (error) {
     res.status(500).send('Server error');
   }
