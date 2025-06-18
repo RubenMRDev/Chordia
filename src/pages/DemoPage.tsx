@@ -124,26 +124,42 @@ const DemoPage = () => {
       setSelectedKeys(normalizedKeys);
     }, 50);
   }
-  const handleKeyClick = (note: string, index: number) => {
+  const handleKeyClick = async (note: string, index: number) => {
     const normalized = normalizeNote(note);
     const noteWithIndex = `${normalized}-${index}`;
     console.log("Clicked on note:", noteWithIndex);
     console.log("Current selected keys:", selectedKeys);
+    
+    // Always play the note when clicked (for better user feedback)
+    if (pianoReady) {
+      try {
+        await playPianoNote(note, "8n", 0.7);
+      } catch (error) {
+        console.error('Error playing piano note:', error);
+      }
+    }
+    
     setSelectedKeys(prev => {
       const alreadySelectedIndex = prev.findIndex(key => key === noteWithIndex);
       if (alreadySelectedIndex >= 0) {
         return prev.filter((_, idx) => idx !== alreadySelectedIndex);
       } else {
-        playPianoNote(note);
         return [...prev, noteWithIndex];
       }
     });
   };
-  const playChordSound = (chord: ChordType) => {
-    chord.keys.forEach(key => {
-      const note = key.split('-')[0];
-      playPianoNote(note);
-    });
+  const playChordSound = async (chord: ChordType) => {
+    if (pianoReady) {
+      try {
+        const notes = chord.keys.map(key => {
+          const note = key.split('-')[0];
+          return note.replace('#', 's'); // Convert # to s for consistency
+        });
+        await playPianoChord(notes, "4n", 0.6);
+      } catch (error) {
+        console.error('Error playing chord sound:', error);
+      }
+    }
   };
   const handleSaveChord = () => {
     if (selectedKeys.length > 0) {

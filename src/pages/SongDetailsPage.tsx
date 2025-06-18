@@ -92,7 +92,7 @@ const SongDetailsPage: React.FC = () => {
   const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
   
   // Piano hook
-  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes } = usePiano();
+  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes, playNote: playPianoNote } = usePiano();
   
   // MIDI hook
   const {
@@ -348,6 +348,15 @@ const SongDetailsPage: React.FC = () => {
       event.preventDefault();
       console.log(`Demo mode - Key pressed: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteName(midiNote)})`);
       
+      // Always play the note when pressed (for better user feedback)
+      if (pianoReady) {
+        const noteName = midiNoteToNoteName(midiNote);
+        const noteWithoutOctave = noteName.replace(/\d/g, ''); // Remove octave number
+        playPianoNote(noteWithoutOctave, "8n", 0.7).catch(e => 
+          console.error('Error playing note:', e)
+        );
+      }
+      
       setPressedKeys(prev => {
         const newPressedKeys = new Set(prev);
         newPressedKeys.add(midiNote);
@@ -377,7 +386,7 @@ const SongDetailsPage: React.FC = () => {
         return newPressedKeys;
       });
     }
-  }, [isDemoMode, song, currentChordIndex, pianoSoundEnabled, playChordSound, checkChordMatch, midiNoteToNoteName]);
+  }, [isDemoMode, song, currentChordIndex, pianoSoundEnabled, playChordSound, checkChordMatch, midiNoteToNoteName, pianoReady, playPianoNote]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (!isDemoMode) return;
@@ -409,6 +418,15 @@ const SongDetailsPage: React.FC = () => {
     
     if (isNoteOn && velocity > 0) {
       console.log(`MIDI - Note pressed: ${note} (${midiNoteToNoteName(note)})`);
+      
+      // Always play the note when pressed (for better user feedback)
+      if (pianoReady) {
+        const noteName = midiNoteToNoteName(note);
+        const noteWithoutOctave = noteName.replace(/\d/g, ''); // Remove octave number
+        playPianoNote(noteWithoutOctave, "8n", velocity / 127).catch(e => 
+          console.error('Error playing note:', e)
+        );
+      }
       
       setPressedKeys(prev => {
         const newPressedKeys = new Set(prev);
@@ -447,7 +465,7 @@ const SongDetailsPage: React.FC = () => {
         return newPressedKeys;
       });
     }
-  }, [isPlayYourselfMode, song, currentChordIndex, pianoSoundEnabled, playChordSound, checkChordMatch, midiNoteToNoteName]);
+  }, [isPlayYourselfMode, song, currentChordIndex, pianoSoundEnabled, playChordSound, checkChordMatch, midiNoteToNoteName, pianoReady, playPianoNote]);
 
   // Set up keyboard event listeners for demo mode
   useEffect(() => {
