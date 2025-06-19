@@ -240,6 +240,23 @@ const ProfilePage: React.FC = () => {
           >
             Edit Profile
           </Link>
+          {userProfile?.role === 'admin' && (
+            <Link
+              to="/admin/songs"
+              style={{
+                backgroundColor: "#ff6b35",
+                color: "white",
+                padding: "0.5rem 1.25rem",
+                borderRadius: "4px",
+                border: "none",
+                fontWeight: "bold",
+                cursor: "pointer",
+                textDecoration: "none",
+              }}
+            >
+              Manage Songs
+            </Link>
+          )}
           <button
             style={{
               backgroundColor: "#dc3545",

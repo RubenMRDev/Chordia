@@ -28,6 +28,7 @@ interface AuthContextType {
   error: string | null
   setError: (error: string | null) => void
   updateProfileInContext: () => Promise<void>
+  refreshUserProfile: () => Promise<UserProfile | null>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               bio: "",
               location: "",
               website: "",
+              role: "user",
               joinDate: new Date().toISOString(),
               socialLinks: {
                 instagram: "",
@@ -113,6 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           bio: "",
           location: "",
           website: "",
+          role: "user",
           joinDate: new Date().toISOString(),
           socialLinks: {
             instagram: "",
@@ -166,22 +169,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
       if (result.user) {
-        await createUserProfile({
-          uid: result.user.uid,
-          displayName: result.user.displayName || "",
-          email: result.user.email || "",
-          photoURL: result.user.photoURL || "",
-          bio: "",
-          location: "",
-          website: "",
-          joinDate: new Date().toISOString(),
-          socialLinks: {
-            instagram: "",
-            twitter: "",
-            soundcloud: "",
-            spotify: ""
-          }
-        })
+        // Verificar si el usuario ya existe
+        const existingProfile = await getUserProfile(result.user.uid)
+        if (!existingProfile) {
+          // Solo crear perfil si no existe
+          await createUserProfile({
+            uid: result.user.uid,
+            displayName: result.user.displayName || "",
+            email: result.user.email || "",
+            photoURL: result.user.photoURL || "",
+            bio: "",
+            location: "",
+            website: "",
+            role: "user", // Solo para usuarios nuevos
+            joinDate: new Date().toISOString(),
+            socialLinks: {
+              instagram: "",
+              twitter: "",
+              soundcloud: "",
+              spotify: ""
+            }
+          })
+        }
+        // Si el usuario ya existe, no sobrescribimos su perfil
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -199,22 +209,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const provider = new FacebookAuthProvider()
       const result = await signInWithPopup(auth, provider)
       if (result.user) {
-        await createUserProfile({
-          uid: result.user.uid,
-          displayName: result.user.displayName || "",
-          email: result.user.email || "",
-          photoURL: result.user.photoURL || "",
-          bio: "",
-          location: "",
-          website: "",
-          joinDate: new Date().toISOString(),
-          socialLinks: {
-            instagram: "",
-            twitter: "",
-            soundcloud: "",
-            spotify: ""
-          }
-        })
+        // Verificar si el usuario ya existe
+        const existingProfile = await getUserProfile(result.user.uid)
+        if (!existingProfile) {
+          // Solo crear perfil si no existe
+          await createUserProfile({
+            uid: result.user.uid,
+            displayName: result.user.displayName || "",
+            email: result.user.email || "",
+            photoURL: result.user.photoURL || "",
+            bio: "",
+            location: "",
+            website: "",
+            role: "user", // Solo para usuarios nuevos
+            joinDate: new Date().toISOString(),
+            socialLinks: {
+              instagram: "",
+              twitter: "",
+              soundcloud: "",
+              spotify: ""
+            }
+          })
+        }
+        // Si el usuario ya existe, no sobrescribimos su perfil
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -232,12 +249,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const profile = await getUserProfile(currentUser.uid);
         if (profile) {
           setUserProfile(profile);
+          console.log('✅ Perfil actualizado en contexto:', profile.role);
         }
       } catch (error) {
         console.error("Error updating user profile in context:", error);
       }
     }
   }
+
+  // Función para forzar la actualización del perfil
+  const refreshUserProfile = async () => {
+    if (currentUser) {
+      try {
+        const profile = await getUserProfile(currentUser.uid);
+        if (profile) {
+          setUserProfile(profile);
+          console.log('🔄 Perfil refrescado:', profile.role);
+          return profile;
+        }
+      } catch (error) {
+        console.error("Error refreshing user profile:", error);
+      }
+    }
+    return null;
+  };
 
   const value = {
     currentUser,
@@ -251,6 +286,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error,
     setError,
     updateProfileInContext,
+    refreshUserProfile,
   }
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>

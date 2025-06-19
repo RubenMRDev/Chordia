@@ -7,7 +7,9 @@ import DiscoveryPage from "./pages/DiscoverPage"
 import LibraryPage from "./pages/LibraryPage"
 import ProfilePage from "./pages/ProfilePage"
 import EditProfilePage from "./pages/EditProfilePage"
+import AdminSongManagementPage from "./pages/AdminSongManagementPage"
 import ProtectedRoute from "./components/ProtectedRoute"
+import AdminRoute from "./components/AdminRoute"
 import { useAuth } from "./context/AuthContext"
 import CreateSongPage from "./pages/CreateSongPage"
 import SongDetailsPage from "./pages/SongDetailsPage"
@@ -77,6 +79,14 @@ function App() {
           <ProtectedRoute>
             <EditProfilePage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/songs"
+        element={
+          <AdminRoute>
+            <AdminSongManagementPage />
+          </AdminRoute>
         }
       />
       <Route

@@ -1,27 +1,22 @@
-const API_URL = 'http://localhost:4000';
+import { getUserProfile as getUserProfileFirebase, createUserProfile as createUserProfileFirebase, updateUserProfile as updateUserProfileFirebase, deleteUserProfile as deleteUserProfileFirebase, updateUserRole as updateUserRoleFirebase } from '../firebase/userService';
+import type { UserProfile } from '../types/firebase';
 
-export async function getUserProfile(uid: string) {
-  const res = await fetch(`${API_URL}/users/${uid}`);
-  return res.json();
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  return getUserProfileFirebase(uid);
 }
 
-export async function createUserProfile(profile: any) {
-  const res = await fetch(`${API_URL}/users`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(profile),
-  });
-  return res.json();
+export async function createUserProfile(profile: UserProfile): Promise<void> {
+  return createUserProfileFirebase(profile);
 }
 
-export async function updateUserProfile(uid: string, profile: any) {
-  await fetch(`${API_URL}/users/${uid}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(profile),
-  });
+export async function updateUserProfile(uid: string, profile: Partial<UserProfile>): Promise<void> {
+  return updateUserProfileFirebase(uid, profile);
 }
 
-export async function deleteUserProfile(uid: string) {
-  await fetch(`${API_URL}/users/${uid}`, { method: 'DELETE' });
+export async function deleteUserProfile(uid: string): Promise<void> {
+  return deleteUserProfileFirebase(uid);
+}
+
+export async function updateUserRole(uid: string, role: 'user' | 'admin'): Promise<void> {
+  return updateUserRoleFirebase(uid, role);
 } 

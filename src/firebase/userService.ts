@@ -9,6 +9,7 @@ export interface UserProfile {
   location?: string
   website?: string
   joinDate: string
+  role: 'user' | 'admin'
   socialLinks?: {
     instagram?: string
     twitter?: string
@@ -23,6 +24,7 @@ export const createUserProfile = async (user: UserProfile): Promise<void> => {
     if (!userDoc.exists()) {
       await setDoc(userRef, {
         ...user,
+        role: user.role || 'user',
         joinDate: new Date().toISOString(),
       })
     } else {
@@ -62,6 +64,17 @@ export const deleteUserProfile = async (userId: string): Promise<void> => {
     await deleteDoc(userDocRef);
   } catch (error) {
     console.error('Error deleting user profile:', error);
+    throw error;
+  }
+};
+
+// Función para actualizar el rol de un usuario a admin
+export const updateUserRole = async (userId: string, role: 'user' | 'admin'): Promise<void> => {
+  const userRef = doc(db, "users", userId);
+  try {
+    await updateDoc(userRef, { role });
+  } catch (error) {
+    console.error("Error updating user role:", error);
     throw error;
   }
 };

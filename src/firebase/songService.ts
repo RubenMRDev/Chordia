@@ -110,3 +110,44 @@ export const deleteAllUserSongs = async (userId: string): Promise<void> => {
     throw error;
   }
 };
+
+// Funciones para gestión de canciones por admins
+export const getAllSongsWithUserInfo = async (): Promise<(Song & { userDisplayName: string })[]> => {
+  try {
+    const q = query(
+      collection(db, "songs"),
+      orderBy("createdAt", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    const songs: (Song & { userDisplayName: string })[] = [];
+    
+    for (const docSnapshot of querySnapshot.docs) {
+      const data = docSnapshot.data() as Omit<Song, 'id'>;
+      const song = { id: docSnapshot.id, ...data };
+      
+      // Obtener información del usuario
+      try {
+        const userDoc = await getDoc(doc(db, "users", data.userId));
+        const userDisplayName = userDoc.exists() ? userDoc.data().displayName : 'Usuario desconocido';
+        songs.push({ ...song, userDisplayName });
+      } catch (error) {
+        console.error(`Error getting user info for song ${docSnapshot.id}:`, error);
+        songs.push({ ...song, userDisplayName: 'Usuario desconocido' });
+      }
+    }
+    
+    return songs;
+  } catch (error) {
+    console.error("Error getting all songs with user info:", error);
+    throw error;
+  }
+};
+
+export const deleteSongAsAdmin = async (songId: string): Promise<void> => {
+  try {
+    await deleteDoc(doc(db, "songs", songId));
+  } catch (error) {
+    console.error("Error deleting song as admin:", error);
+    throw error;
+  }
+};

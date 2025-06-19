@@ -48,6 +48,7 @@ export interface UserProfile {
   location?: string;
   website?: string;
   joinDate: string;
+  role: 'user' | 'admin';
   socialLinks?: {
     instagram?: string;
     twitter?: string;
