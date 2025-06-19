@@ -109,7 +109,7 @@ export default function CreateSongPage() {
   const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState<boolean>(false);
   
   // Piano hook
-  const { isReady: pianoReady, playNote: playPianoNote } = usePiano();
+  const {} = usePiano();
   
   const whiteKeys = ["C", "D", "E", "F", "G", "A", "B"]
   const hasBlackKeyAfter = [true, true, false, true, true, true, false]
@@ -141,16 +141,7 @@ export default function CreateSongPage() {
     setOctave(newOctave)
   }
   
-  const handleKeyClick = async (note: string) => {
-    // Play piano sound when key is clicked
-    if (pianoReady) {
-      try {
-        await playPianoNote(note, "8n", 0.7);
-      } catch (error) {
-        console.error('Error playing piano note:', error);
-      }
-    }
-    
+  const handleKeyClick = (note: string) => {
     setSelectedKeys(prev => {
       if (prev.includes(note)) {
         return prev.filter(key => key !== note);
