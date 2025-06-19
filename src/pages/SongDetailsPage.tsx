@@ -119,7 +119,7 @@ const SongDetailsPage: React.FC = () => {
   const [midiActive, setMidiActive] = useState<boolean>(false);
   
   // Piano hook
-  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes, playNote: playPianoNote } = usePiano();
+  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes, triggerAttack, triggerRelease } = usePiano();
   
   // MIDI hook
   const {
@@ -497,11 +497,9 @@ const SongDetailsPage: React.FC = () => {
       // Always play the note when pressed (for better user feedback)
       if (pianoReady) {
         const noteName = midiNoteToNoteName(midiNote);
-        const noteWithoutOctave = noteName.replace(/\d/g, ''); // Remove octave number
+        const noteWithoutOctave = noteName.replace(/\d/g, '');
         const octave = getOctaveFromMidiNote(midiNote);
-        playPianoNote(noteWithoutOctave, "8n", 0.7, octave).catch(e => 
-          console.error('Error playing note:', e)
-        );
+        triggerAttack(noteWithoutOctave, 0.7, octave);
       }
       
       // Update both the ref and the state
@@ -540,7 +538,7 @@ const SongDetailsPage: React.FC = () => {
         chordCheckTimeoutRef.current = null;
       }, 150); // Slightly longer delay to ensure all keys are registered
     }
-  }, [isDemoMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, playPianoNote]);
+  }, [isDemoMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, triggerAttack]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (!isDemoMode) return;
@@ -551,18 +549,18 @@ const SongDetailsPage: React.FC = () => {
     if (midiNote !== undefined) {
       event.preventDefault();
       console.log(`Demo mode - Key released: ${key} -> MIDI note: ${midiNote} (${midiNoteToNoteNameWithOctave(midiNote)})`);
-      
-      // Set a timeout to actually release the key after a delay
-      const releaseTimeout = setTimeout(() => {
-        console.log(`Actually releasing key: ${midiNote} (${midiNoteToNoteNameWithOctave(midiNote)})`);
-        pressedKeysRef.current.delete(midiNote);
-        setPressedKeys(new Set(pressedKeysRef.current));
-        keyReleaseTimeoutsRef.current.delete(midiNote);
-      }, 200); // Delay key release to allow chord checking
-      
-      keyReleaseTimeoutsRef.current.set(midiNote, releaseTimeout);
+      // Llama a triggerRelease inmediatamente
+      if (pianoReady) {
+        const noteName = midiNoteToNoteName(midiNote);
+        const noteWithoutOctave = noteName.replace(/\d/g, '');
+        const octave = getOctaveFromMidiNote(midiNote);
+        triggerRelease(noteWithoutOctave, octave);
+      }
+      pressedKeysRef.current.delete(midiNote);
+      setPressedKeys(new Set(pressedKeysRef.current));
+      keyReleaseTimeoutsRef.current.delete(midiNote);
     }
-  }, [isDemoMode, midiNoteToNoteNameWithOctave]);
+  }, [isDemoMode, midiNoteToNoteNameWithOctave, pianoReady, triggerRelease, currentKeyMapping]);
 
   // Handle MIDI messages
   const handleMIDIMessage = useCallback((event: WebMidi.MIDIMessageEvent) => {
@@ -580,11 +578,9 @@ const SongDetailsPage: React.FC = () => {
       // Always play the note when pressed (for better user feedback)
       if (pianoReady) {
         const noteName = midiNoteToNoteName(note);
-        const noteWithoutOctave = noteName.replace(/\d/g, ''); // Remove octave number
+        const noteWithoutOctave = noteName.replace(/\d/g, '');
         const octave = getOctaveFromMidiNote(note);
-        playPianoNote(noteWithoutOctave, "8n", velocity / 127, octave).catch(e => 
-          console.error('Error playing note:', e)
-        );
+        triggerAttack(noteWithoutOctave, velocity / 127, octave);
       }
       
       // Update both the ref and the state
@@ -620,18 +616,18 @@ const SongDetailsPage: React.FC = () => {
       }, 150); // Slightly longer delay to ensure all keys are registered
     } else if (isNoteOff || (isNoteOn && velocity === 0)) {
       console.log(`MIDI - Note released: ${note} (${midiNoteToNoteNameWithOctave(note)})`);
-      
-      // Set a timeout to actually release the key after a delay
-      const releaseTimeout = setTimeout(() => {
-        console.log(`Actually releasing MIDI key: ${note} (${midiNoteToNoteNameWithOctave(note)})`);
-        pressedKeysRef.current.delete(note);
-        setPressedKeys(new Set(pressedKeysRef.current));
-        keyReleaseTimeoutsRef.current.delete(note);
-      }, 200); // Delay key release to allow chord checking
-      
-      keyReleaseTimeoutsRef.current.set(note, releaseTimeout);
+      // Llama a triggerRelease inmediatamente
+      if (pianoReady) {
+        const noteName = midiNoteToNoteName(note);
+        const noteWithoutOctave = noteName.replace(/\d/g, '');
+        const octave = getOctaveFromMidiNote(note);
+        triggerRelease(noteWithoutOctave, octave);
+      }
+      pressedKeysRef.current.delete(note);
+      setPressedKeys(new Set(pressedKeysRef.current));
+      keyReleaseTimeoutsRef.current.delete(note);
     }
-  }, [isPlayYourselfMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, playPianoNote]);
+  }, [isPlayYourselfMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, triggerRelease]);
 
   // Set up keyboard event listeners for demo mode
   useEffect(() => {

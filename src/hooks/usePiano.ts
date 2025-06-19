@@ -8,6 +8,8 @@ interface UsePianoReturn {
   playChord: (notes: string[], duration?: string, velocity?: number) => Promise<void>;
   stopAllNotes: () => void;
   initialize: () => Promise<void>;
+  triggerAttack: (note: string, velocity?: number, octave?: number) => void;
+  triggerRelease: (note: string, octave?: number) => void;
 }
 
 export const usePiano = (): UsePianoReturn => {
@@ -46,6 +48,14 @@ export const usePiano = (): UsePianoReturn => {
     pianoService.stopAllNotes();
   }, []);
 
+  const triggerAttack = useCallback((note: string, velocity: number = 0.8, octave?: number) => {
+    pianoService.triggerAttack(note, velocity, octave);
+  }, []);
+
+  const triggerRelease = useCallback((note: string, octave?: number) => {
+    pianoService.triggerRelease(note, octave);
+  }, []);
+
   // Auto-initialize when hook is first used
   useEffect(() => {
     if (!isReady && !isLoading) {
@@ -59,6 +69,8 @@ export const usePiano = (): UsePianoReturn => {
     playNote,
     playChord,
     stopAllNotes,
-    initialize
+    initialize,
+    triggerAttack,
+    triggerRelease
   };
 }; 

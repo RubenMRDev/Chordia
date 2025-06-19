@@ -138,6 +138,18 @@ class PianoService {
   isReady(): boolean {
     return this.isInitialized && this.piano !== null;
   }
+
+  triggerAttack(note: string, velocity: number = 0.8, octave?: number): void {
+    if (!this.piano) return;
+    const normalizedNote = this.normalizeNote(note, octave);
+    this.piano.triggerAttack(normalizedNote, undefined, velocity);
+  }
+
+  triggerRelease(note: string, octave?: number): void {
+    if (!this.piano) return;
+    const normalizedNote = this.normalizeNote(note, octave);
+    this.piano.triggerRelease(normalizedNote);
+  }
 }
 
 // Create a singleton instance
