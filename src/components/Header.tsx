@@ -70,7 +70,7 @@ const Header: React.FC = () => {
             location.pathname === "/dashboard" ? "text-[var(--accent-green)]" : "text-[var(--text-primary)]"
           }`}
         >
-          Stage
+          Dashboard
         </Link>
           </div>
         </nav>
