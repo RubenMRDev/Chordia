@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward, FaKeyboard } from 'react-icons/fa';
+import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward, FaKeyboard, FaInfoCircle } from 'react-icons/fa';
 import Header from '../components/Header';
 import MIDITroubleshooting from '../components/MIDITroubleshooting';
 import { getSongById } from '../api/songApi';
@@ -8,6 +8,9 @@ import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
 import { useMIDI } from '../hooks/useMIDI';
 import { usePiano } from '../hooks/usePiano';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import * as ReactDOM from 'react-dom';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {
   // Encuentra la nota más baja de todos los acordes (por octava)
@@ -908,6 +911,117 @@ const SongDetailsPage: React.FC = () => {
     console.log('Piano state changed:', { pianoReady, pianoSoundEnabled });
   }, [pianoReady, pianoSoundEnabled]);
 
+  const [showMIDIModal, setShowMIDIModal] = useState(false);
+  const MySwal = withReactContent(Swal);
+  const openMIDIModal = useCallback(() => {
+    MySwal.fire({
+      title: <span style={{color: '#00E676'}}>MIDI Status & Troubleshooting</span>,
+      html: (
+        <div>
+          {/* MIDI Status Information */}
+          {midiSupported && (
+            <div className="w-full p-3 bg-[#0f1624] border border-[#a0aec0] rounded text-sm mb-4">
+              <div className="font-bold mb-2 text-[#00E676]">MIDI Status:</div>
+              <div className="space-y-1 text-xs text-[#a0aec0]">
+                <div>• Browser Support: {midiSupported ? '✅ Supported' : '❌ Not Supported'}</div>
+                <div>• Devices Found: {midiDevices.length}</div>
+                <div>• Connection Status: {midiConnected ? '✅ Connected' : '❌ Not Connected'}</div>
+                <div>• MIDI Active: {midiActive ? '✅ Yes' : '❌ No'}</div>
+                <div>• Access Requested: {midiAccessRequested ? '✅ Yes' : '❌ No'}</div>
+                <div>• Initializing: {midiInitializing ? '🔄 Yes' : '❌ No'}</div>
+                {midiCurrentDevice && (
+                  <div>• Current Device: {midiCurrentDevice.name} ({midiCurrentDevice.manufacturer})</div>
+                )}
+                {midiError && (
+                  <div className="text-red-400">• Error: {midiError}</div>
+                )}
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={async () => {
+                    await refreshDevices();
+                    setMidiRefreshRequested(true);
+                  }}
+                  className="flex-1 p-2 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
+                >
+                  Refresh MIDI Devices
+                </button>
+                {!midiAccessRequested && (
+                  <button
+                    onClick={initializeMIDI}
+                    className="flex-1 p-2 bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] rounded text-xs font-bold hover:border-[#00E676] hover:text-[#00E676] transition-colors"
+                  >
+                    Initialize MIDI
+                  </button>
+                )}
+                {midiAccessRequested && midiDevices.length > 0 && !midiConnected && (
+                  <button
+                    onClick={() => {
+                      connectToDevice(midiDevices[0].id);
+                    }}
+                    className="flex-1 p-2 bg-yellow-600 text-white rounded text-xs font-bold hover:bg-yellow-700 transition-colors"
+                  >
+                    Reconnect
+                  </button>
+                )}
+              </div>
+              {/* Available Devices List */}
+              {midiDevices.length > 0 && (
+                <div className="mt-3 p-2 bg-[#0f1624] rounded border border-[#a0aec0]">
+                  <div className="font-medium text-white mb-1 text-xs">Available Devices:</div>
+                  {midiDevices.map(device => (
+                    <div key={device.id} className="text-xs text-[#a0aec0] ml-2 mb-1">
+                      • {device.name} ({device.manufacturer}) - {device.state}
+                      {midiCurrentDevice?.id === device.id && (
+                        <span className="text-[#00E676] ml-1">← Connected</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {/* MIDI Troubleshooting */}
+          <MIDITroubleshooting
+            midiSupported={midiSupported}
+            midiDevices={midiDevices}
+            midiError={midiError}
+            onRefresh={async () => {
+              await refreshDevices();
+              setMidiRefreshRequested(true);
+            }}
+          />
+        </div>
+      ),
+      showConfirmButton: false,
+      showCloseButton: true,
+      width: '48rem',
+      background: '#0a101b',
+      customClass: {
+        popup: 'swal2-mt-modal',
+      },
+      didClose: () => setShowMIDIModal(false),
+    });
+  }, [midiSupported, midiDevices, midiConnected, midiActive, midiAccessRequested, midiInitializing, midiCurrentDevice, midiError, refreshDevices, initializeMIDI, connectToDevice]);
+
+  const [midiRefreshRequested, setMidiRefreshRequested] = useState(false);
+  const prevDevicesRef = useRef(midiDevices);
+
+  useEffect(() => {
+    // Si se pidió refresh y la lista de dispositivos cambió, reabrir el modal
+    if (midiRefreshRequested && prevDevicesRef.current !== midiDevices) {
+      setMidiRefreshRequested(false);
+      setShowMIDIModal(false);
+      setTimeout(() => setShowMIDIModal(true), 100);
+    }
+    prevDevicesRef.current = midiDevices;
+  }, [midiDevices, midiRefreshRequested]);
+
+  useEffect(() => {
+    if (showMIDIModal) openMIDIModal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMIDIModal]);
+
   return (
     <div className="bg-[#0a101b] min-h-screen text-white">
       <Header />
@@ -993,233 +1107,27 @@ const SongDetailsPage: React.FC = () => {
                 </div>
                 
                 {/* Play Yourself Button */}
-                <button
-                  onClick={handlePlayYourselfToggle}
-                  disabled={midiInitializing}
-                  className={`w-full px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                    isPlayYourselfMode 
-                      ? "bg-[#00E676] text-black" 
-                      : "bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676]"
-                  } ${midiInitializing ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <FaKeyboard />
-                  {midiInitializing ? 'Detecting MIDI...' : (isPlayYourselfMode ? 'Exit Play Yourself' : 'Play Yourself')}
-                </button>
-                
-                {/* MIDI Debug Information */}
-                {midiError && (
-                  <div className="w-full p-3 bg-red-900/20 border border-red-500 rounded text-sm text-red-300">
-                    <div className="font-bold mb-1">MIDI Error:</div>
-                    <div>{midiError}</div>
-                  </div>
-                )}
-                
-                {/* MIDI Status Information */}
-                {!isPlayYourselfMode && midiSupported && (
-                  <div className="w-full p-3 bg-[#0f1624] border border-[#a0aec0] rounded text-sm">
-                    <div className="font-bold mb-2 text-[#00E676]">MIDI Status:</div>
-                    <div className="space-y-1 text-xs text-[#a0aec0]">
-                      <div>• Browser Support: {midiSupported ? '✅ Supported' : '❌ Not Supported'}</div>
-                      <div>• Devices Found: {midiDevices.length}</div>
-                      <div>• Connection Status: {midiConnected ? '✅ Connected' : '❌ Not Connected'}</div>
-                      <div>• MIDI Active: {midiActive ? '✅ Yes' : '❌ No'}</div>
-                      <div>• Access Requested: {midiAccessRequested ? '✅ Yes' : '❌ No'}</div>
-                      <div>• Initializing: {midiInitializing ? '🔄 Yes' : '❌ No'}</div>
-                      {midiCurrentDevice && (
-                        <div>• Current Device: {midiCurrentDevice.name} ({midiCurrentDevice.manufacturer})</div>
-                      )}
-                      {midiError && (
-                        <div className="text-red-400">• Error: {midiError}</div>
-                      )}
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={refreshDevices}
-                        className="flex-1 p-2 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
-                      >
-                        Refresh MIDI Devices
-                      </button>
-                      {!midiAccessRequested && (
-                        <button
-                          onClick={initializeMIDI}
-                          className="flex-1 p-2 bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] rounded text-xs font-bold hover:border-[#00E676] hover:text-[#00E676] transition-colors"
-                        >
-                          Initialize MIDI
-                        </button>
-                      )}
-                      {midiAccessRequested && midiDevices.length > 0 && !midiConnected && (
-                        <button
-                          onClick={() => {
-                            console.log('Forcing MIDI reconnection...');
-                            connectToDevice(midiDevices[0].id);
-                          }}
-                          className="flex-1 p-2 bg-yellow-600 text-white rounded text-xs font-bold hover:bg-yellow-700 transition-colors"
-                        >
-                          Reconnect
-                        </button>
-                      )}
-                    </div>
-                    
-                    {/* Available Devices List */}
-                    {midiDevices.length > 0 && (
-                      <div className="mt-3 p-2 bg-[#0f1624] rounded border border-[#a0aec0]">
-                        <div className="font-medium text-white mb-1 text-xs">Available Devices:</div>
-                        {midiDevices.map(device => (
-                          <div key={device.id} className="text-xs text-[#a0aec0] ml-2 mb-1">
-                            • {device.name} ({device.manufacturer}) - {device.state}
-                            {midiCurrentDevice?.id === device.id && (
-                              <span className="text-[#00E676] ml-1">← Connected</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* MIDI Troubleshooting */}
-                {!isPlayYourselfMode && (midiError || midiDevices.length === 0) && midiSupported && (
-                  <MIDITroubleshooting
-                    midiSupported={midiSupported}
-                    midiDevices={midiDevices}
-                    midiError={midiError}
-                    onRefresh={refreshDevices}
-                  />
-                )}
-                
-                {isPlayYourselfMode && (
-                  <div className="w-full text-center">
-                    {isDemoMode ? (
-                      <>
-                        <div className="text-sm text-[#a0aec0] mb-2">
-                          Demo Mode - Use your computer keyboard
-                        </div>
-                        <div className="text-xs text-[#a0aec0] mb-2">
-                          {(() => {
-                            if (!song) return null;
-                            
-                            // Extract all octaves from all chords in the song
-                            const allOctaves: number[] = [];
-                            song.chords.forEach(chord => {
-                              chord.keys.forEach(key => {
-                                const octaveMatch = key.match(/\d+/);
-                                if (octaveMatch) {
-                                  allOctaves.push(parseInt(octaveMatch[0]));
-                                }
-                              });
-                            });
-                            
-                            if (allOctaves.length === 0) return null;
-                            
-                            const minOctave = Math.min(...allOctaves);
-                            const maxOctave = Math.max(...allOctaves);
-                            
-                            if (minOctave === maxOctave) {
-                              return (
-                                <>
-                                  <div className="font-bold text-[#00E676] mb-1">Single Octave ({minOctave}):</div>
-                                  <div>A S D F G H J K L (white keys) | W E T Y U O P (black keys)</div>
-                                </>
-                              );
-                            } else {
-                              return (
-                                <>
-                                  <div className="font-bold text-[#00E676] mb-1">Multiple Octaves ({minOctave}-{maxOctave}):</div>
-                                  <div className="font-bold text-[#00E676] mb-1">Lower Octave ({minOctave}):</div>
-                                  <div>Z X C V B N M , . / 1 2 3</div>
-                                  <div className="font-bold text-[#00E676] mb-1 mt-2">Middle Octave (4-5):</div>
-                                  <div>A S D F G H J K L (white keys) | W E T Y U O P (black keys)</div>
-                                  <div className="font-bold text-[#00E676] mb-1 mt-2">Upper Octave (5-6):</div>
-                                  <div>Q R I [ ] \ 4 5 6 7 8 9 0</div>
-                                </>
-                              );
-                            }
-                          })()}
-                        </div>
-                        <div className="text-xs text-[#a0aec0]">
-                          Play the highlighted chord in any octave to advance
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm text-[#a0aec0] mb-2">
-                          {midiCurrentDevice ? (
-                            <>Connected to: {midiCurrentDevice.name}</>
-                          ) : (
-                            <>No MIDI device connected</>
-                          )}
-                        </div>
-                        <div className="text-xs text-[#a0aec0]">
-                          Play the highlighted chord on your MIDI keyboard in any octave to advance
-                        </div>
-                      </>
-                    )}
-                    
-                    {/* Debug Information */}
-                    <div className="mt-4 p-3 bg-[#0f1624] border border-[#a0aec0] rounded text-xs">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="font-bold text-[#00E676]">Debug Info:</div>
-                        <button
-                          onClick={() => setShowDebugInfo(prev => !prev)}
-                          className="px-2 py-1 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
-                        >
-                          {showDebugInfo ? 'Hide' : 'Show'} Debug
-                        </button>
-                      </div>
-                      
-                      {showDebugInfo && (
-                        <>
-                          <div className="space-y-1 text-[#a0aec0]">
-                            <div>Current Chord: {currentChordIndex + 1} of {song?.chords.length}</div>
-                            <div>Chord Index: {currentChordIndex}</div>
-                            <div>Expected Notes: {song?.chords[currentChordIndex]?.keys.join(', ')}</div>
-                            <div>Expected Note Names: {song?.chords[currentChordIndex] ? Array.from(chordToNoteNames(song.chords[currentChordIndex])).join(', ') : ''}</div>
-                            <div>Pressed Keys: {Array.from(pressedKeys).map(n => midiNoteToNoteNameWithOctave(n)).join(', ') || 'None'}</div>
-                            <div>Pressed Note Names: {(() => {
-                              const notesByType = new Map<string, number[]>();
-                              Array.from(pressedKeys).forEach(note => {
-                                const noteName = midiNoteToNoteNameOnly(note);
-                                if (!notesByType.has(noteName)) {
-                                  notesByType.set(noteName, []);
-                                }
-                                notesByType.get(noteName)!.push(note);
-                              });
-                              return Array.from(notesByType.entries()).map(([noteName, midiNotes]) => 
-                                `${noteName}(${midiNotes.length})`
-                              ).join(', ') || 'None';
-                            })()}</div>
-                            <div>Keys Count: {pressedKeys.size}</div>
-                          </div>
-                          <div className="flex gap-2 mt-2">
-                            <button
-                              onClick={testChordConversion}
-                              className="flex-1 p-2 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
-                            >
-                              Test Chord Conversion
-                            </button>
-                            <button
-                              onClick={resetChordIndex}
-                              className="flex-1 p-2 bg-yellow-600 text-white rounded text-xs font-bold hover:bg-yellow-700 transition-colors"
-                            >
-                              Reset to Chord 1
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Demo Mode Button (only show if MIDI is supported) */}
-                {midiSupported && !isPlayYourselfMode && (
+                <div className="flex items-center gap-2 w-full">
                   <button
-                    onClick={handleDemoModeToggle}
-                    className="w-full px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676]"
+                    onClick={handlePlayYourselfToggle}
+                    disabled={midiInitializing}
+                    className={`flex-1 px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                      isPlayYourselfMode 
+                        ? "bg-[#00E676] text-black" 
+                        : "bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676]"
+                    } ${midiInitializing ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <FaKeyboard />
-                    Try Demo Mode
+                    {midiInitializing ? 'Detecting MIDI...' : (isPlayYourselfMode ? 'Exit Play Yourself' : 'Play Yourself')}
                   </button>
-                )}
+                  <button
+                    onClick={() => setShowMIDIModal(true)}
+                    className="ml-2 p-3 rounded-full bg-[#0f1624] border border-[#a0aec0] text-[#00E676] hover:bg-[#00E676] hover:text-black transition-colors flex items-center justify-center"
+                    title="MIDI Info & Troubleshooting"
+                  >
+                    <FaInfoCircle size={22} />
+                  </button>
+                </div>
                 
                 <div className="flex gap-4">
                   <button
