@@ -1,5 +1,3 @@
-// @ts-ignore
-// eslint-disable-next-line
 declare const puter: any;
 
 export interface AIChordRequest {
@@ -17,9 +15,7 @@ export interface AIChordResponse {
   explanation: string;
 }
 
-// Mapeo de acordes a teclas de piano con octavas
 const chordToKeys: { [key: string]: string[] } = {
-  // Naturales y menores
   "C": ["C4", "E4", "G4"],
   "Cm": ["C4", "Eb4", "G4"],
   "D": ["D4", "F#4", "A4"],
@@ -34,7 +30,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "Am": ["A4", "C5", "E5"],
   "B": ["B4", "D#5", "F#5"],
   "Bm": ["B4", "D5", "F#5"],
-  // Sostenidos y bemoles (solo mayores y menores para evitar duplicados)
   "C#": ["C#4", "E#4", "G#4"],
   "C#m": ["C#4", "E4", "G#4"],
   "Db": ["Db4", "F4", "Ab4"],
@@ -55,7 +50,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "A#m": ["A#4", "C#5", "F5"],
   "Bb": ["Bb4", "D5", "F5"],
   "Bbm": ["Bb4", "Db5", "F5"],
-  // Extendidos y variantes
   "Cmaj7": ["C4", "E4", "G4", "B4"],
   "Dmaj7": ["D4", "F#4", "A4", "C#5"],
   "Emaj7": ["E4", "G#4", "B4", "D#5"],
@@ -98,7 +92,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "F#7": ["F#4", "A#4", "C#5", "E5"],
   "C#7": ["C#4", "E#4", "G#4", "B4"],
   "G#7": ["G#4", "B#4", "D#5", "F#5"],
-  // Sus4, sus2, 7sus4
   "A7sus4": ["A4", "D5", "E5", "G5"],
   "D7sus4": ["D4", "G4", "A4", "C5"],
   "G7sus4": ["G4", "C5", "D5", "F5"],
@@ -115,7 +108,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "Csus4": ["C4", "F4", "G4"],
   "F#sus4": ["F#4", "B4", "C#5"],
   "G#sus4": ["G#4", "C#5", "D#5"],
-  // 9, 11, 13
   "C9": ["C4", "E4", "G4", "Bb4", "D5"],
   "D9": ["D4", "F#4", "A4", "C5", "E5"],
   "E9": ["E4", "G#4", "B4", "D5", "F#5"],
@@ -127,7 +119,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "G11": ["G4", "B4", "D5", "F5", "A5", "C6"],
   "C13": ["C4", "E4", "G4", "Bb4", "D5", "A5"],
   "G13": ["G4", "B4", "D5", "F5", "A5", "E6"],
-  // m9, m11, m13
   "Bm9": ["B4", "D5", "F#5", "A5", "C#6"],
   "Bm11": ["B4", "D5", "F#5", "A5", "C#6", "E6"],
   "Bm13": ["B4", "D5", "F#5", "A5", "C#6", "E6", "G#6"],
@@ -137,7 +128,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "Am9": ["A4", "C5", "E5", "G5", "B5"],
   "Am11": ["A4", "C5", "E5", "G5", "B5", "D6"],
   "Am13": ["A4", "C5", "E5", "G5", "B5", "D6", "F#6"],
-  // Agrega acordes maj9, maj11, maj13
   "Cmaj9": ["C4", "E4", "G4", "B4", "D5"],
   "Dmaj9": ["D4", "F#4", "A4", "C#5", "E5"],
   "Fmaj9": ["F4", "A4", "C5", "E5", "G5"],
@@ -146,7 +136,6 @@ const chordToKeys: { [key: string]: string[] } = {
   "Fmaj11": ["F4", "A4", "C5", "E5", "G5", "Bb5"],
   "Cmaj13": ["C4", "E4", "G4", "B4", "D5", "A5"],
   "Fmaj13": ["F4", "A4", "C5", "E5", "G5", "D6"],
-  // Disminuidos (dim) y disminuidos séptima (dim7)
   "Cdim": ["C4", "Eb4", "Gb4"],
   "Cdim7": ["C4", "Eb4", "Gb4", "Bbb4"],
   "C#dim": ["C#4", "E4", "G4"],
@@ -292,12 +281,11 @@ Use only standard chord notation (C, Cm, F, G, Am, etc.).`;
     }
   }
 
-  // Normaliza el nombre del acorde para soportar variantes y notaciones alternativas
   private normalizeChordName(chord: string): string {
     if (!chord) return "C";
     let c = chord.trim()
-      .replace(/♯/g, "#")
-      .replace(/♭/g, "b")
+      .replace(/\u266f/g, "#")
+      .replace(/\u266d/g, "b")
       .replace(/min7$/i, "m7")
       .replace(/min$/i, "m")
       .replace(/dim7$/i, "dim7")
@@ -312,7 +300,7 @@ Use only standard chord notation (C, Cm, F, G, Am, etc.).`;
       .replace(/M11$/i, "maj11")
       .replace(/M13$/i, "maj13")
       .replace(/ /g, "")
-      .replace(/–/g, "-")
+      .replace(/\u2013/g, "-")
       .replace(/([A-G])b/, (m, p1) => p1 + "b")
       .replace(/([A-G])#/, (m, p1) => p1 + "#");
     c = c.charAt(0).toUpperCase() + c.slice(1);

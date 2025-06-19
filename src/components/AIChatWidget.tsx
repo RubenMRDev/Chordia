@@ -2,11 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { FaComments, FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { FaTrash } from 'react-icons/fa';
-// @ts-ignore
 import { marked } from 'marked';
-
-// Declarar puter como global para TypeScript
-// @ts-ignore
 declare const puter: any;
 
 interface Message {
@@ -99,7 +95,6 @@ const AIChatWidget: React.FC = () => {
       if (typeof puter?.init === 'function') {
         await puter.init();
       }
-      // Prompt enriquecido con toda la información de la web y creación de canciones
       const prompt = `You are an expert assistant for the Chordia website and piano. Chordia is a platform for pianists where users can:\n\n- Register and create a personal profile.\n- Access a dashboard with their songs and progress.\n- Discover new songs in the Discover section.\n- Save and manage songs in their Library.\n- Create new songs and chord progressions.\n- Edit their profile and view information about other users.\n- Access tools like an AI chord generator, an interactive piano, and learning resources.\n- Admins can manage platform songs.\n\nFor creating a song in Chordia, the user must go to the 'Create Song' section, introduce the title, chords, progression, and any relevant additional information. They can use the AI chord generator for suggestions and the interactive piano to test the chords. Once completed, they can save the song in their personal library.\n\nYou can also help with questions about music theory, piano practice, website usage, technical issues, and recommendations. Respond clearly, helpfully, and in a friendly manner.\n\nUser: ${input}`;
       console.log('AIChatWidget: Enviando prompt a puter.ai.chat:', prompt);
       const response = await puter.ai.chat(prompt);
@@ -148,7 +143,6 @@ const AIChatWidget: React.FC = () => {
 
   return (
     <>
-      {/* Botón flotante */}
       {!open && (
         <button
           className="fixed bottom-6 right-6 z-50 bg-[var(--accent-green)] text-black rounded-full shadow-lg p-4 flex items-center justify-center hover:bg-green-400 transition-all"
@@ -158,7 +152,6 @@ const AIChatWidget: React.FC = () => {
           <FaComments size={28} />
         </button>
       )}
-      {/* Modal de chat */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end pointer-events-none">
           <div className="w-full h-full absolute top-0 left-0 pointer-events-auto" onClick={() => setOpen(false)} />

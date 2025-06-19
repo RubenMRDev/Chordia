@@ -40,7 +40,6 @@ const LibraryPage: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Efecto para cargar las canciones
   useEffect(() => {
     const fetchSongs = async () => {
       if (!currentUser) return;
@@ -49,7 +48,7 @@ const LibraryPage: React.FC = () => {
         setError(null);
         const userSongs = await getUserSongs(currentUser.uid);
         setSongs(userSongs);
-        setVisibleSongs(userSongs.length); // Mostrar todas las canciones inmediatamente
+        setVisibleSongs(userSongs.length);
         setAnimationsReady(true);
       } catch (err) {
         console.error('Error fetching songs:', err);
@@ -61,7 +60,6 @@ const LibraryPage: React.FC = () => {
     fetchSongs();
   }, [currentUser]);
 
-  // Efecto para agregar los estilos de animación
   useEffect(() => {
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `

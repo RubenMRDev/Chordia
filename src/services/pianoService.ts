@@ -6,7 +6,6 @@ class PianoService {
   private isInitializing = false;
 
   constructor() {
-    // Initialize Tone.js context
     Tone.context.resume();
   }
 
@@ -18,8 +17,6 @@ class PianoService {
     this.isInitializing = true;
 
     try {
-      // Create a sampler with piano samples
-      // Using a simple piano sample set that's available online
       this.piano = new Tone.Sampler({
         urls: {
           "C4": "C4.mp3",
@@ -30,14 +27,12 @@ class PianoService {
         baseUrl: "https://tonejs.github.io/audio/salamander/",
       }).toDestination();
 
-      // Wait for the samples to load
       await Tone.loaded();
       
       this.isInitialized = true;
       console.log('Piano service initialized successfully');
     } catch (error) {
       console.error('Failed to initialize piano service:', error);
-      // Fallback to basic synth if samples fail to load
       this.piano = new Tone.Synth({
         oscillator: {
           type: "triangle"
@@ -67,7 +62,6 @@ class PianoService {
     }
 
     try {
-      // Convert note format (e.g., "C", "Cs", "D" to "C4", "C#4", "D4")
       const normalizedNote = this.normalizeNote(note, octave);
       this.piano.triggerAttackRelease(normalizedNote, duration, undefined, velocity);
     } catch (error) {
@@ -86,15 +80,12 @@ class PianoService {
     }
 
     try {
-      // Convert all notes to the same format
       const normalizedNotes = notes.map(note => this.normalizeNote(note));
       
-      // Play all notes simultaneously
       normalizedNotes.forEach(note => {
         this.piano!.triggerAttack(note, undefined, velocity);
       });
 
-      // Release all notes after the specified duration
       setTimeout(() => {
         normalizedNotes.forEach(note => {
           this.piano!.triggerRelease(note);
@@ -112,10 +103,8 @@ class PianoService {
   }
 
   private normalizeNote(note: string, octave?: number): string {
-    // Use provided octave or default to 4
     const targetOctave = octave !== undefined ? octave : 4;
     
-    // Convert note format from "C", "Cs", "D", etc. to "C4", "C#4", "D4", etc.
     const noteMap: { [key: string]: string } = {
       'C': `C${targetOctave}`, 'Cs': `C#${targetOctave}`, 'C#': `C#${targetOctave}`,
       'D': `D${targetOctave}`, 'Ds': `D#${targetOctave}`, 'D#': `D#${targetOctave}`,
@@ -126,15 +115,13 @@ class PianoService {
       'B': `B${targetOctave}`, 'Bs': `B#${targetOctave}`, 'B#': `B#${targetOctave}`,
     };
 
-    return noteMap[note] || `C${targetOctave}`; // Default to C in target octave if note not found
+    return noteMap[note] || `C${targetOctave}`;
   }
 
-  // Method to get available notes for testing
   getAvailableNotes(): string[] {
     return ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'];
   }
 
-  // Method to check if service is ready
   isReady(): boolean {
     return this.isInitialized && this.piano !== null;
   }
@@ -152,7 +139,6 @@ class PianoService {
   }
 }
 
-// Create a singleton instance
 const pianoService = new PianoService();
 
 export default pianoService; 

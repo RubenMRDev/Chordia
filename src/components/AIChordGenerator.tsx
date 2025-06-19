@@ -71,16 +71,13 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
 
       const response: AIChordResponse = await aiChordService.generateChordProgression(request);
       
-      // Convert chords to piano keys
       const chordKeys = aiChordService.convertChordsToPianoKeys(response.chords);
       
-      // Convert to ChordType format
       const chords: ChordType[] = chordKeys.map(keys => ({
         keys,
         selected: true
       }));
 
-      // Show success message with explanation
       Swal.fire({
         title: 'Chord Progression Generated!',
         html: `
@@ -96,7 +93,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
         color: "var(--text-secondary)",
       });
 
-      // Add chords to the main progression
       onChordsGenerated(chords);
       onClose();
 
@@ -131,7 +127,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
         </div>
 
         <div className="space-y-6">
-          {/* Style Selection */}
           <div>
             <label className="block text-gray-300 text-sm font-medium mb-2">
               Musical Style
@@ -148,8 +143,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               ))}
             </select>
           </div>
-
-          {/* Mood Selection */}
           <div>
             <label className="block text-gray-300 text-sm font-medium mb-2">
               Mood
@@ -166,8 +159,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               ))}
             </select>
           </div>
-
-          {/* Key Selection */}
           <div>
             <label className="block text-gray-300 text-sm font-medium mb-2">
               Key
@@ -184,8 +175,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               ))}
             </select>
           </div>
-
-          {/* Length and Complexity */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-gray-300 text-sm font-medium mb-2">
@@ -218,8 +207,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               </select>
             </div>
           </div>
-
-          {/* Description */}
           <div>
             <label className="block text-gray-300 text-sm font-medium mb-2">
               Describe Your Vision *
@@ -232,8 +219,6 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               rows={4}
             />
           </div>
-
-          {/* Generate Button */}
           <div className="flex gap-3 pt-4">
             <button
               onClick={handleGenerate}

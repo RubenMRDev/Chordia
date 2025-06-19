@@ -23,7 +23,6 @@ const InteractivePiano: React.FC<InteractivePianoProps> = ({
   const hasBlackKeyAfter = [true, true, false, true, true, true, false];
 
   const handleKeyClick = async (note: string, index: number) => {
-    // Always play the note when clicked (for better user feedback)
     if (pianoReady) {
       try {
         await playNote(note, "8n", 0.7);
@@ -31,8 +30,6 @@ const InteractivePiano: React.FC<InteractivePianoProps> = ({
         console.error('Error playing piano note:', error);
       }
     }
-
-    // Call the parent's onNoteClick if provided
     if (onNoteClick) {
       onNoteClick(note, index);
     }
@@ -86,7 +83,6 @@ const InteractivePiano: React.FC<InteractivePianoProps> = ({
 
   return (
     <div className={`relative h-[120px] w-full max-w-[400px] mx-auto ${className}`}>
-      {/* White Keys */}
       <div className="flex h-full w-full">
         {Array(octave)
           .fill(whiteKeys)
@@ -107,8 +103,6 @@ const InteractivePiano: React.FC<InteractivePianoProps> = ({
             </div>
           ))}
       </div>
-
-      {/* Black Keys */}
       <div className="absolute top-0 left-0 right-0 h-[60%]">
         {Array(octave)
           .fill(whiteKeys)

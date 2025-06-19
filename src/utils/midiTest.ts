@@ -8,7 +8,6 @@ export const testMIDIConnectivity = async () => {
   };
 
   try {
-    // Check browser support
     results.browserSupport = 'requestMIDIAccess' in navigator;
     console.log('Browser MIDI support:', results.browserSupport);
 
@@ -17,13 +16,11 @@ export const testMIDIConnectivity = async () => {
       return results;
     }
 
-    // Request MIDI access
     try {
       const access = await navigator.requestMIDIAccess();
       results.accessGranted = true;
       console.log('MIDI access granted:', access);
 
-      // Get device details
       access.inputs.forEach((input, key) => {
         const deviceInfo = {
           id: input.id,
@@ -39,13 +36,10 @@ export const testMIDIConnectivity = async () => {
 
       results.devicesFound = results.deviceDetails.length;
 
-      // Test device connection
       if (results.devicesFound > 0) {
         const firstDevice = access.inputs.values().next().value;
         if (firstDevice) {
           console.log('Testing connection to first device:', firstDevice.name);
-          
-          // Set up a test message handler
           firstDevice.onmidimessage = (event: WebMidi.MIDIMessageEvent) => {
             console.log('Test MIDI message received:', event.data);
           };
