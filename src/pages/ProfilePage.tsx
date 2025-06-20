@@ -118,17 +118,16 @@ const ProfilePage: React.FC = () => {
   };
 
   const formatDate = (dateString: string | number | Date) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch (error) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
       console.error("Invalid date:", dateString);
       return "Invalid date";
     }
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -270,6 +269,20 @@ const ProfilePage: React.FC = () => {
             onClick={handleLogout}
           >
             Logout
+          </button>
+          <button
+            style={{
+              backgroundColor: "#a9a9a9",
+              color: "white",
+              padding: "0.5rem 1.25rem",
+              borderRadius: "4px",
+              border: "none",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+            onClick={handleDeleteAccount}
+          >
+            Delete Account
           </button>
         </div>
       </div>
@@ -514,31 +527,6 @@ const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        padding: "2rem", 
-        borderTop: "1px solid rgba(255,255,255,0.1)",
-        marginTop: "2rem" 
-      }}>
-        <button
-          style={{
-            backgroundColor: "transparent",
-            color: "#dc3545",
-            padding: "0.75rem 1.5rem",
-            borderRadius: "4px",
-            border: "1px solid #dc3545",
-            fontWeight: "bold",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem"
-          }}
-          onClick={handleDeleteAccount}
-        >
-          <FaTrash /> Delete Account Permanently
-        </button>
       </div>
     </div>
   );

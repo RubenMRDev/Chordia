@@ -75,10 +75,10 @@ const DashboardPage: React.FC = () => {
     const stars = [];
     for (let i = 0; i < 3; i++) {
       if (i < level) {
-        stars.push(<FaStar key={i} style={{ color: 'var(--accent-green)' }} />);
+        stars.push(<FaStar key={i} style={{ color: 'var(--accent-green)' }} data-testid="filled-star" />);
       } else {
         stars.push(
-          <FaRegStar key={i} style={{ color: 'var(--text-secondary)' }} />
+          <FaRegStar key={i} style={{ color: 'var(--text-secondary)' }} data-testid="empty-star" />
         );
       }
     }
@@ -509,18 +509,21 @@ const DashboardPage: React.FC = () => {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <a
                 href="#"
+                title="Chordia on Twitter"
                 style={{ color: 'var(--text-secondary)', fontSize: '1.25rem' }}
               >
                 <FaTwitter />
               </a>
               <a
                 href="#"
+                title="Chordia on Instagram"
                 style={{ color: 'var(--text-secondary)', fontSize: '1.25rem' }}
               >
                 <FaInstagram />
               </a>
               <a
                 href="#"
+                title="Chordia on YouTube"
                 style={{ color: 'var(--text-secondary)', fontSize: '1.25rem' }}
               >
                 <FaYoutube />

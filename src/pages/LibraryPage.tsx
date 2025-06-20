@@ -42,7 +42,11 @@ const LibraryPage: React.FC = () => {
 
   useEffect(() => {
     const fetchSongs = async () => {
-      if (!currentUser) return;
+      if (!currentUser) {
+        setLoading(false);
+        setSongs([]);
+        return;
+      }
       try {
         setLoading(true);
         setError(null);
@@ -212,6 +216,7 @@ const LibraryPage: React.FC = () => {
                           event.stopPropagation();
                           handleDeleteSong(song.id as string, song.title);
                         }}
+                        aria-label={`Delete ${song.title}`}
                         className="bg-transparent border-none text-[#ef4444] cursor-pointer flex items-center text-base"
                       >
                         <FaTrash />

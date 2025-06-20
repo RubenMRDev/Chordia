@@ -1,7 +1,7 @@
 import * as Tone from 'tone';
 
 class PianoService {
-  private piano: Tone.Sampler | null = null;
+  private piano: any = null;
   private isInitialized = false;
   private isInitializing = false;
 
@@ -27,7 +27,7 @@ class PianoService {
         baseUrl: "https://tonejs.github.io/audio/salamander/",
       }).toDestination();
 
-      await Tone.loaded();
+      await this.piano.loaded;
       
       this.isInitialized = true;
       console.log('Piano service initialized successfully');
@@ -136,6 +136,31 @@ class PianoService {
     if (!this.piano) return;
     const normalizedNote = this.normalizeNote(note, octave);
     this.piano.triggerRelease(normalizedNote);
+  }
+
+  stopNote(note: string, octave?: number): void {
+    if (!this.piano) return;
+    const normalizedNote = this.normalizeNote(note, octave);
+    this.piano.triggerRelease(normalizedNote);
+  }
+
+  stopChord(notes: string[], octave?: number): void {
+    if (!this.piano) return;
+    notes.forEach(note => {
+      const normalizedNote = this.normalizeNote(note, octave);
+      this.piano!.triggerRelease(normalizedNote);
+    });
+  }
+
+  setVolume(volume: number): void {
+    if ((this.piano as any)?.volume !== undefined) {
+      (this.piano as any).volume = volume;
+    }
+  }
+
+  setInstrument(_instrument: string): void {
+    this.isInitialized = false;
+    this.piano = null;
   }
 }
 

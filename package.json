@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest --config jest.frontend.config.cjs",
-    "test:api": "jest --config jest.config.cjs"
+    "test:api": "jest --config jest.config.cjs",
+    "test:coverage": "jest --config jest.frontend.config.cjs --coverage",
+    "test:api:coverage": "jest --config jest.config.cjs --coverage",
+    "test:all:coverage": "npm run test:coverage && npm run test:api:coverage",
+    "coverage:open": "node open-coverage.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.17",
@@ -39,6 +43,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-mock-extended": "^4.0.0-beta1",

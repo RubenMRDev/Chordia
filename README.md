@@ -164,12 +164,58 @@ chordia-landing/
 
 ### Test Coverage
 
+🔹 **Front-end (components, pages, hooks, utils, context):**
+Includes:
+
+- `src/components`
+- `src/pages`
+- `src/context`
+- `src/hooks`
+- `src/utils`
+
+**Front-end average coverage:**
+
+| Metric   | Estimated Avg. Coverage |
+|----------|:----------------------:|
+| % Stmts  | ~65.0%                 |
+| % Branch | ~51.0%                 |
+| % Funcs  | ~56.0%                 |
+| % Lines  | ~65.0%                 |
+
+➡️ Approximate result: **~59%** of the front-end is tested (weighted average of the 4 metrics).
+
+🔹 **Back-end (services, API, firebase):**
+Includes:
+
+- `src/api`
+- `src/services`
+- `src/firebase`
+
+**Back-end average coverage:**
+
+| Metric   | Estimated Avg. Coverage |
+|----------|:----------------------:|
+| % Stmts  | ~63.0%                 |
+| % Branch | ~66.0%                 |
+| % Funcs  | ~53.0%                 |
+| % Lines  | ~62.0%                 |
+
+➡️ Approximate result: **~61%** of the back-end is tested.
+
+✅ **Final summary**
+
+| Part       | Approx. Coverage % |
+|------------|:-----------------:|
+| Front-end  | ~59%              |
+| Back-end   | ~61%              |
+| Overall    | ~52.5% (actual, from global table) |
+
 <table align="center">
   <tr>
     <th style="text-align:center; font-size:20px;">Test Results</th>
   </tr>
   <tr>
-    <td><img src="https://res.cloudinary.com/doy4x4chv/image/upload/v1748262462/dfbf276d-cb40-4d34-bb79-dfc30257db78.png" alt="Chordia Test Results" width="600"></td>
+    <td><img src="https://res.cloudinary.com/doy4x4chv/image/upload/v1750598540/Screenshot_2025-06-22_152141_mojfgf.png" alt="Chordia Test Results" width="600"></td>
   </tr>
 </table>
 

@@ -126,6 +126,7 @@ const EditProfilePage: React.FC = () => {
             <h2 style={{ marginBottom: "1.5rem" }}>Basic Information</h2>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="name"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -136,6 +137,7 @@ const EditProfilePage: React.FC = () => {
               </label>
               <input
                 type="text"
+                id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -152,6 +154,7 @@ const EditProfilePage: React.FC = () => {
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="bio"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -162,6 +165,7 @@ const EditProfilePage: React.FC = () => {
               </label>
               <textarea
                 name="bio"
+                id="bio"
                 value={formData.bio}
                 onChange={handleChange}
                 rows={4}
@@ -179,6 +183,7 @@ const EditProfilePage: React.FC = () => {
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="location"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -189,6 +194,7 @@ const EditProfilePage: React.FC = () => {
               </label>
               <input
                 type="text"
+                id="location"
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
@@ -205,6 +211,7 @@ const EditProfilePage: React.FC = () => {
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="website"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -215,6 +222,7 @@ const EditProfilePage: React.FC = () => {
               </label>
               <input
                 type="text"
+                id="website"
                 name="website"
                 value={formData.website}
                 onChange={handleChange}
@@ -234,6 +242,7 @@ const EditProfilePage: React.FC = () => {
             <h2 style={{ marginBottom: "1.5rem" }}>Social Links</h2>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="instagram"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -254,6 +263,7 @@ const EditProfilePage: React.FC = () => {
                 />
                 <input
                   type="text"
+                  id="instagram"
                   name="instagram"
                   value={formData.instagram}
                   onChange={handleChange}
@@ -272,6 +282,7 @@ const EditProfilePage: React.FC = () => {
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="twitter"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -292,6 +303,7 @@ const EditProfilePage: React.FC = () => {
                 />
                 <input
                   type="text"
+                  id="twitter"
                   name="twitter"
                   value={formData.twitter}
                   onChange={handleChange}
@@ -310,6 +322,7 @@ const EditProfilePage: React.FC = () => {
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="soundcloud"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -330,6 +343,7 @@ const EditProfilePage: React.FC = () => {
                 />
                 <input
                   type="text"
+                  id="soundcloud"
                   name="soundcloud"
                   value={formData.soundcloud}
                   onChange={handleChange}
@@ -348,6 +362,7 @@ const EditProfilePage: React.FC = () => {
             </div>
             <div style={{ marginBottom: "1.5rem" }}>
               <label
+                htmlFor="spotify"
                 style={{
                   display: "block",
                   marginBottom: "0.5rem",
@@ -368,6 +383,7 @@ const EditProfilePage: React.FC = () => {
                 />
                 <input
                   type="text"
+                  id="spotify"
                   name="spotify"
                   value={formData.spotify}
                   onChange={handleChange}

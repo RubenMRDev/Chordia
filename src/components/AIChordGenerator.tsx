@@ -128,10 +128,11 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
 
         <div className="space-y-6">
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="style-select" className="block text-gray-300 text-sm font-medium mb-2">
               Musical Style
             </label>
             <select
+              id="style-select"
               value={formData.style}
               onChange={(e) => handleInputChange('style', e.target.value)}
               className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
@@ -144,10 +145,11 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
             </select>
           </div>
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="mood-select" className="block text-gray-300 text-sm font-medium mb-2">
               Mood
             </label>
             <select
+              id="mood-select"
               value={formData.mood}
               onChange={(e) => handleInputChange('mood', e.target.value)}
               className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
@@ -160,10 +162,11 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
             </select>
           </div>
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="key-select" className="block text-gray-300 text-sm font-medium mb-2">
               Key
             </label>
             <select
+              id="key-select"
               value={formData.key}
               onChange={(e) => handleInputChange('key', e.target.value)}
               className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
@@ -177,10 +180,11 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="length-select" className="block text-gray-300 text-sm font-medium mb-2">
                 Number of Chords
               </label>
               <select
+                id="length-select"
                 value={formData.length}
                 onChange={(e) => handleInputChange('length', Number(e.target.value))}
                 className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
@@ -193,10 +197,11 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               </select>
             </div>
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="complexity-select" className="block text-gray-300 text-sm font-medium mb-2">
                 Complexity
               </label>
               <select
+                id="complexity-select"
                 value={formData.complexity}
                 onChange={(e) => handleInputChange('complexity', e.target.value as 'simple' | 'medium' | 'complex')}
                 className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
@@ -208,10 +213,11 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
             </div>
           </div>
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="description-textarea" className="block text-gray-300 text-sm font-medium mb-2">
               Describe Your Vision *
             </label>
             <textarea
+              id="description-textarea"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Describe how you want your chord progression to sound. For example: 'A sad progression that builds tension and resolves beautifully' or 'An energetic rock progression with a strong driving feel'"

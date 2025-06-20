@@ -262,9 +262,8 @@ const RegisterPage: React.FC = () => {
               type="checkbox"
               id="terms"
               checked={agreeTerms}
-              onChange={() => setAgreeTerms(!agreeTerms)}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
               style={{ marginRight: "0.5rem", marginTop: "0.25rem" }}
-              required
             />
             <label
               htmlFor="terms"
@@ -287,6 +286,7 @@ const RegisterPage: React.FC = () => {
           </div>
           <button
             type="submit"
+            data-testid="create-account-button"
             disabled={isLoading}
             style={{
               width: "100%",
