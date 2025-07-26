@@ -103,8 +103,6 @@ export default function CreateSongPage() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [editingChordIndex, setEditingChordIndex] = useState<number | null>(null);
   const [isAdvancedMode, setIsAdvancedMode] = useState<boolean>(true);
-  const [selectedKeyType, setSelectedKeyType] = useState<"major" | "minor">("major");
-  const [selectedCircleKey, setSelectedCircleKey] = useState<string>("C");
   const [selectedCircleChords, setSelectedCircleChords] = useState<string[]>([]);
   const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState<boolean>(false);
   

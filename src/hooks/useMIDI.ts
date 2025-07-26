@@ -55,7 +55,7 @@ export const useMIDI = () => {
     console.log('Updating MIDI devices list...');
     console.log('Total inputs:', access.inputs.size);
     
-    access.inputs.forEach((input, key) => {
+    access.inputs.forEach((input) => {
       const device = getDeviceInfo(input);
       devices.push(device);
       console.log('Found MIDI device:', device);

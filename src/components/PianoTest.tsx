@@ -9,16 +9,6 @@ const PianoTest: React.FC = () => {
 
   const notes = ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'];
 
-  const handleNoteClick = async (note: string) => {
-    if (!isReady) return;
-    
-    try {
-      await playNote(note, "8n", 0.8);
-    } catch (error) {
-      console.error('Error playing note:', error);
-    }
-  };
-
   const handleNoteSelect = (note: string) => {
     setSelectedNotes(prev => {
       if (prev.includes(note)) {

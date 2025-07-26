@@ -1,9 +1,3 @@
-// Mock user for authentication
-const mockUser = {
-  uid: 'testUserId',
-  email: 'test@example.com',
-};
-
 // Mock auth service
 export const auth = {
   currentUser: {

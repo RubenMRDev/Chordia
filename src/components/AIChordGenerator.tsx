@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Swal from 'sweetalert2';
 import aiChordService, { AIChordRequest, AIChordResponse } from '../services/aiChordService';
 
