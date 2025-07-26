@@ -3,7 +3,7 @@ import { usePiano } from '../hooks/usePiano';
 import InteractivePiano from './InteractivePiano';
 
 const PianoTest: React.FC = () => {
-  const { isReady, isLoading, playNote, playChord, stopAllNotes } = usePiano();
+  const { isReady, isLoading, playNote: _playNote, playChord, stopAllNotes } = usePiano();
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
   const [interactiveSelectedNotes, setInteractiveSelectedNotes] = useState<string[]>([]);
 

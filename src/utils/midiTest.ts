@@ -21,7 +21,7 @@ export const testMIDIConnectivity = async () => {
       results.accessGranted = true;
       console.log('MIDI access granted:', access);
 
-      access.inputs.forEach((input, key) => {
+      access.inputs.forEach((input, _key) => {
         const deviceInfo = {
           id: input.id,
           name: input.name || 'Unknown Device',

@@ -115,7 +115,7 @@ const InteractivePiano: React.FC<InteractivePianoProps> = ({
             if (blackKeyIdx === -1) return null;
             
             const blackNote = blackKeyNames[blackKeyIdx];
-            const position = ((idx % 7) + 1) / whiteKeys.length;
+            const _position = ((idx % 7) + 1) / whiteKeys.length;
             const octaveOffset = Math.floor(idx / 7);
             const adjustedPosition = (octaveOffset * 7 + (idx % 7) + 1) / (octave * 7);
             

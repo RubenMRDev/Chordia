@@ -14,7 +14,7 @@ interface ChordType {
 }
 
 // Circle of Fifths data
-const circleOfFifths = {
+const _circleOfFifths = {
   major: [
     { key: "C", chords: ["C", "F", "G"] },
     { key: "G", chords: ["G", "C", "D"] },
@@ -370,7 +370,7 @@ export default function CreateSongPage() {
     return hasTwoOctaves ? renderTwoOctaves() : renderSingleOctave(chord.keys.map(k => k.replace(/\d/g, '')));
   };
 
-  const handleCircleChordSelect = (chord: string) => {
+  const _handleCircleChordSelect = (chord: string) => {
     setSelectedCircleChords(prev => {
       if (prev.includes(chord)) {
         return prev.filter(c => c !== chord);
@@ -378,49 +378,6 @@ export default function CreateSongPage() {
         return [...prev, chord];
       }
     });
-  };
-
-  const handleAddCircleChords = () => {
-    if (selectedCircleChords.length > 0) {
-      const newChords: ChordType[] = selectedCircleChords.map(chord => {
-        // Convert chord names to piano keys with correct octaves
-        const chordToKeys: { [key: string]: string[] } = {
-          "C": ["C4", "E4", "G4"],
-          "F": ["F4", "A4", "C5"],
-          "G": ["G4", "B4", "D5"],
-          "D": ["D4", "F#4", "A4"],
-          "A": ["A4", "C#5", "E5"],
-          "E": ["E4", "G#4", "B4"],
-          "B": ["B4", "D#5", "F#5"],
-          "F#": ["F#4", "A#4", "C#5"],
-          "C#": ["C#4", "E#4", "G#4"],
-          "Bb": ["Bb4", "D5", "F5"],
-          "Eb": ["Eb4", "G4", "Bb4"],
-          "Ab": ["Ab4", "C5", "Eb5"],
-          "Db": ["Db4", "F4", "Ab4"],
-          "Am": ["A4", "C5", "E5"],
-          "Dm": ["D4", "F4", "A4"],
-          "Em": ["E4", "G4", "B4"],
-          "Bm": ["B4", "D5", "F#5"],
-          "F#m": ["F#4", "A4", "C#5"],
-          "C#m": ["C#4", "E4", "G#4"],
-          "G#m": ["G#4", "B4", "D#5"],
-          "Gm": ["G4", "Bb4", "D5"],
-          "Cm": ["C4", "Eb4", "G4"],
-          "Fm": ["F4", "Ab4", "C5"],
-          "Bbm": ["Bb4", "Db5", "F5"],
-          "Ebm": ["Eb4", "Gb4", "Bb4"]
-        };
-        
-        return {
-          keys: chordToKeys[chord] || ["C4", "E4", "G4"], // Default to C major if not found
-          selected: true
-        };
-      });
-      
-      setChordProgression(prev => [...prev, ...newChords]);
-      setSelectedCircleChords([]);
-    }
   };
 
   const CircleOfFifthsSVG = () => {

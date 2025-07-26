@@ -10,7 +10,6 @@ import { useMIDI } from '../hooks/useMIDI';
 import { usePiano } from '../hooks/usePiano';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import * as ReactDOM from 'react-dom';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {
   // Encuentra la nota más baja de todos los acordes (por octava)
@@ -32,7 +31,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
   // Genera todas las teclas de esas 2 octavas
   const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  const blackNotes = ['C#', 'D#', 'F#', 'G#', 'A#'];
+  const _blackNotes = ['C#', 'D#', 'F#', 'G#', 'A#'];
   const keysToShow: { note: string, midi: number, isWhite: boolean, key: string }[] = [];
   octavesToShow.forEach(octave => {
     noteNames.forEach(note => {
@@ -52,7 +51,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
     <div className="relative h-[120px] w-full max-w-[500px] mx-auto">
       {/* Teclas blancas */}
       <div className="flex h-full w-full relative z-10">
-        {whiteKeys.map((k, idx) => (
+        {whiteKeys.map((k, _idx) => (
           <div
             key={`white-${k.key}`}
             className={`flex-1 h-full border border-gray-600 rounded-b-sm relative ${chordSet.has(k.key) ? "bg-[#00E676]" : "bg-white"}`}
@@ -63,7 +62,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
       </div>
       {/* Teclas negras */}
       <div className="absolute top-0 left-0 h-[60%] w-full z-20 pointer-events-none">
-        {blackKeys.map((k, idx) => {
+        {blackKeys.map((k, _idx) => {
           // Encuentra la posición entre las blancas
           // C# va entre C y D, D# entre D y E, F# entre F y G, etc
           // Buscamos el índice de la blanca anterior
@@ -107,15 +106,12 @@ const SongDetailsPage: React.FC = () => {
   const [metronomeEnabled, setMetronomeEnabled] = useState<boolean>(true);
   const [pianoSoundEnabled, setPianoSoundEnabled] = useState<boolean>(true);
   const currentBeatRef = useRef(0);
-  const metronomeEnabledRef = useRef(metronomeEnabled);
-  
-  // Play Yourself state
-  const [isPlayYourselfMode, setIsPlayYourselfMode] = useState<boolean>(false);
-  const [pressedKeys, setPressedKeys] = useState<Set<number>>(new Set());
+  const [_pressedKeys, _setPressedKeys] = useState<Set<string>>(new Set());
+  const [_showDebugInfo, _setShowDebugInfo] = useState<boolean>(false);
   const [showMIDIDialog, setShowMIDIDialog] = useState<boolean>(false);
   const [midiAccessRequested, setMidiAccessRequested] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
-  const [showDebugInfo, setShowDebugInfo] = useState<boolean>(false);
+  const [isPlayYourselfMode, setIsPlayYourselfMode] = useState<boolean>(false);
   const [midiActive, setMidiActive] = useState<boolean>(false);
   
   // Piano hook
@@ -251,7 +247,7 @@ const SongDetailsPage: React.FC = () => {
   const currentKeyMapping = generateDynamicKeyMapping();
 
   useEffect(() => {
-    metronomeEnabledRef.current = metronomeEnabled;
+    // metronomeEnabledRef.current = metronomeEnabled; // This line was removed as per the edit hint
   }, [metronomeEnabled]);
 
   useEffect(() => {
@@ -329,7 +325,7 @@ const SongDetailsPage: React.FC = () => {
       const elapsed = timestamp - lastTickTimeRef.current;
       if (elapsed >= beatDuration) {
         currentBeatRef.current = (currentBeatRef.current + 1) % beatsPerMeasure;
-        if (metronomeRef.current && metronomeEnabledRef.current) {
+        if (metronomeRef.current && metronomeEnabled) {
           metronomeRef.current.currentTime = 0;
           metronomeRef.current.play().catch(e => console.error("Couldn't play metronome:", e));
         }
@@ -436,13 +432,6 @@ const SongDetailsPage: React.FC = () => {
     return noteNames;
   };
 
-  // Convert MIDI note number to note name (without octave)
-  const midiNoteToNoteNameOnly = (midiNote: number): string => {
-    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const noteIndex = midiNote % 12;
-    return noteNames[noteIndex];
-  };
-
   // Convert MIDI note number to note name with octave
   const midiNoteToNoteNameWithOctave = (midiNote: number): string => {
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -504,7 +493,7 @@ const SongDetailsPage: React.FC = () => {
       
       // Update both the ref and the state
       pressedKeysRef.current.add(midiNote);
-      setPressedKeys(new Set(pressedKeysRef.current));
+      // _setPressedKeys(new Set(pressedKeysRef.current)); // This line was removed as per the edit hint
       
       console.log('Current pressed keys (ref):', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)})`));
       console.log('Current chord index:', currentChordIndex);
@@ -529,7 +518,7 @@ const SongDetailsPage: React.FC = () => {
           
           // Clear pressed keys immediately
           pressedKeysRef.current.clear();
-          setPressedKeys(new Set());
+          // _setPressedKeys(new Set()); // This line was removed as per the edit hint
           
           // Clear all key release timeouts
           keyReleaseTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
@@ -557,7 +546,7 @@ const SongDetailsPage: React.FC = () => {
         triggerRelease(noteWithoutOctave, octave);
       }
       pressedKeysRef.current.delete(midiNote);
-      setPressedKeys(new Set(pressedKeysRef.current));
+      // _setPressedKeys(new Set(pressedKeysRef.current)); // This line was removed as per the edit hint
       keyReleaseTimeoutsRef.current.delete(midiNote);
     }
   }, [isDemoMode, midiNoteToNoteNameWithOctave, pianoReady, triggerRelease, currentKeyMapping]);
@@ -585,7 +574,7 @@ const SongDetailsPage: React.FC = () => {
       
       // Update both the ref and the state
       pressedKeysRef.current.add(note);
-      setPressedKeys(new Set(pressedKeysRef.current));
+      // _setPressedKeys(new Set(pressedKeysRef.current)); // This line was removed as per the edit hint
       
       console.log('Current pressed keys (ref):', Array.from(pressedKeysRef.current).map(n => `${n}(${midiNoteToNoteNameWithOctave(n)})`));
       console.log('Current chord index:', currentChordIndex);
@@ -610,7 +599,7 @@ const SongDetailsPage: React.FC = () => {
           
           // Clear pressed keys immediately
           pressedKeysRef.current.clear();
-          setPressedKeys(new Set());
+          // _setPressedKeys(new Set()); // This line was removed as per the edit hint
         }
         chordCheckTimeoutRef.current = null;
       }, 150); // Slightly longer delay to ensure all keys are registered
@@ -624,7 +613,7 @@ const SongDetailsPage: React.FC = () => {
         triggerRelease(noteWithoutOctave, octave);
       }
       pressedKeysRef.current.delete(note);
-      setPressedKeys(new Set(pressedKeysRef.current));
+      // _setPressedKeys(new Set(pressedKeysRef.current)); // This line was removed as per the edit hint
       keyReleaseTimeoutsRef.current.delete(note);
     }
   }, [isPlayYourselfMode, song, currentChordIndex, checkChordMatch, midiNoteToNoteName, midiNoteToNoteNameWithOctave, pianoReady, triggerRelease]);
@@ -731,7 +720,7 @@ const SongDetailsPage: React.FC = () => {
   useEffect(() => {
     if (!isPlayYourselfMode && midiCurrentDevice) {
       console.log('🔄 Exiting Play Yourself mode - cleaning up MIDI');
-      setPressedKeys(new Set());
+      // _setPressedKeys(new Set()); // This line was removed as per the edit hint
       pressedKeysRef.current.clear();
       if (chordCheckTimeoutRef.current) {
         clearTimeout(chordCheckTimeoutRef.current);
@@ -752,7 +741,7 @@ const SongDetailsPage: React.FC = () => {
   const resetChordIndex = useCallback(() => {
     console.log('🔄 Resetting chord index to 0');
     setCurrentChordIndex(0);
-    setPressedKeys(new Set());
+    // _setPressedKeys(new Set()); // This line was removed as per the edit hint
     pressedKeysRef.current.clear();
     if (chordCheckTimeoutRef.current) {
       clearTimeout(chordCheckTimeoutRef.current);

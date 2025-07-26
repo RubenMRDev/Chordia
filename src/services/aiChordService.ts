@@ -486,10 +486,10 @@ Use only standard chord notation (C, Cm, F, G, Am, etc.).`;
       .replace(/M13$/i, "maj13")
       .replace(/ /g, "")
       .replace(/\u2013/g, "-")
-      .replace(/([A-G])b/, (m, p1) => p1 + "b")
-      .replace(/([A-G])#/, (m, p1) => p1 + "#");
+      .replace(/([A-G])b/, (_m, p1) => p1 + "b")
+      .replace(/([A-G])#/, (_m, p1) => p1 + "#");
     c = c.charAt(0).toUpperCase() + c.slice(1);
-    c = c.replace(/([A-G][#b]?)(m|maj|dim|aug|sus[24]?|6|7|9|11|13)$/, (m, root, qual) => root + qual);
+    c = c.replace(/([A-G][#b]?)(m|maj|dim|aug|sus[24]?|6|7|9|11|13)$/, (_m, root, qual) => root + qual);
     if (/^[A-G][#b]?minor$/i.test(c)) c = c[0].toUpperCase() + (c[1] || "") + "m";
     if (/^[A-G][#b]?major$/i.test(c)) c = c[0].toUpperCase() + (c[1] || "");
     return c;

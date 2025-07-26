@@ -1,4 +1,4 @@
-import { Sampler, Synth, Time, start } from 'tone';
+import * as Tone from 'tone';
 
 class PianoService {
   private piano: any = null;
@@ -7,7 +7,7 @@ class PianoService {
 
   constructor() {
     // Use Tone.start() to resume the context
-    start();
+    (Tone as any).start();
   }
 
   async initialize(): Promise<void> {
@@ -18,7 +18,7 @@ class PianoService {
     this.isInitializing = true;
 
     try {
-      this.piano = new Sampler({
+      this.piano = new (Tone as any).Sampler({
         urls: {
           "C4": "C4.mp3",
           "D#4": "Ds4.mp3", 
@@ -34,7 +34,7 @@ class PianoService {
       console.log('Piano service initialized successfully');
     } catch (error) {
       console.error('Failed to initialize piano service:', error);
-      this.piano = new Synth({
+      this.piano = new (Tone as any).Synth({
         oscillator: {
           type: "triangle"
         },
@@ -91,7 +91,7 @@ class PianoService {
         normalizedNotes.forEach(note => {
           this.piano!.triggerRelease(note);
         });
-      }, Time(duration).toMilliseconds());
+      }, (Tone as any).Time(duration).toMilliseconds());
     } catch (error) {
       console.error(`Error playing chord ${notes}:`, error);
     }

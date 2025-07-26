@@ -36,7 +36,7 @@ const LibraryPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [visibleSongs, setVisibleSongs] = useState<number>(0);
-  const [animationsReady, setAnimationsReady] = useState<boolean>(false);
+  const [_animationsReady, setAnimationsReady] = useState<boolean>(false);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
