@@ -31,7 +31,6 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
   // Genera todas las teclas de esas 2 octavas
   const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  const _blackNotes = ['C#', 'D#', 'F#', 'G#', 'A#'];
   const keysToShow: { note: string, midi: number, isWhite: boolean, key: string }[] = [];
   octavesToShow.forEach(octave => {
     noteNames.forEach(note => {

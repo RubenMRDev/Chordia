@@ -13,38 +13,6 @@ interface ChordType {
   selected: boolean
 }
 
-// Circle of Fifths data
-const _circleOfFifths = {
-  major: [
-    { key: "C", chords: ["C", "F", "G"] },
-    { key: "G", chords: ["G", "C", "D"] },
-    { key: "D", chords: ["D", "G", "A"] },
-    { key: "A", chords: ["A", "D", "E"] },
-    { key: "E", chords: ["E", "A", "B"] },
-    { key: "B", chords: ["B", "E", "F#"] },
-    { key: "F#", chords: ["F#", "B", "C#"] },
-    { key: "C#", chords: ["C#", "F#", "G#"] },
-    { key: "F", chords: ["F", "Bb", "C"] },
-    { key: "Bb", chords: ["Bb", "Eb", "F"] },
-    { key: "Eb", chords: ["Eb", "Ab", "Bb"] },
-    { key: "Ab", chords: ["Ab", "Db", "Eb"] }
-  ],
-  minor: [
-    { key: "Am", chords: ["Am", "Dm", "Em"] },
-    { key: "Em", chords: ["Em", "Am", "Bm"] },
-    { key: "Bm", chords: ["Bm", "Em", "F#m"] },
-    { key: "F#m", chords: ["F#m", "Bm", "C#m"] },
-    { key: "C#m", chords: ["C#m", "F#m", "G#m"] },
-    { key: "G#m", chords: ["G#m", "C#m", "A#m"] },
-    { key: "Dm", chords: ["Dm", "Gm", "Am"] },
-    { key: "Gm", chords: ["Gm", "Cm", "Dm"] },
-    { key: "Cm", chords: ["Cm", "Fm", "Gm"] },
-    { key: "Fm", chords: ["Fm", "Bbm", "Cm"] },
-    { key: "Bbm", chords: ["Bbm", "Ebm", "Fm"] },
-    { key: "Ebm", chords: ["Ebm", "Abm", "Bbm"] }
-  ]
-}
-
 const HeaderWithConfirmation = () => {
   const handleLinkClick = (e: MouseEvent) => {
     e.preventDefault();
@@ -103,7 +71,6 @@ export default function CreateSongPage() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [editingChordIndex, setEditingChordIndex] = useState<number | null>(null);
   const [isAdvancedMode, setIsAdvancedMode] = useState<boolean>(true);
-  const [selectedCircleChords, setSelectedCircleChords] = useState<string[]>([]);
   const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState<boolean>(false);
   
   // Piano hook
@@ -368,16 +335,6 @@ export default function CreateSongPage() {
 
     // Si tiene 2 octavas, mostrar una fila de 14 teclas blancas, sino mostrar 1 octava
     return hasTwoOctaves ? renderTwoOctaves() : renderSingleOctave(chord.keys.map(k => k.replace(/\d/g, '')));
-  };
-
-  const _handleCircleChordSelect = (chord: string) => {
-    setSelectedCircleChords(prev => {
-      if (prev.includes(chord)) {
-        return prev.filter(c => c !== chord);
-      } else {
-        return [...prev, chord];
-      }
-    });
   };
 
   const CircleOfFifthsSVG = () => {
