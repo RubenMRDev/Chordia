@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaMusic, FaUser, FaCalendarAlt, FaClock } from 'react-icons/fa';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-import { getAllSongsWithUserInfo, deleteSongAsAdmin } from '../api/songApi';
+import { getAllSongsWithUserInfo, deleteSongAsAdmin } from '../firebase/songService';
 import Swal from 'sweetalert2';
 import type { Song } from '../types/firebase';
 

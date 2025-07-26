@@ -13,7 +13,7 @@ import {
   type User,
 } from "firebase/auth"
 import { auth } from "../firebase/config"
-import { createUserProfile, getUserProfile } from '../api/userApi'
+import { createUserProfile, getUserProfile } from '../firebase/userService';
 import type { UserProfile } from '../types/firebase'
 
 interface AuthContextType {

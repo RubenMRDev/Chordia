@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import Header from "../components/Header"
 import { useAuth } from "../context/AuthContext"
-import { createSong } from '../api/songApi'
+import { createSong } from '../firebase/songService';
 import Swal from 'sweetalert2'
 import { usePiano } from '../hooks/usePiano'
 import AIChordGenerator from '../components/AIChordGenerator'
@@ -228,7 +228,7 @@ export default function CreateSongPage() {
         createdAt: new Date().toISOString()
       };
       // Using void to explicitly ignore the returned value
-      void await createSong(songData);
+      void createSong(songData);
       Swal.fire({
         title: 'Success!',
         text: `Song "${songTitle}" saved successfully!`,

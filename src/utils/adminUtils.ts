@@ -1,5 +1,4 @@
-import { updateUserRole } from '../api/userApi';
-import { getUserProfile } from '../api/userApi';
+import { updateUserRole, getUserProfile } from '../firebase/userService';
 
 /**
  * Función para convertir un usuario a admin

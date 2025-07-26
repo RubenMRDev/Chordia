@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaMusic, FaPlay, FaTrash, FaClock, FaPlus } from 'react-icons/fa';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-import { getUserSongs, deleteSongById } from '../api/songApi';
+import { getUserSongs, deleteSongById } from '../firebase/songService';
 import Swal from 'sweetalert2';
 import type { Song } from '../types/firebase';
 

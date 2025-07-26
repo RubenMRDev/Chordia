@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward, FaKeyboard, FaInfoCircle } from 'react-icons/fa';
 import Header from '../components/Header';
 import MIDITroubleshooting from '../components/MIDITroubleshooting';
-import { getSongById } from '../api/songApi';
+import { getSongById } from '../firebase/songService';
 import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
 import { useMIDI } from '../hooks/useMIDI';

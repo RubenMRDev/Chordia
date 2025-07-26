@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaMusic, FaClock, FaPlus, FaTrash, FaMapMarkerAlt, FaGlobe, FaCalendarAlt, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from 'react-icons/fa';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
-import { getUserSongs, deleteAllUserSongs } from '../api/songApi';
-import { getUserProfile, deleteUserProfile } from '../api/userApi';
+import { getUserSongs, deleteAllUserSongs } from '../firebase/songService';
+import { getUserProfile, deleteUserProfile } from '../firebase/userService';
 import Swal from 'sweetalert2';
 import type { Song, UserProfile } from '../types/firebase';
 
