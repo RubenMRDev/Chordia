@@ -1,6 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { Link } from 'react-router-dom';
-const Hero = ({ title = 'Master Piano with Chordia', subtitle = 'Learn, create, and explore music like never before.', callToAction = 'Try it Free', backgroundImage = 'https://res.cloudinary.com/doy4x4chv/image/upload/v1742986249/hero-music_kpdnh2.webp', className = '' }) => {
-    return (_jsxs("section", { className: `relative py-20 overflow-hidden bg-[var(--background-darker)] ${className}`, "data-testid": "hero-component", children: [_jsx("div", { className: "absolute top-0 right-0 w-full h-full bg-cover bg-center opacity-50 z-0", style: { backgroundImage: `url(${backgroundImage})` }, "data-testid": "hero-background" }), _jsx("div", { className: "container", children: _jsxs("div", { className: "max-w-[600px] relative z-10", children: [_jsx("h1", { className: "text-[3.5rem] font-bold leading-tight mb-4", children: title }), _jsx("p", { className: "text-[var(--text-secondary)] text-lg mb-8 leading-relaxed", children: subtitle }), _jsxs("div", { className: "flex gap-4", children: [_jsx(Link, { to: "/register", className: "btn btn-primary no-underline", children: callToAction }), _jsx(Link, { to: "/demo", className: "btn btn-secondary", children: "Watch Demo" })] })] }) })] }));
-};
-export default Hero;

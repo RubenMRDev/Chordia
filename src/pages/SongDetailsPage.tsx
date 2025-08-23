@@ -8,6 +8,7 @@ import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
 import { useMIDI } from '../hooks/useMIDI';
 import { usePiano } from '../hooks/usePiano';
+import { SongDetailsSkeleton } from '../components/skeletons';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
@@ -1018,9 +1019,7 @@ const SongDetailsPage: React.FC = () => {
           <FaArrowLeft /> Back to Stage
         </Link>
         {loading ? (
-          <div className="text-center py-12 text-[#a0aec0]">
-            Loading song details...
-          </div>
+          <SongDetailsSkeleton />
         ) : error ? (
           <div className="text-center py-12 text-red-500">
             {error}
