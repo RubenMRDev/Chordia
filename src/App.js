@@ -1,0 +1,31 @@
+"use client";
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import DashboardPage from "./pages/DashboardPage";
+import DiscoveryPage from "./pages/DiscoverPage";
+import LibraryPage from "./pages/LibraryPage";
+import ProfilePage from "./pages/ProfilePage";
+import EditProfilePage from "./pages/EditProfilePage";
+import AdminSongManagementPage from "./pages/AdminSongManagementPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import { useAuth } from "./context/AuthContext";
+import CreateSongPage from "./pages/CreateSongPage";
+import SongDetailsPage from "./pages/SongDetailsPage";
+import Header from './components/Header';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import Experience from './components/Experience';
+import CallToAction from './components/CallToAction';
+import Footer from './components/Footer';
+import LandingLayout from './components/LandingLayout';
+import DemoPage from './pages/DemoPage';
+import AIChatWidget from './components/AIChatWidget';
+import "./App.css";
+function App() {
+    const { currentUser } = useAuth();
+    return (_jsxs(_Fragment, { children: [_jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsxs(LandingLayout, { children: [_jsx(Header, {}), _jsx(Hero, {}), _jsx(Features, {}), _jsx(Experience, {}), _jsx(CallToAction, {}), _jsx(Footer, {})] }) }), _jsx(Route, { path: "/login", element: currentUser ? _jsx(Navigate, { to: "/dashboard", replace: true }) : _jsx(LoginPage, {}) }), _jsx(Route, { path: "/register", element: currentUser ? _jsx(Navigate, { to: "/dashboard", replace: true }) : _jsx(RegisterPage, {}) }), _jsx(Route, { path: "/dashboard", element: _jsx(ProtectedRoute, { children: _jsx(DashboardPage, {}) }) }), _jsx(Route, { path: "/library", element: _jsx(ProtectedRoute, { children: _jsx(LibraryPage, {}) }) }), _jsx(Route, { path: "/discover", element: _jsx(ProtectedRoute, { children: _jsx(DiscoveryPage, {}) }) }), _jsx(Route, { path: "/profile", element: _jsx(ProtectedRoute, { children: _jsx(ProfilePage, {}) }) }), _jsx(Route, { path: "/profile/edit", element: _jsx(ProtectedRoute, { children: _jsx(EditProfilePage, {}) }) }), _jsx(Route, { path: "/admin/songs", element: _jsx(AdminRoute, { children: _jsx(AdminSongManagementPage, {}) }) }), _jsx(Route, { path: "/create", element: _jsx(ProtectedRoute, { children: _jsx(CreateSongPage, {}) }) }), _jsx(Route, { path: "/song/:songId", element: _jsx(ProtectedRoute, { children: _jsx(SongDetailsPage, {}) }) }), _jsx(Route, { path: "/demo", element: _jsx(DemoPage, {}) }), _jsx(Route, { path: "*", element: _jsx(Navigate, { to: "/", replace: true }) })] }), _jsx(AIChatWidget, {})] }));
+}
+export default App;
