@@ -58,72 +58,79 @@ const Features: React.FC = () => {
     };
   }, []);
   return (
-    <section ref={sectionRef} className="py-16 bg-[var(--background-dark)]">
-      <div className="container mx-auto px-4 text-center">
-        <h2 
-          className={`text-4xl md:text-5xl font-bold mb-4 transition-all duration-500 ease-out ${
-            headingVisible 
-              ? 'opacity-100 translate-y-0' 
+    <section ref={sectionRef} className="section">
+      <div className="container text-center">
+        <h2
+          className={`text-3xl md:text-5xl font-bold mb-4 transition-all duration-500 ease-out ${
+            headingVisible
+              ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-8'
           }`}
         >
-          Why Choose <span className="text-[#04e073]">Chordia</span>
+          Why Choose <span className="text-[#7bffbb]">Chordia</span>
         </h2>
-        <p 
-          className={`text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto transition-all duration-500 ease-out ${
-            subheadingVisible 
-              ? 'opacity-100 translate-y-0' 
+        <div className="glass-divider" />
+        <p
+          className={`text-[rgba(226,235,255,0.7)] mb-12 max-w-2xl mx-auto transition-all duration-500 ease-out ${
+            subheadingVisible
+              ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-8'
           }`}
         >
           Everything you need to enhance your musical journey
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div 
+        <div className="features-grid">
+          <div
             ref={setFeatureRef(0)}
-            className={`card p-6 rounded-lg shadow-lg transition-all duration-500 ease-out bg-[var(--card-bg)] ${
-              visibleItems.includes(0) 
-                ? 'opacity-100 translate-y-0' 
+            className={`glass-card h-full transition-all duration-500 ease-out ${
+              visibleItems.includes(0)
+                ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-12'
             }`}
           >
-            <FaBook className="text-4xl mb-4 mx-auto text-[#04e073]" />
-            <h3 className="text-xl font-semibold mb-4 text-[#04e073]">
+            <div className="feature-icon mx-auto">
+              <FaBook />
+            </div>
+            <h3 className="text-xl font-semibold mb-3 text-[#7bffbb]">
               Extensive Song Catalog
             </h3>
-            <p className="text-[var(--text-secondary)]">
+            <p className="text-[rgba(226,235,255,0.7)]">
               Access thousands of songs with detailed chord progressions and sheet music.
             </p>
           </div>
-          <div 
+          <div
             ref={setFeatureRef(1)}
-            className={`card p-6 rounded-lg shadow-lg transition-all duration-500 ease-out bg-[var(--card-bg)] ${
-              visibleItems.includes(1) 
-                ? 'opacity-100 translate-y-0' 
+            className={`glass-card h-full transition-all duration-500 ease-out ${
+              visibleItems.includes(1)
+                ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-12'
             }`}
           >
-            <FaEdit className="text-4xl mb-4 mx-auto text-[#04e073]" />
-            <h3 className="text-xl font-semibold mb-4 text-[#04e073]">
+            <div className="feature-icon mx-auto">
+              <FaEdit />
+            </div>
+            <h3 className="text-xl font-semibold mb-3 text-[#7bffbb]">
               Custom Compositions
             </h3>
-            <p className="text-[var(--text-secondary)]">
+            <p className="text-[rgba(226,235,255,0.7)]">
               Create and save your own musical arrangements with our intuitive editor.
             </p>
           </div>
-          <div 
+          <div
             ref={setFeatureRef(2)}
-            className={`card p-6 rounded-lg shadow-lg transition-all duration-500 ease-out bg-[var(--card-bg)] ${
-              visibleItems.includes(2) 
-                ? 'opacity-100 translate-y-0' 
+            className={`glass-card h-full transition-all duration-500 ease-out ${
+              visibleItems.includes(2)
+                ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-12'
             }`}
           >
-            <FaGraduationCap className="text-4xl mb-4 mx-auto text-[#04e073]" />
-            <h3 className="text-xl font-semibold mb-4 text-[#04e073]">
+            <div className="feature-icon mx-auto">
+              <FaGraduationCap />
+            </div>
+            <h3 className="text-xl font-semibold mb-3 text-[#7bffbb]">
               Interactive Learning
             </h3>
-            <p className="text-[var(--text-secondary)]">
+            <p className="text-[rgba(226,235,255,0.7)]">
               Learn at your own pace with our interactive tutorials and exercises.
             </p>
           </div>
