@@ -1,7 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-const LandingLayout = ({ children }) => {
-    return (_jsxs("div", { className: "relative min-h-screen overflow-hidden", children: [_jsxs("div", { className: "pointer-events-none fixed inset-0 -z-10", children: [_jsx("div", { className: "absolute inset-0 opacity-90", style: {
-                            background: 'radial-gradient(circle at 20% 20%, rgba(123, 255, 187, 0.18), transparent 55%), radial-gradient(circle at 80% 10%, rgba(102, 217, 255, 0.18), transparent 60%)'
-                        } }), _jsx("div", { className: "absolute inset-0 bg-gradient-to-br from-[#05070d]/70 via-[#0c1427]/80 to-[#05070d]" }), _jsx("div", { className: "absolute -top-32 -left-32 h-[420px] w-[420px] rounded-full bg-[rgba(123,255,187,0.14)] blur-[120px]", style: { animation: 'floatSlow 22s ease-in-out infinite' } }), _jsx("div", { className: "absolute bottom-[-140px] right-[-80px] h-[380px] w-[420px] rounded-full bg-[rgba(102,217,255,0.18)] blur-[110px]", style: { animation: 'floatSlow 26s ease-in-out infinite', animationDelay: '6s' } }), _jsx("div", { className: "absolute inset-0 bg-[url('https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/noise_txsv6s.png')] opacity-[0.04] mix-blend-screen" })] }), _jsx("main", { className: "relative z-10 flex flex-col gap-10 md:gap-16", children: children })] }));
-};
-export default LandingLayout;
