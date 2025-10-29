@@ -4,7 +4,9 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaMusic, FaArrowLeft, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
-import { updateUserProfile } from '../firebase/userService';
+import { updateUserProfile } from '../firebase/userService'
+import { FormInputField } from '../components/form/FormInputField'
+import { FormTextAreaField } from '../components/form/FormTextAreaField'
 
 const EditProfilePage: React.FC = () => {
   const navigate = useNavigate()
@@ -124,282 +126,70 @@ const EditProfilePage: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1.5rem" }}>Basic Information</h2>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="name"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "4px",
-                  color: "var(--text-primary)",
-                  fontSize: "1rem",
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="bio"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Bio
-              </label>
-              <textarea
-                name="bio"
-                id="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                rows={4}
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "4px",
-                  color: "var(--text-primary)",
-                  fontSize: "1rem",
-                  resize: "vertical",
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="location"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Location
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "4px",
-                  color: "var(--text-primary)",
-                  fontSize: "1rem",
-                }}
-              />
-            </div>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="website"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Website
-              </label>
-              <input
-                type="text"
-                id="website"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "4px",
-                  color: "var(--text-primary)",
-                  fontSize: "1rem",
-                }}
-              />
-            </div>
+            <FormInputField
+              id="name"
+              name="name"
+              label="Name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+            <FormTextAreaField
+              id="bio"
+              name="bio"
+              label="Bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={4}
+            />
+            <FormInputField
+              id="location"
+              name="location"
+              label="Location"
+              value={formData.location}
+              onChange={handleChange}
+            />
+            <FormInputField
+              id="website"
+              name="website"
+              label="Website"
+              value={formData.website}
+              onChange={handleChange}
+            />
           </div>
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ marginBottom: "1.5rem" }}>Social Links</h2>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="instagram"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Instagram
-              </label>
-              <div style={{ position: "relative" }}>
-                <FaInstagram
-                  style={{
-                    position: "absolute",
-                    left: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--text-secondary)",
-                  }}
-                />
-                <input
-                  type="text"
-                  id="instagram"
-                  name="instagram"
-                  value={formData.instagram}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    paddingLeft: "2.5rem",
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "4px",
-                    color: "var(--text-primary)",
-                    fontSize: "1rem",
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="twitter"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Twitter
-              </label>
-              <div style={{ position: "relative" }}>
-                <FaTwitter
-                  style={{
-                    position: "absolute",
-                    left: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--text-secondary)",
-                  }}
-                />
-                <input
-                  type="text"
-                  id="twitter"
-                  name="twitter"
-                  value={formData.twitter}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    paddingLeft: "2.5rem",
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "4px",
-                    color: "var(--text-primary)",
-                    fontSize: "1rem",
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="soundcloud"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                SoundCloud
-              </label>
-              <div style={{ position: "relative" }}>
-                <FaSoundcloud
-                  style={{
-                    position: "absolute",
-                    left: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--text-secondary)",
-                  }}
-                />
-                <input
-                  type="text"
-                  id="soundcloud"
-                  name="soundcloud"
-                  value={formData.soundcloud}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    paddingLeft: "2.5rem",
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "4px",
-                    color: "var(--text-primary)",
-                    fontSize: "1rem",
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label
-                htmlFor="spotify"
-                style={{
-                  display: "block",
-                  marginBottom: "0.5rem",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Spotify
-              </label>
-              <div style={{ position: "relative" }}>
-                <FaSpotify
-                  style={{
-                    position: "absolute",
-                    left: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--text-secondary)",
-                  }}
-                />
-                <input
-                  type="text"
-                  id="spotify"
-                  name="spotify"
-                  value={formData.spotify}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "0.75rem",
-                    paddingLeft: "2.5rem",
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "4px",
-                    color: "var(--text-primary)",
-                    fontSize: "1rem",
-                  }}
-                />
-              </div>
-            </div>
+            <FormInputField
+              id="instagram"
+              name="instagram"
+              label="Instagram"
+              value={formData.instagram}
+              onChange={handleChange}
+              icon={FaInstagram}
+            />
+            <FormInputField
+              id="twitter"
+              name="twitter"
+              label="Twitter"
+              value={formData.twitter}
+              onChange={handleChange}
+              icon={FaTwitter}
+            />
+            <FormInputField
+              id="soundcloud"
+              name="soundcloud"
+              label="SoundCloud"
+              value={formData.soundcloud}
+              onChange={handleChange}
+              icon={FaSoundcloud}
+            />
+            <FormInputField
+              id="spotify"
+              name="spotify"
+              label="Spotify"
+              value={formData.spotify}
+              onChange={handleChange}
+              icon={FaSpotify}
+            />
           </div>
           <div
             style={{
