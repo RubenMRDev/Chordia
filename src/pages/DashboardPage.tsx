@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaMusic, FaPlay, FaStar, FaRegStar, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import Header from '../components/Header';
@@ -8,14 +8,16 @@ const DashboardPage: React.FC = () => {
   const { songs: allSongs, loading } = useSongsWithUserData();
   const navigate = useNavigate();
 
-  // Get 3 random songs with difficulty
-  const songs = allSongs
-    .map(song => ({
-      ...song,
-      difficulty: Math.floor(Math.random() * 3) + 1,
-    }))
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
+  // Get 3 random songs with difficulty - memoized to avoid recalculation on every render
+  const songs = useMemo(() => {
+    return allSongs
+      .map(song => ({
+        ...song,
+        difficulty: Math.floor(Math.random() * 3) + 1,
+      }))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+  }, [allSongs]);
 
   const renderDifficultyStars = (level: number) => {
     const stars = [];
