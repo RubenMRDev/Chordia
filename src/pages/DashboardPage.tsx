@@ -1,75 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaMusic, FaPlay, FaStar, FaRegStar, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import Header from '../components/Header';
-import { getAllSongs } from '../firebase/songService';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/config';
-
-interface DisplaySong {
-  id: string;
-  title: string;
-  key: string;
-  timeSignature: string;
-  tempo: number;
-  username: string;
-  userId: string;
-  createdAt: string;
-  difficulty?: number;
-}
+import { useSongsWithUserData, DisplaySong } from '../hooks/useSongsWithUserData';
 
 const DashboardPage: React.FC = () => {
-  const [songs, setSongs] = useState<DisplaySong[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { songs: allSongs, loading } = useSongsWithUserData();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchRandomSongs = async () => {
-      try {
-        setLoading(true);
-        const allSongs = await getAllSongs();
-        const songsWithUserData = await Promise.all(
-          allSongs.map(async (song) => {
-            let username = '@user';
-            try {
-              const userDoc = await getDoc(doc(db, 'users', song.userId));
-              if (userDoc.exists()) {
-                username =
-                  '@' +
-                  (userDoc.data().username ||
-                    userDoc.data().displayName ||
-                    userDoc.data().email?.split('@')[0] ||
-                    'user');
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
-            }
-            const difficulty = Math.floor(Math.random() * 3) + 1;
-            return {
-              id: song.id || '',
-              title: song.title,
-              key: song.key,
-              timeSignature: song.timeSignature,
-              tempo: song.tempo,
-              username: username,
-              userId: song.userId,
-              createdAt: song.createdAt,
-              difficulty: difficulty,
-            };
-          })
-        );
-        const randomSongs = [...songsWithUserData]
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3);
-        setSongs(randomSongs);
-      } catch (error) {
-        console.error('Error fetching songs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRandomSongs();
-  }, []);
+  // Get 3 random songs with difficulty - memoized to avoid recalculation on every render
+  const songs = useMemo(() => {
+    return allSongs
+      .map(song => ({
+        ...song,
+        difficulty: Math.floor(Math.random() * 3) + 1,
+      }))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+  }, [allSongs]);
 
   const renderDifficultyStars = (level: number) => {
     const stars = [];

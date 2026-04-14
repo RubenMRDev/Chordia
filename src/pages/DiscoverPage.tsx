@@ -2,70 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import { FaMusic, FaPlay, FaUser, FaRandom, FaClock } from 'react-icons/fa';
-import { getAllSongs } from '../firebase/songService';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/config';
-
-interface DisplaySong {
-  id: string;
-  title: string;
-  key: string;
-  timeSignature: string;
-  tempo: number;
-  username: string;
-  userId: string;
-  createdAt: string;
-}
+import { useSongsWithUserData } from '../hooks/useSongsWithUserData';
 
 type SortMethod = 'recent' | 'random';
 
 const DiscoverPage: React.FC = () => {
-  const [songs, setSongs] = useState<DisplaySong[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { songs: allSongs, loading } = useSongsWithUserData();
   const [sortMethod, setSortMethod] = useState<SortMethod>('recent');
   const [animationsReady, setAnimationsReady] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchAllSongs = async () => {
-      try {
-        setLoading(true);
-        const allSongs = await getAllSongs();
-        const songsWithUserData = await Promise.all(
-          allSongs.map(async (song) => {
-            let username = '@user';
-            try {
-              const userDoc = await getDoc(doc(db, "users", song.userId));
-              if (userDoc.exists()) {
-                username = '@' + (userDoc.data().username || 
-                                  userDoc.data().displayName || 
-                                  userDoc.data().email?.split('@')[0] || 
-                                  'user');
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
-            }
-            return {
-              id: song.id || '',
-              title: song.title,
-              key: song.key,
-              timeSignature: song.timeSignature,
-              tempo: song.tempo,
-              username: username,
-              userId: song.userId,
-              createdAt: song.createdAt
-            };
-          })
-        );
-        setSongs(sortSongs(songsWithUserData, sortMethod));
-      } catch (error) {
-        console.error('Error fetching songs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllSongs();
-  }, [sortMethod]);
 
   useEffect(() => {
     setAnimationsReady(false);
@@ -73,9 +18,9 @@ const DiscoverPage: React.FC = () => {
       setAnimationsReady(true);
     }, 100);
     return () => clearTimeout(timer);
-  }, [songs]);
+  }, [allSongs]);
 
-  const sortSongs = (songsToSort: DisplaySong[], method: SortMethod): DisplaySong[] => {
+  const sortSongs = (songsToSort: typeof allSongs, method: SortMethod) => {
     switch (method) {
       case 'recent':
         return [...songsToSort].sort((a, b) => 
@@ -88,9 +33,10 @@ const DiscoverPage: React.FC = () => {
     }
   };
 
+  const songs = sortSongs(allSongs, sortMethod);
+
   const handleSortChange = (method: SortMethod) => {
     setSortMethod(method);
-    setSongs(sortSongs([...songs], method));
   };
 
   const formatDate = (dateString: string) => {
