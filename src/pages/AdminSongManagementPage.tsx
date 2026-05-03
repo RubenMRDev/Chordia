@@ -5,6 +5,7 @@ import { FaTrash, FaMusic, FaUser, FaCalendarAlt, FaClock } from 'react-icons/fa
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { getAllSongsWithUserInfo, deleteSongAsAdmin } from '../firebase/songService';
+import { SongGridSkeleton } from '../components/skeletons';
 import Swal from 'sweetalert2';
 import type { Song } from '../types/firebase';
 
@@ -102,17 +103,24 @@ const AdminSongManagementPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div
-        style={{
-          backgroundColor: "var(--background-darker)",
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "var(--text-primary)",
-        }}
-      >
-        Loading...
+      <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
+        <Header />
+        <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ marginBottom: "2rem" }}>
+            <h1 style={{ 
+              fontSize: "2rem", 
+              fontWeight: "bold", 
+              marginBottom: "1rem", 
+              color: "var(--text-primary)" 
+            }}>
+              Song Management
+            </h1>
+            <p style={{ color: "var(--text-secondary)" }}>
+              Manage all songs in the system
+            </p>
+          </div>
+          <SongGridSkeleton count={12} showUserInfo={true} />
+        </div>
       </div>
     );
   }

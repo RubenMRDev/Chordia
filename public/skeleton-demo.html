@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chordia - Skeleton Loading Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0a101b;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #00E676;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #a0aec0;
+            margin-bottom: 3rem;
+            font-size: 1.2rem;
+        }
+
+        /* Skeleton Animation */
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        .skeleton-shimmer {
+            background: linear-gradient(
+                90deg,
+                #374151 25%,
+                #4b5563 37%,
+                #374151 63%
+            );
+            background-size: 400px 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+        }
+
+        /* Song Card Skeletons */
+        .song-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .song-card {
+            background-color: #1a223a;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .song-card-header {
+            height: 160px;
+            background-color: #162032;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 1rem;
+        }
+
+        .song-card-icon {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+        }
+
+        .play-button {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+        }
+
+        .song-card-body {
+            padding: 1rem;
+        }
+
+        .title-skeleton {
+            height: 24px;
+            width: 75%;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .user-info {
+            height: 16px;
+            width: 50%;
+            margin-bottom: 0.75rem;
+            border-radius: 4px;
+        }
+
+        .song-details {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-tag {
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .detail-tag.key { width: 64px; }
+        .detail-tag.signature { width: 48px; }
+        .detail-tag.bpm { width: 80px; }
+
+        .song-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .date-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .date-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .date-text {
+            height: 16px;
+            width: 80px;
+            border-radius: 4px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        /* Piano Skeleton */
+        .piano-container {
+            margin: 3rem 0;
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            color: #00E676;
+        }
+
+        .piano {
+            position: relative;
+            height: 120px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .white-keys {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .white-key {
+            flex: 1;
+            height: 100%;
+            border: 1px solid #4b5563;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .white-key:not(:first-child) {
+            border-left: 1px solid #4b5563;
+        }
+
+        .black-keys {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 60%;
+            width: 100%;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .black-key {
+            position: absolute;
+            height: 100%;
+            width: 6%;
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* Features List */
+        .features {
+            background-color: #0f1419;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .features h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #00E676;
+        }
+
+        .features ul {
+            list-style: none;
+        }
+
+        .features li {
+            margin-bottom: 0.5rem;
+            color: #a0aec0;
+        }
+
+        .features strong {
+            color: #ffffff;
+        }
+
+        .demo-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            background-color: #374151;
+            color: #a0aec0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background-color: #4b5563;
+            color: white;
+        }
+
+        .nav-btn.active {
+            background-color: #00E676;
+            color: black;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Chordia Skeleton Loading States</h1>
+        <p class="subtitle">Enhanced user experience with shimmer loading animations</p>
+
+        <div class="demo-navigation">
+            <button class="nav-btn active" onclick="showDemo('song-library')">Song Library</button>
+            <button class="nav-btn" onclick="showDemo('admin-management')">Admin Management</button>
+            <button class="nav-btn" onclick="showDemo('piano-demo')">Piano Component</button>
+        </div>
+
+        <!-- Song Library Demo -->
+        <div id="song-library" class="demo-section">
+            <h2 class="section-title">Song Library Loading State</h2>
+            <div class="song-grid">
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Management Demo -->
+        <div id="admin-management" class="demo-section" style="display: none;">
+            <h2 class="section-title">Admin Song Management Loading State</h2>
+            <div class="song-grid">
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="user-info skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="user-info skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="song-card">
+                    <div class="song-card-header">
+                        <div class="song-card-icon skeleton-shimmer"></div>
+                        <div class="play-button skeleton-shimmer"></div>
+                    </div>
+                    <div class="song-card-body">
+                        <div class="title-skeleton skeleton-shimmer"></div>
+                        <div class="user-info skeleton-shimmer"></div>
+                        <div class="song-details">
+                            <div class="detail-tag key skeleton-shimmer"></div>
+                            <div class="detail-tag signature skeleton-shimmer"></div>
+                            <div class="detail-tag bpm skeleton-shimmer"></div>
+                        </div>
+                        <div class="song-footer">
+                            <div class="date-info">
+                                <div class="date-icon skeleton-shimmer"></div>
+                                <div class="date-text skeleton-shimmer"></div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn skeleton-shimmer"></div>
+                                <div class="action-btn skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Piano Demo -->
+        <div id="piano-demo" class="demo-section" style="display: none;">
+            <h2 class="section-title">Piano Component Loading State</h2>
+            <div class="piano-container">
+                <div class="piano">
+                    <div class="white-keys">
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                        <div class="white-key skeleton-shimmer"></div>
+                    </div>
+                    <div class="black-keys">
+                        <div class="black-key skeleton-shimmer" style="left: 4.6%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 11.9%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 26.2%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 33.3%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 40.5%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 54.8%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 62.1%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 76.2%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 83.3%;"></div>
+                        <div class="black-key skeleton-shimmer" style="left: 90.5%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <h3>✨ Skeleton Loading Features</h3>
+            <ul>
+                <li>• <strong>Shimmer Animation:</strong> Smooth gradient animation across loading elements</li>
+                <li>• <strong>Structural Consistency:</strong> Skeletons match the exact layout of loaded content</li>
+                <li>• <strong>Responsive Design:</strong> Adapts to different screen sizes like the real components</li>
+                <li>• <strong>User Experience:</strong> Users see content structure immediately, reducing perceived loading time</li>
+                <li>• <strong>Component Variety:</strong> Different skeletons for song cards, piano interface, and chord progressions</li>
+                <li>• <strong>Performance:</strong> Pure CSS animations with no JavaScript dependencies</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showDemo(demoId) {
+            // Hide all demos
+            document.querySelectorAll('.demo-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected demo
+            document.getElementById(demoId).style.display = 'block';
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

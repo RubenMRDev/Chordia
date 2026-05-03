@@ -4,6 +4,7 @@ import { FaMusic, FaPlay, FaTrash, FaClock, FaPlus } from 'react-icons/fa';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import { getUserSongs, deleteSongById } from '../firebase/songService';
+import { SongGridSkeleton } from '../components/skeletons';
 import Swal from 'sweetalert2';
 import type { Song } from '../types/firebase';
 
@@ -147,9 +148,7 @@ const LibraryPage: React.FC = () => {
           </Link>
         </div>
         {loading ? (
-          <div className="text-center py-12 text-[var(--text-secondary)]">
-            Loading your songs...
-          </div>
+          <SongGridSkeleton count={8} showUserInfo={false} />
         ) : error ? (
           <div className="text-center py-12 text-[#ef4444]">
             {error}

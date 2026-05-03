@@ -21,6 +21,7 @@ import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
 import LandingLayout from './components/LandingLayout';
 import DemoPage from './pages/DemoPage';
+import SkeletonDemo from './pages/SkeletonDemo';
 import AIChatWidget from './components/AIChatWidget';
 import "./App.css"
 
@@ -108,6 +109,7 @@ function App() {
           }
         />
         <Route path="/demo" element={<DemoPage />} />
+        <Route path="/skeleton-demo" element={<SkeletonDemo />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <AIChatWidget />

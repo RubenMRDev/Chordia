@@ -145,3 +145,24 @@ input[type="url"], textarea, select, [contenteditable="true"] {
   -moz-user-select: none !important;
   -ms-user-select: none !important;
 }
+
+/* Skeleton loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #374151 25%,
+    #4b5563 37%,
+    #374151 63%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}

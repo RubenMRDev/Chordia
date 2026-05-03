@@ -1,3 +1,0 @@
-/// <reference types="@testing-library/jest-dom" />
-
-export {};

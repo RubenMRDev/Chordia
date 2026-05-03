@@ -24,4 +24,14 @@ dist-ssr
 *.sw?
 node_modules
 
+# Build artifacts
+*.d.ts
+*.js
+!eslint.config.js
+!vite.config.js
+!jest.config.cjs
+!jest.frontend.config.cjs
+!open-coverage.js
+tsconfig.tsbuildinfo
+
 api/serviceAccountKey.json
