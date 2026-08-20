@@ -9,7 +9,10 @@ module.exports = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    'tone': '<rootDir>/node_modules/tone/build/Tone.js'
+    // Ojo con el orden y con anclar el patron: 'tone' sin anclas tambien
+    // casaba con '@tonejs/midi' y devolvia la clase Midi de Tone.js.
+    '^@tonejs/midi$': '<rootDir>/node_modules/@tonejs/midi/build/Midi.js',
+    '^tone$': '<rootDir>/node_modules/tone/build/Tone.js'
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
