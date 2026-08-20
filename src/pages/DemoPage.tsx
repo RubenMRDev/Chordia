@@ -75,15 +75,8 @@ const DemoPage = () => {
     }
   ];
   useEffect(() => {
-    const notes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"];
-    notes.forEach(note => {
-      try {
-        const audio = new Audio(`/piano-sounds/${note}.mp3`);
-        audio.preload = "auto";
-      } catch (error) {
-        console.error(`Failed to load piano sound for ${note}:`, error);
-      }
-    });
+    // Antes se precargaban /piano-sounds/*.mp3, que no existen en public/ y
+    // daban 404 en cada visita. El piano ahora carga sus propias muestras.
     metronomeRef.current = new Audio("/metronome-click.mp3");
     metronomeRef.current.preload = "auto";
     return () => {

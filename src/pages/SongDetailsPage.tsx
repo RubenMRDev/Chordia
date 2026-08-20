@@ -97,7 +97,6 @@ const SongDetailsPage: React.FC = () => {
   const [currentChordIndex, setCurrentChordIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [beatCount, setBeatCount] = useState<number>(0);
-  const metronomeRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const lastTickTimeRef = useRef<number | null>(null);
   const isFirstRenderRef = useRef<boolean>(true);
@@ -114,7 +113,7 @@ const SongDetailsPage: React.FC = () => {
   const [midiActive, setMidiActive] = useState<boolean>(false);
   
   // Piano hook
-  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes, triggerAttack, triggerRelease } = usePiano();
+  const { isReady: pianoReady, playChord: playPianoChord, stopAllNotes, triggerAttack, triggerRelease, click: metronomeClick } = usePiano();
   
   // MIDI hook
   const {
@@ -274,27 +273,18 @@ const SongDetailsPage: React.FC = () => {
   };
 
   const playChordSound = useCallback(async (chord: ChordType) => {
-    console.log('playChordSound called with:', { chord, pianoSoundEnabled, pianoReady });
-    if (!pianoSoundEnabled || !pianoReady) {
-      console.log('Piano not ready:', { pianoSoundEnabled, pianoReady });
-      return;
-    }
+    if (!pianoSoundEnabled || !pianoReady) return;
     try {
-      // Extrae solo los nombres de las notas sin octava
-      const noteNames = chord.keys.map(key => {
-        // Extrae el nombre de la nota sin octava (e.g., "C4" -> "C", "F#5" -> "F#")
-        return key.replace(/\d/g, '');
-      });
-      
-      console.log('Playing chord:', chord.keys, '-> Notes for piano:', noteNames);
-      
-      // Reproduce el acorde con las notas simples - el pianoService se encargará de las octavas
-      await playPianoChord(noteNames, "4n", 0.6);
-      console.log('Chord played successfully');
+      // Se pasan las notas con su octava ("C4", "F#5"): antes se quitaba y todo
+      // el acorde acababa sonando en la octava 4.
+      const tempo = song?.tempo || 120;
+      const beatsPerMeasure = getBeatsPerMeasure(song?.timeSignature);
+      const measureSeconds = (60 / tempo) * beatsPerMeasure;
+      await playPianoChord(chord.keys, measureSeconds * 0.98, 0.62);
     } catch (error) {
       console.error('Error playing chord sound:', error);
     }
-  }, [pianoSoundEnabled, pianoReady, playPianoChord]);
+  }, [pianoSoundEnabled, pianoReady, playPianoChord, song]);
 
   const stopAllPianoSounds = useCallback(() => {
     stopAllNotes();
@@ -324,9 +314,10 @@ const SongDetailsPage: React.FC = () => {
       const elapsed = timestamp - lastTickTimeRef.current;
       if (elapsed >= beatDuration) {
         currentBeatRef.current = (currentBeatRef.current + 1) % beatsPerMeasure;
-        if (metronomeRef.current && metronomeEnabled) {
-          metronomeRef.current.currentTime = 0;
-          metronomeRef.current.play().catch(e => console.error("Couldn't play metronome:", e));
+        if (metronomeEnabled) {
+          // Click sintetizado: sin fichero que cargar y con el timing del
+          // reloj de audio, no del elemento <audio>.
+          metronomeClick(currentBeatRef.current === 0);
         }
         setBeatCount(currentBeatRef.current);
         if (currentBeatRef.current === 0) {
@@ -1009,7 +1000,6 @@ const SongDetailsPage: React.FC = () => {
   return (
     <div className="bg-[#0a101b] min-h-screen text-white">
       <Header />
-      <audio ref={metronomeRef} src="/metronome-click.mp3" preload="auto" />
       <div className="p-4 md:p-8">
         <Link 
           to="/dashboard" 
