@@ -21,6 +21,8 @@ import CallToAction from './components/CallToAction';
 import Footer from './components/Footer';
 import LandingLayout from './components/LandingLayout';
 import DemoPage from './pages/DemoPage';
+import MidiLibraryPage from './pages/MidiLibraryPage';
+import PlayMidiPage from './pages/PlayMidiPage';
 import AIChatWidget from './components/AIChatWidget';
 import "./App.css"
 
@@ -108,6 +110,9 @@ function App() {
           }
         />
         <Route path="/demo" element={<DemoPage />} />
+        {/* Importar y tocar ficheros MIDI: accesible sin cuenta, igual que la demo. */}
+        <Route path="/midi" element={<MidiLibraryPage />} />
+        <Route path="/play/:midiId" element={<PlayMidiPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <AIChatWidget />

@@ -464,6 +464,17 @@ const DashboardPage: React.FC = () => {
                   Create Song
                 </Link>
               </li>
+              <li style={{ marginBottom: '0.5rem' }}>
+                <Link
+                  to="/midi"
+                  style={{
+                    color: 'var(--text-secondary)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Play MIDI
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

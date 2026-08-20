@@ -55,6 +55,17 @@ const Header: React.FC = () => {
           Discover
         </Link>
         <Link
+          to="/midi"
+          onClick={() => handleLinkClick("/midi")}
+          className={`no-underline font-bold ${
+            location.pathname.startsWith("/midi") || location.pathname.startsWith("/play")
+              ? "text-[var(--accent-green)]"
+              : "text-[var(--text-primary)]"
+          }`}
+        >
+          MIDI
+        </Link>
+        <Link
           to="/library"
           onClick={() => handleLinkClick("/library")}
           className={`no-underline font-bold ${
