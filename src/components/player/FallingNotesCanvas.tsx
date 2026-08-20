@@ -8,6 +8,8 @@ interface FallingNotesCanvasProps {
   song: ParsedSong | null;
   showNoteNames: boolean;
   showMeasures: boolean;
+  /** Rango de teclas del piano del usuario; null = el de la cancion. */
+  keyboardRange?: [number, number] | null;
   /** Permite tocar el teclado de abajo con raton o dedo. */
   interactive?: boolean;
   className?: string;
@@ -22,6 +24,7 @@ const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
   song,
   showNoteNames,
   showMeasures,
+  keyboardRange = null,
   interactive = true,
   className = '',
 }) => {
@@ -48,6 +51,10 @@ const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
   useEffect(() => {
     rendererRef.current?.setOptions({ showNoteNames, showMeasures });
   }, [showNoteNames, showMeasures]);
+
+  useEffect(() => {
+    rendererRef.current?.setKeyboardRange(keyboardRange);
+  }, [keyboardRange]);
 
   const midiFromEvent = (event: React.PointerEvent<HTMLCanvasElement>): number | null => {
     const canvas = canvasRef.current;

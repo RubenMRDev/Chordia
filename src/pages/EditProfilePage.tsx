@@ -2,6 +2,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import PianoRangeSettings from '../components/piano/PianoRangeSettings';
 import { FaMusic, FaArrowLeft, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
 import { updateUserProfile } from '../firebase/userService';
@@ -440,6 +441,11 @@ const EditProfilePage: React.FC = () => {
             </button>
           </div>
         </form>
+
+        {/* Configuracion del piano: se guarda al instante, no depende del form. */}
+        <div style={{ marginTop: "2rem" }}>
+          <PianoRangeSettings />
+        </div>
       </div>
     </div>
   )

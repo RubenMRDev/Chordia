@@ -9,6 +9,7 @@ import {
   FaGraduationCap,
   FaSearchPlus,
   FaFont,
+  FaKeyboard,
 } from 'react-icons/fa';
 import type { Player, PlayerSnapshot } from '../../features/player/Player';
 
@@ -19,6 +20,11 @@ interface PlayerControlsProps {
   onVolumeChange: (volume: number) => void;
   showNoteNames: boolean;
   onToggleNoteNames: () => void;
+  /**
+   * Semitonos que harian falta para que la pieza quepa en el piano del usuario
+   * (0 si ya cabe). Con esto se ofrece el boton de ajuste.
+   */
+  suggestedTranspose?: number;
 }
 
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5];
@@ -38,6 +44,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   onVolumeChange,
   showNoteNames,
   onToggleNoteNames,
+  suggestedTranspose = 0,
 }) => {
   const { settings, status } = snapshot;
   const playing = status === 'playing' || status === 'waiting';
@@ -186,6 +193,41 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           <FaFont className="inline mr-1.5 -mt-0.5" />
           Nombres de nota
         </button>
+
+        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <span className="whitespace-nowrap">Octava</span>
+          <button
+            type="button"
+            onClick={() => player.updateSettings({ transpose: settings.transpose - 12 })}
+            className="w-8 h-8 rounded bg-white/5 hover:bg-white/10 text-white font-bold"
+            aria-label="Bajar una octava"
+          >
+            -
+          </button>
+          <span className="w-8 text-center text-white font-semibold tabular-nums">
+            {settings.transpose === 0 ? '0' : `${settings.transpose > 0 ? '+' : ''}${settings.transpose / 12}`}
+          </span>
+          <button
+            type="button"
+            onClick={() => player.updateSettings({ transpose: settings.transpose + 12 })}
+            className="w-8 h-8 rounded bg-white/5 hover:bg-white/10 text-white font-bold"
+            aria-label="Subir una octava"
+          >
+            +
+          </button>
+        </div>
+
+        {suggestedTranspose !== 0 && settings.transpose !== suggestedTranspose && (
+          <button
+            type="button"
+            onClick={() => player.updateSettings({ transpose: suggestedTranspose })}
+            className="px-3 py-1.5 rounded text-sm font-semibold bg-[#FFD166]/20 text-[#FFD166] hover:bg-[#FFD166]/30"
+            title="Mueve la pieza las octavas necesarias para que entre en tu teclado"
+          >
+            <FaKeyboard className="inline mr-1.5 -mt-0.5" />
+            Ajustar a mi piano
+          </button>
+        )}
       </div>
     </div>
   );

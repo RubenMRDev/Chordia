@@ -34,6 +34,11 @@ export interface PlayerSettings {
   metronome: boolean;
   /** Segundos de musica visibles en pantalla (zoom del renderer). */
   secondsVisible: number;
+  /**
+   * Semitonos que se desplaza la pieza entera. Sirve para tocar piezas que no
+   * caben en el piano del usuario (normalmente multiplos de 12).
+   */
+  transpose: number;
 }
 
 export interface PlayerStats {
@@ -81,6 +86,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   userHands: { left: false, right: true },
   metronome: false,
   secondsVisible: 4,
+  transpose: 0,
 };
 
 const EMPTY_STATS: PlayerStats = {
@@ -213,7 +219,12 @@ export class Player {
 
   /** Tonos que faltan por pulsar (para resaltar teclas del teclado). */
   requiredNotes(): number[] {
-    return this.pendingNotes().map((note) => note.midi);
+    return this.pendingNotes().map((note) => this.sounding(note.midi));
+  }
+
+  /** Nota tal y como suena y hay que tocarla, con la transposicion aplicada. */
+  sounding(midi: number): number {
+    return midi + this.settings.transpose;
   }
 
   /**
@@ -382,7 +393,7 @@ export class Player {
       if (!this.shouldAutoPlay(note)) continue;
       const when = audioNow + (note.time - this.songTime) / this.settings.speed;
       pianoEngine.scheduleNote(
-        note.midi,
+        this.sounding(note.midi),
         note.velocity,
         Math.max(when, audioNow),
         note.duration / this.settings.speed,
@@ -411,7 +422,7 @@ export class Player {
       this.satisfied.clear();
       // Las notas ya pulsadas y mantenidas cuentan como acertadas.
       group.notes.forEach((note) => {
-        if (this.pressed.has(note.midi)) this.registerHit(note);
+        if (this.pressed.has(this.sounding(note.midi))) this.registerHit(note);
       });
       this.notify(true);
     }
@@ -463,7 +474,9 @@ export class Player {
 
     if (this.status === 'waiting') {
       const group = this.waitGroups[this.waitIndex];
-      const target = group?.notes.find((note) => note.midi === midi && !this.satisfied.has(note.id));
+      const target = group?.notes.find(
+        (note) => this.sounding(note.midi) === midi && !this.satisfied.has(note.id),
+      );
       if (target) {
         this.registerHit(target);
         this.updateWaitState();
@@ -478,7 +491,7 @@ export class Player {
       // Fuera del modo espera se puntua por proximidad temporal.
       const candidate = this.notes.find(
         (note) =>
-          note.midi === midi &&
+          this.sounding(note.midi) === midi &&
           this.settings.userHands[note.hand] &&
           Math.abs(note.time - this.songTime) <= HIT_WINDOW &&
           !this.hitNotes.has(note.id),

@@ -12,6 +12,8 @@ interface PlayerStageProps {
   time: number;
   duration: number;
   showNoteNames: boolean;
+  /** Rango del piano del usuario. */
+  keyboardRange?: [number, number] | null;
   /** La cancion todavia se esta cargando. */
   loading: boolean;
   /**
@@ -34,6 +36,7 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
   time,
   duration,
   showNoteNames,
+  keyboardRange = null,
   loading,
   notice,
 }) => {
@@ -75,7 +78,13 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
             Cargando la cancion...
           </div>
         ) : (
-          <FallingNotesCanvas player={player} song={song} showNoteNames={showNoteNames} showMeasures />
+          <FallingNotesCanvas
+            player={player}
+            song={song}
+            showNoteNames={showNoteNames}
+            showMeasures
+            keyboardRange={keyboardRange}
+          />
         )}
       </div>
 

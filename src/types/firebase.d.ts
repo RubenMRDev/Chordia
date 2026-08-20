@@ -55,4 +55,6 @@ export interface UserProfile {
     soundcloud?: string;
     spotify?: string;
   };
+  /** Rango de teclas del piano del usuario, para el modo MIDI. */
+  piano?: import('../features/piano/pianoSettings').PianoSettings;
 }

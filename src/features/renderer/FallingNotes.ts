@@ -57,6 +57,9 @@ export class FallingNotesRenderer {
   private keys: KeyGeometry[] = [];
   private keyboardHeight = 110;
   private range: [number, number] = [48, 84];
+  /** Rango del piano del usuario; manda sobre el rango de la cancion. */
+  private fixedRange: [number, number] | null = null;
+  private songRange: [number, number] = [48, 84];
   private maxNoteDuration = 4;
   private options: RendererOptions = { showNoteNames: true, showMeasures: true };
   private observer: ResizeObserver | null = null;
@@ -80,7 +83,7 @@ export class FallingNotesRenderer {
   /** Recalcula el rango de teclado a partir de la cancion cargada. */
   syncSong(song: ParsedSong | null): void {
     if (!song) {
-      this.range = [48, 84];
+      this.songRange = [48, 84];
       this.maxNoteDuration = 4;
     } else {
       let [low, high] = expandToOctaveBounds(song.lowestMidi, song.highestMidi);
@@ -89,9 +92,23 @@ export class FallingNotesRenderer {
         if (low > 21) low -= 12;
         else high += 12;
       }
-      this.range = [low, high];
+      this.songRange = [low, high];
       this.maxNoteDuration = song.notes.reduce((max, note) => Math.max(max, note.duration), 1);
     }
+    this.applyRange();
+  }
+
+  /**
+   * Fija el teclado al piano real del usuario. Con `null` se vuelve a usar el
+   * rango de la cancion.
+   */
+  setKeyboardRange(range: [number, number] | null): void {
+    this.fixedRange = range;
+    this.applyRange();
+  }
+
+  private applyRange(): void {
+    this.range = this.fixedRange ?? this.songRange;
     this.resize();
   }
 
@@ -216,6 +233,7 @@ export class FallingNotesRenderer {
       const notes = this.visibleNotes(song, time, secondsVisible);
       notes.forEach((note) => {
         this.drawNote(ctx, note, {
+          midi: this.player.sounding(note.midi),
           time,
           pps,
           keyboardTop,
@@ -223,7 +241,9 @@ export class FallingNotesRenderer {
           isUserNote: settings.userHands[note.hand],
           required: waiting && requiredIds.has(note.id),
         });
-        if (note.time <= time && note.time + note.duration > time) sounding.set(note.midi, note.hand);
+        if (note.time <= time && note.time + note.duration > time) {
+          sounding.set(this.player.sounding(note.midi), note.hand);
+        }
       });
     }
 
@@ -278,6 +298,7 @@ export class FallingNotesRenderer {
     ctx: CanvasRenderingContext2D,
     note: SongNote,
     frame: {
+      midi: number;
       time: number;
       pps: number;
       keyboardTop: number;
@@ -286,10 +307,10 @@ export class FallingNotesRenderer {
       required: boolean;
     },
   ): void {
-    const key = this.keyFor(note.midi);
+    const { midi, time, pps, keyboardTop, speed, isUserNote, required } = frame;
+    const key = this.keyFor(midi);
     if (!key) return;
 
-    const { time, pps, keyboardTop, speed, isUserNote, required } = frame;
     const bottom = keyboardTop - (note.time - time) * pps;
     const rawHeight = note.duration * pps;
     const height = Math.max(rawHeight, 6);
@@ -343,7 +364,7 @@ export class FallingNotesRenderer {
       ctx.fillStyle = palette.text;
       ctx.font = `600 ${Math.min(12, Math.floor(width * 0.5))}px Inter, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(midiToDisplayName(note.midi), x + width / 2, bottom - 5);
+      ctx.fillText(midiToDisplayName(midi), x + width / 2, bottom - 5);
       ctx.textAlign = 'left';
     }
 

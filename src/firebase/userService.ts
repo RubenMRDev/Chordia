@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "./config"
+import type { PianoSettings } from "../features/piano/pianoSettings"
 export interface UserProfile {
   uid: string
   displayName: string
@@ -16,6 +17,8 @@ export interface UserProfile {
     soundcloud?: string
     spotify?: string
   }
+  /** Rango de teclas del piano del usuario, para el modo MIDI. */
+  piano?: PianoSettings
 }
 export const createUserProfile = async (user: UserProfile): Promise<void> => {
   const userRef = doc(db, "users", user.uid)
