@@ -18,6 +18,8 @@ Sign up now and start building your chord library today!
 - **Real-time Chord Recognition**: Instantly see chord names and progressions as you play
 - **Community Sharing**: Share your arrangements and collaborate with other musicians
 - **Smart Practice Tools**: Track your progress and get personalized recommendations
+- **MIDI Import & Play-Along**: Import any `.mid` file and play it with falling notes over the keyboard (Sightread style), with wait mode, hand selection, speed control and scoring
+- **Studio-grade Piano Engine**: Multi-sampled acoustic piano over the Web Audio API, with velocity dynamics, sustain pedal, stereo spread and reverb
 
 <h1>📸 Screenshots</h1>
 
@@ -62,6 +64,30 @@ Sign up now and start building your chord library today!
    - **firebase** - For backend services
    - **sweetalert2** - For attractive alerts and confirmations
    - **tailwindcss** - For utility-first CSS
+   - **@tonejs/midi** - For parsing imported `.mid` files
+
+<h1>🎹 MIDI Import & Play-Along</h1>
+
+Import a MIDI file and play it like in Sightread: the notes fall over an on-screen
+keyboard and you play along with a MIDI keyboard, the computer keyboard or the mouse.
+
+- **Where**: `MIDI` in the top navigation (`/midi` to import, `/play/:midiId` to play). No account needed.
+- **Import**: drag & drop `.mid` / `.midi` files. They are stored in the browser (IndexedDB), never uploaded.
+- **Modes**: *Listen* plays the whole piece; *Practice* freezes the clock on every note of your hand until you play it right.
+- **Controls**: hand selection (what you play / what the app plays), 25%-150% speed, zoom, metronome, note names, click-to-seek scrub bar and hit/streak/accuracy stats.
+- **Input**: any MIDI keyboard is auto-detected (velocity + CC64 sustain pedal). Without one, the `q w e r ...` and `z x c v ...` rows are the piano and `Shift` is the pedal.
+- **Bridge to Chordia songs**: *Guardar como cancion* extracts the chord progression from a MIDI file and saves it as a regular Chordia song (key, tempo and time signature included).
+- A built-in public-domain demo song ships with the app, so the feature can be tried without importing anything.
+
+<h2>🔊 Piano sound engine</h2>
+
+`src/features/audio` replaces the old 3-sample `Tone.Sampler` with a Web Audio engine:
+
+- 31 Salamander Grand Piano samples (one every minor third), so pitch-shifting never exceeds one semitone
+- velocity drives both loudness and brightness (filter), like a real hammer action
+- sustain pedal, 48-voice polyphony with voice stealing, pitch-based stereo spread, convolution reverb, compressor and limiter
+- notes are scheduled on the audio clock (sample-accurate playback and metronome), not with `setTimeout`
+- fallback additive synth: notes always sound, even while samples are still downloading or offline
 
 <h1>🔧 Installation</h1>
 
