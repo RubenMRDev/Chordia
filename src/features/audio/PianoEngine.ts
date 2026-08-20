@@ -238,15 +238,21 @@ export class PianoEngine {
   /** Dinamica: la ganancia crece mas despacio que la velocidad. */
   private velocityToGain(velocity: number): number {
     const v = clamp(velocity, 0.02, 1);
-    return 0.06 + 0.94 * Math.pow(v, 1.6);
+    return 0.1 + 0.9 * Math.pow(v, 1.35);
   }
 
-  /** Cuanto mas fuerte se pulsa, mas brillante suena. */
+  /**
+   * Cuanto mas fuerte se pulsa, mas brillante suena.
+   *
+   * La curva es suave a proposito: muchos MIDI (los que exporta MuseScore, por
+   * ejemplo) no pasan de velocidad 0,7, y con una curva agresiva la pieza
+   * entera sonaba apagada, como con una manta encima.
+   */
   private velocityToCutoff(velocity: number, midi: number): number {
     const v = clamp(velocity, 0.02, 1);
     const base = midiToFrequency(midi);
-    const harmonics = 6 + 22 * Math.pow(v, 1.3);
-    return clamp(base * harmonics, 700, 18000);
+    const harmonics = 12 + 26 * Math.pow(v, 0.85);
+    return clamp(base * harmonics, 3500, 20000);
   }
 
   /** Los graves a la izquierda, los agudos a la derecha, como un piano real. */
@@ -276,6 +282,12 @@ export class PianoEngine {
     // La primera nota dispara la descarga de muestras en segundo plano: hasta
     // que llegan se oye el sintetizador, pero nunca hay que esperar a nada.
     if (this.state.status === 'idle') void this.load();
+
+    // Un piano real no puede tocar la misma tecla dos veces a la vez: el
+    // apagador para la cuerda y vuelve a sonar. Sin esto se acumulaban copias
+    // de la misma muestra (fichero con notas duplicadas, tremolos, pedal) y
+    // aparecia un efecto metalico raro.
+    this.dampSameKey(clampToPiano(Math.round(midi)), Math.max(startTime, ctx.currentTime));
 
     const note = clampToPiano(Math.round(midi));
     const t = Math.max(startTime, ctx.currentTime);
@@ -382,6 +394,13 @@ export class PianoEngine {
     }
 
     return voice;
+  }
+
+  /** Apaga rapido lo que siga sonando en esa misma tecla. */
+  private dampSameKey(midi: number, when: number): void {
+    this.voices
+      .filter((voice) => voice.midi === midi && (voice.releaseAt === null || voice.releaseAt > when))
+      .forEach((voice) => this.fadeOutVoice(voice, when, 0.06));
   }
 
   private enforcePolyphony(when: number): void {

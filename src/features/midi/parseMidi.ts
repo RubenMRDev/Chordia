@@ -120,15 +120,88 @@ function assignHands(notes: SongNote[], trackAverages: Map<number, number>): voi
   });
 }
 
+/**
+ * Quita notas duplicadas en la misma tecla y el mismo instante.
+ *
+ * Varios exports (MuseScore entre otros) dejan pares note-on/note-off de
+ * duracion cero pegados a la nota real: se oian como un golpe doble en esa
+ * tecla y con el doble de volumen. Se queda la nota mas larga.
+ */
+function dropDuplicateNotes(notes: SongNote[]): SongNote[] {
+  const DUPLICATE_WINDOW = 0.02;
+  const result: SongNote[] = [];
+  const lastByPitch = new Map<number, SongNote>();
+
+  for (const note of notes) {
+    const previous = lastByPitch.get(note.midi);
+    if (previous && note.time - previous.time <= DUPLICATE_WINDOW) {
+      previous.duration = Math.max(previous.duration, note.duration);
+      previous.velocity = Math.max(previous.velocity, note.velocity);
+      continue;
+    }
+    lastByPitch.set(note.midi, note);
+    result.push(note);
+  }
+
+  return result;
+}
+
+/**
+ * Aplica el pedal de sustain (CC64) alargando las notas hasta que se suelta.
+ *
+ * Sin esto, las piezas que dependen del pedal (la Sonata Claro de Luna es el
+ * ejemplo tipico) sonaban secas y cortadas: cada nota moria en su duracion
+ * nominal en vez de seguir resonando. Se corta la prolongacion cuando la misma
+ * tecla se vuelve a pulsar, que es lo que hace el apagador de verdad.
+ */
+function applySustainPedal(notes: SongNote[], pedal: Array<{ time: number; value: number }>): void {
+  if (pedal.length === 0) return;
+
+  const events = [...pedal].sort((a, b) => a.time - b.time);
+  const segments: Array<[number, number]> = [];
+  let downAt: number | null = null;
+  for (const event of events) {
+    const down = event.value >= 0.5;
+    if (down && downAt === null) downAt = event.time;
+    else if (!down && downAt !== null) {
+      segments.push([downAt, event.time]);
+      downAt = null;
+    }
+  }
+  if (downAt !== null) segments.push([downAt, Number.POSITIVE_INFINITY]);
+  if (segments.length === 0) return;
+
+  const nextSamePitch = new Map<number, number>();
+  const MAX_EXTENSION = 10;
+
+  // De atras adelante para saber cuando vuelve a sonar cada tecla.
+  for (let i = notes.length - 1; i >= 0; i--) {
+    const note = notes[i];
+    const nextStart = nextSamePitch.get(note.midi) ?? Number.POSITIVE_INFINITY;
+    nextSamePitch.set(note.midi, note.time);
+
+    const end = note.time + note.duration;
+    const segment = segments.find(([start, stop]) => end >= start - 1e-6 && end < stop);
+    if (!segment) continue;
+
+    const limit = Math.min(segment[1], nextStart, note.time + MAX_EXTENSION);
+    if (limit > end) note.duration = limit - note.time;
+  }
+}
+
 export function parseMidiBuffer(data: ArrayBuffer, fileName = 'Sin titulo'): ParsedSong {
   const midi = new Midi(data);
 
   const notes: SongNote[] = [];
   const trackAverages = new Map<number, number>();
   const tracks: SongTrack[] = [];
+  const pedal: Array<{ time: number; value: number }> = [];
   let noteId = 0;
 
   midi.tracks.forEach((track, index) => {
+    (track.controlChanges[64] ?? []).forEach((change) => {
+      pedal.push({ time: change.time ?? 0, value: change.value ?? 0 });
+    });
     if (track.notes.length === 0) return;
 
     let sum = 0;
@@ -171,6 +244,10 @@ export function parseMidiBuffer(data: ArrayBuffer, fileName = 'Sin titulo'): Par
   }
 
   notes.sort((a, b) => a.time - b.time || a.midi - b.midi);
+  const cleaned = dropDuplicateNotes(notes);
+  notes.length = 0;
+  notes.push(...cleaned);
+  applySustainPedal(notes, pedal);
   assignHands(notes, trackAverages);
 
   // La mano de la pista se deduce de sus notas (para los filtros de la UI).

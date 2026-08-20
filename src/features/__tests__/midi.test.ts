@@ -76,6 +76,61 @@ describe('parseo de ficheros MIDI', () => {
     expect(low.every((note) => note.hand === 'left')).toBe(true);
   });
 
+  it('descarta las notas duplicadas en la misma tecla e instante', () => {
+    // Reproduce lo que hacen algunos exports: un note-on/off de duracion cero
+    // pegado a la nota real (asi sonaba doble y mas fuerte).
+    const midi = new Midi();
+    midi.header.setTempo(120);
+    const track = midi.addTrack();
+    track.addNote({ midi: 60, time: 0, duration: 0, velocity: 0.3 });
+    track.addNote({ midi: 60, time: 0, duration: 1, velocity: 0.8 });
+    track.addNote({ midi: 64, time: 0, duration: 1, velocity: 0.8 });
+    // Repetir la misma tecla mas tarde si es una nota de verdad.
+    track.addNote({ midi: 60, time: 1.5, duration: 0.5, velocity: 0.8 });
+
+    const song = parseMidiBuffer(new Uint8Array(midi.toArray()).buffer, 'dup.mid');
+    const atZero = song.notes.filter((note) => note.time < 0.01);
+    expect(atZero.map((note) => note.midi).sort((a, b) => a - b)).toEqual([60, 64]);
+    // Se queda la version larga.
+    expect(atZero.find((note) => note.midi === 60)?.duration).toBeCloseTo(1, 2);
+    expect(song.notes.filter((note) => note.midi === 60)).toHaveLength(2);
+  });
+
+  it('alarga las notas mientras el pedal esta pisado', () => {
+    const midi = new Midi();
+    midi.header.setTempo(120);
+    const track = midi.addTrack();
+    track.addNote({ midi: 60, time: 0, duration: 0.2, velocity: 0.8 });
+    track.addNote({ midi: 64, time: 0.5, duration: 0.2, velocity: 0.8 });
+    // Pedal pisado de 0 a 2 s.
+    track.addCC({ number: 64, value: 1, time: 0 });
+    track.addCC({ number: 64, value: 0, time: 2 });
+
+    const song = parseMidiBuffer(new Uint8Array(midi.toArray()).buffer, 'pedal.mid');
+    const first = song.notes.find((note) => note.midi === 60);
+    const second = song.notes.find((note) => note.midi === 64);
+    // Ambas resuenan hasta que se suelta el pedal en el segundo 2.
+    expect(first!.time + first!.duration).toBeCloseTo(2, 1);
+    expect(second!.time + second!.duration).toBeCloseTo(2, 1);
+  });
+
+  it('deja de alargar cuando la misma tecla se vuelve a pulsar', () => {
+    const midi = new Midi();
+    midi.header.setTempo(120);
+    const track = midi.addTrack();
+    track.addNote({ midi: 60, time: 0, duration: 0.2, velocity: 0.8 });
+    track.addNote({ midi: 60, time: 1, duration: 0.2, velocity: 0.8 });
+    track.addCC({ number: 64, value: 1, time: 0 });
+    track.addCC({ number: 64, value: 0, time: 3 });
+
+    const song = parseMidiBuffer(new Uint8Array(midi.toArray()).buffer, 'pedal-repetido.mid');
+    const notes = song.notes.filter((note) => note.midi === 60).sort((a, b) => a.time - b.time);
+    expect(notes).toHaveLength(2);
+    // La primera se corta al volver a pulsarse en el segundo 1, no en el 3.
+    expect(notes[0].time + notes[0].duration).toBeCloseTo(1, 1);
+    expect(notes[1].time + notes[1].duration).toBeCloseTo(3, 1);
+  });
+
   it('falla con datos que no son un MIDI valido', () => {
     const garbage = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]).buffer;
     expect(() => parseMidiBuffer(garbage, 'roto.mid')).toThrow();

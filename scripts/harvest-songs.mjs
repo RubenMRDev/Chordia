@@ -121,10 +121,56 @@ async function fetchBuffer(url, attempts = 3) {
  */
 function analyse(buffer) {
   const midi = new Midi(buffer);
-  const notes = midi.tracks.flatMap((track) =>
-    track.notes.map((note) => ({ midi: note.midi, time: note.time, duration: note.duration })),
-  );
+  const raw = midi.tracks
+    .flatMap((track) =>
+      track.notes.map((note) => ({ midi: note.midi, time: note.time, duration: note.duration })),
+    )
+    .sort((a, b) => a.time - b.time || a.midi - b.midi);
+
+  // Mismo criterio que el parser de la app: fuera los duplicados en la misma
+  // tecla y el mismo instante (los note-on de duracion cero de MuseScore).
+  const notes = [];
+  const lastByPitch = new Map();
+  for (const note of raw) {
+    const previous = lastByPitch.get(note.midi);
+    if (previous && note.time - previous.time <= 0.02) {
+      previous.duration = Math.max(previous.duration, note.duration);
+      continue;
+    }
+    lastByPitch.set(note.midi, note);
+    notes.push(note);
+  }
   if (notes.length === 0) return null;
+
+  // Mismo criterio que la app: el pedal de sustain (CC64) alarga las notas.
+  const pedalEvents = midi.tracks
+    .flatMap((track) => track.controlChanges[64] ?? [])
+    .map((change) => ({ time: change.time ?? 0, value: change.value ?? 0 }))
+    .sort((a, b) => a.time - b.time);
+  if (pedalEvents.length > 0) {
+    const segments = [];
+    let downAt = null;
+    for (const event of pedalEvents) {
+      if (event.value >= 0.5 && downAt === null) downAt = event.time;
+      else if (event.value < 0.5 && downAt !== null) {
+        segments.push([downAt, event.time]);
+        downAt = null;
+      }
+    }
+    if (downAt !== null) segments.push([downAt, Infinity]);
+
+    const nextSamePitch = new Map();
+    for (let i = notes.length - 1; i >= 0; i--) {
+      const note = notes[i];
+      const nextStart = nextSamePitch.get(note.midi) ?? Infinity;
+      nextSamePitch.set(note.midi, note.time);
+      const end = note.time + note.duration;
+      const segment = segments.find(([start, stop]) => end >= start - 1e-6 && end < stop);
+      if (!segment) continue;
+      const limit = Math.min(segment[1], nextStart, note.time + 10);
+      if (limit > end) note.duration = limit - note.time;
+    }
+  }
 
   const duration = notes.reduce((max, note) => Math.max(max, note.time + note.duration), 0);
   if (duration < 3) return null;

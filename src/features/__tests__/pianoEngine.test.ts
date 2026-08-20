@@ -43,6 +43,14 @@ describe('motor de piano', () => {
     expect(engine.activeNotes()).toEqual([]);
   });
 
+  it('volver a pulsar la misma tecla apaga la anterior', () => {
+    engine.noteOn(60, 0.8);
+    engine.noteOn(60, 0.8);
+    // Una tecla = una voz sonando; si no, se acumulan copias de la muestra y
+    // suena metalico.
+    expect(engine.activeNotes()).toEqual([60]);
+  });
+
   it('allNotesOff corta todo', () => {
     [48, 55, 60, 64].forEach((midi) => engine.noteOn(midi, 0.7));
     expect(engine.activeNotes()).toHaveLength(4);
