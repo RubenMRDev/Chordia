@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaUsb, FaExclamationTriangle, FaSyncAlt } from 'react-icons/fa';
 import Header from '../components/Header';
-import FallingNotesCanvas from '../components/player/FallingNotesCanvas';
+import PlayerStage from '../components/player/PlayerStage';
 import PlayerControls from '../components/player/PlayerControls';
 import ScrubBar from '../components/player/ScrubBar';
 import KeyboardHelp from '../components/player/KeyboardHelp';
@@ -14,7 +14,6 @@ import pianoService from '../services/pianoService';
 import { getMidiData, getMidiEntry, type MidiLibraryEntry } from '../features/midi/library';
 import { parseMidiBuffer } from '../features/midi/parseMidi';
 import type { ParsedSong } from '../features/midi/types';
-import { midiToNoteName } from '../features/audio/notes';
 
 /**
  * Pantalla de juego: notas cayendo sobre el teclado, como Sightread, con el
@@ -92,8 +91,19 @@ const PlayMidiPage: React.FC = () => {
     pianoService.setVolume(next);
   };
 
-  const { stats, status, requiredNotes } = snapshot;
+  const { stats, status } = snapshot;
   const scored = stats.hits + stats.wrong;
+
+  // Un solo aviso flotante sobre el canvas, para que la vista nunca se mueva.
+  let notice: string | null = null;
+  if (isLoading && !isSampled) {
+    notice = `Cargando las muestras del piano (${Math.round(loadProgress * 100)}%). Mientras tanto ya puedes tocar: suena el sintetizador de respaldo.`;
+  } else if (status === 'finished') {
+    notice =
+      scored > 0
+        ? `Fin de la cancion: ${stats.hits} acertadas, ${stats.wrong} falladas, mejor racha ${stats.bestStreak}.`
+        : 'Fin de la cancion.';
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background-dark)] text-[var(--text-primary)]">
@@ -137,13 +147,6 @@ const PlayMidiPage: React.FC = () => {
           </div>
         </div>
 
-        {isLoading && !isSampled && (
-          <div className="bg-[var(--card-background)] rounded-lg px-4 py-3 text-sm text-[var(--text-secondary)]">
-            Cargando las muestras del piano ({Math.round(loadProgress * 100)}%). Mientras tanto ya
-            puedes tocar: suena con el sintetizador de respaldo.
-          </div>
-        )}
-
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-3">
             <FaExclamationTriangle className="text-red-400" />
@@ -154,45 +157,16 @@ const PlayMidiPage: React.FC = () => {
           </div>
         )}
 
-        {status === 'waiting' && requiredNotes.length > 0 && (
-          <div className="bg-[#FFD166]/10 border border-[#FFD166]/40 rounded-lg px-4 py-3 flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-[#FFD166]">Te toca:</span>
-            {requiredNotes.map((midi) => (
-              <span
-                key={midi}
-                className="px-2 py-1 rounded bg-[#FFD166]/20 text-[#FFD166] font-bold text-sm"
-              >
-                {midiToNoteName(midi)}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {status === 'finished' && (
-          <div className="bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/40 rounded-lg px-4 py-3">
-            <strong className="text-[var(--accent-green)]">Fin de la cancion.</strong>{' '}
-            {scored > 0 && (
-              <span className="text-[var(--text-secondary)]">
-                {stats.hits} notas acertadas, {stats.wrong} falladas, mejor racha {stats.bestStreak}.
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="h-[58vh] min-h-[360px] rounded-lg overflow-hidden bg-[var(--background-darker)] border border-white/5">
-          {loading ? (
-            <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)]">
-              Cargando la cancion...
-            </div>
-          ) : (
-            <FallingNotesCanvas
-              player={player}
-              song={song}
-              showNoteNames={showNoteNames}
-              showMeasures
-            />
-          )}
-        </div>
+        <PlayerStage
+          player={player}
+          song={song}
+          status={status}
+          time={snapshot.time}
+          duration={snapshot.duration}
+          showNoteNames={showNoteNames}
+          loading={loading}
+          notice={notice}
+        />
 
         <ScrubBar time={snapshot.time} duration={snapshot.duration} onSeek={(time) => player.seek(time)} />
 

@@ -211,11 +211,25 @@ export class Player {
     return this.status === 'waiting';
   }
 
+  /** Tonos que faltan por pulsar (para resaltar teclas del teclado). */
   requiredNotes(): number[] {
+    return this.pendingNotes().map((note) => note.midi);
+  }
+
+  /**
+   * Ids de las notas concretas que se estan esperando. Hace falta distinguirlas
+   * por id y no por tono: si no, todas las notas futuras del mismo tono se
+   * pintaban como "te toca esta" y parecia que habia que tocar cuatro.
+   */
+  requiredNoteIds(): number[] {
+    return this.pendingNotes().map((note) => note.id);
+  }
+
+  private pendingNotes(): SongNote[] {
     if (this.status !== 'waiting') return [];
     const group = this.waitGroups[this.waitIndex];
     if (!group) return [];
-    return group.notes.filter((note) => !this.satisfied.has(note.id)).map((note) => note.midi);
+    return group.notes.filter((note) => !this.satisfied.has(note.id));
   }
 
   private currentMeasure(): number {

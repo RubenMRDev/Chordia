@@ -208,6 +208,7 @@ export class FallingNotesRenderer {
 
     // Se calcula una vez por frame y no por nota.
     const required = new Set(this.player.requiredNotes());
+    const requiredIds = new Set(this.player.requiredNoteIds());
     const waiting = this.player.isWaiting();
 
     const sounding = new Map<number, Hand>();
@@ -220,7 +221,7 @@ export class FallingNotesRenderer {
           keyboardTop,
           speed: settings.speed,
           isUserNote: settings.userHands[note.hand],
-          required: waiting && required.has(note.midi),
+          required: waiting && requiredIds.has(note.id),
         });
         if (note.time <= time && note.time + note.duration > time) sounding.set(note.midi, note.hand);
       });

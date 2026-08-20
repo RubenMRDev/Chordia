@@ -61,6 +61,8 @@ describe('reproductor de MIDI', () => {
 
     expect(player.getStatus()).toBe('waiting');
     expect(player.requiredNotes()).toEqual([firstRight?.midi]);
+    // Por id, no por tono: solo se espera esta nota, no todas las del mismo tono.
+    expect(player.requiredNoteIds()).toEqual([firstRight?.id]);
 
     // El reloj esta congelado en el momento de la nota.
     const frozen = player.getTime();
