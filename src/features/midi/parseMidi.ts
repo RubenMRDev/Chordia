@@ -12,6 +12,12 @@ import { clampToPiano } from '../audio/notes';
 
 const MIN_NOTE_DURATION = 0.03;
 
+/**
+ * Muchos MIDI traen un nombre interno inutil ("control track" en los que genera
+ * LilyPond), asi que en esos casos es mejor el nombre del fichero.
+ */
+const JUNK_NAMES = /^(control ?track|untitled|midi|track ?\d*|new ?song)$/i;
+
 /** Nombre legible a partir del nombre de fichero. */
 export function songNameFromFileName(fileName: string): string {
   return fileName
@@ -19,6 +25,12 @@ export function songNameFromFileName(fileName: string): string {
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function usableName(name: string | undefined): string | null {
+  const trimmed = name?.trim() ?? '';
+  if (!trimmed || JUNK_NAMES.test(trimmed)) return null;
+  return trimmed;
 }
 
 function buildMeasures(midi: Midi, duration: number): SongMeasure[] {
@@ -184,7 +196,7 @@ export function parseMidiBuffer(data: ArrayBuffer, fileName = 'Sin titulo'): Par
     : null;
 
   return {
-    name: midi.name?.trim() || songNameFromFileName(fileName),
+    name: usableName(midi.name) ?? songNameFromFileName(fileName),
     notes,
     measures,
     tracks,

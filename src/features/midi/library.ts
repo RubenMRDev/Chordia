@@ -9,6 +9,13 @@
 
 import { buildDemoMidi, DEMO_SONG_ID, DEMO_SONG_NAME } from './demoSong';
 import { parseMidiBuffer, songNameFromFileName } from './parseMidi';
+import {
+  fromCatalogId,
+  getCatalogSong,
+  getCatalogSongData,
+  isCatalogId,
+  toCatalogId,
+} from './catalog';
 
 const DB_NAME = 'chordia-midi';
 const DB_VERSION = 1;
@@ -156,8 +163,9 @@ export async function importMidiFile(file: File): Promise<MidiLibraryEntry> {
   return toEntry(entry);
 }
 
-/** Devuelve los bytes de una cancion de la biblioteca (o de la demo). */
+/** Devuelve los bytes de una cancion: catalogo, demo o fichero importado. */
 export async function getMidiData(id: string): Promise<ArrayBuffer | null> {
+  if (isCatalogId(id)) return getCatalogSongData(fromCatalogId(id));
   if (id === DEMO_SONG_ID) return buildDemoMidi();
   if (!isSupported()) return null;
   const stored = await withStore('readonly', (store) => runRequest(store, store.get(id) as IDBRequest<StoredMidi | undefined>));
@@ -165,6 +173,21 @@ export async function getMidiData(id: string): Promise<ArrayBuffer | null> {
 }
 
 export async function getMidiEntry(id: string): Promise<MidiLibraryEntry | null> {
+  if (isCatalogId(id)) {
+    const song = await getCatalogSong(fromCatalogId(id));
+    if (!song) return null;
+    return {
+      id: toCatalogId(song.id),
+      name: `${song.title} - ${song.composer}`,
+      fileName: song.file.split('/').pop() ?? `${song.id}.mid`,
+      addedAt: '1970-01-01T00:00:00.000Z',
+      size: song.size,
+      duration: song.duration,
+      noteCount: song.noteCount,
+      bpm: song.bpm,
+      builtIn: true,
+    };
+  }
   if (id === DEMO_SONG_ID) return demoEntry();
   if (!isSupported()) return null;
   const stored = await withStore('readonly', (store) => runRequest(store, store.get(id) as IDBRequest<StoredMidi | undefined>));

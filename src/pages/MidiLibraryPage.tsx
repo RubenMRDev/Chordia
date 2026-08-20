@@ -4,6 +4,10 @@ import { FaPlay, FaTrash, FaSave, FaMusic, FaRegClock, FaKeyboard } from 'react-
 import Swal from 'sweetalert2';
 import Header from '../components/Header';
 import MidiDropzone from '../components/player/MidiDropzone';
+import CatalogBrowser from '../components/player/CatalogBrowser';
+import PianoRangeSettings from '../components/piano/PianoRangeSettings';
+import { usePianoSettings } from '../hooks/usePianoSettings';
+import { describeRange, keyCount } from '../features/piano/pianoSettings';
 import { formatTime } from '../features/player/format';
 import {
   deleteMidiSong,
@@ -28,9 +32,14 @@ const swalTheme = {
  * Biblioteca de ficheros MIDI importados: importar, tocar, borrar y convertir a
  * una cancion de acordes de Chordia.
  */
+type Tab = 'catalogo' | 'mios';
+
 const MidiLibraryPage: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { settings: piano } = usePianoSettings();
+  const [tab, setTab] = useState<Tab>('catalogo');
+  const [showPiano, setShowPiano] = useState(false);
   const [entries, setEntries] = useState<MidiLibraryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
@@ -163,15 +172,52 @@ const MidiLibraryPage: React.FC = () => {
             Canciones MIDI
           </h1>
           <p className="text-[var(--text-secondary)] mt-2 max-w-2xl">
-            Importa cualquier fichero .mid y toca la cancion con las notas cayendo sobre el teclado.
-            Puedes usar un teclado MIDI, el teclado del ordenador o el raton.
+            Toca cientos de piezas del catalogo o importa tus propios .mid, con las notas cayendo
+            sobre el teclado. Vale un teclado MIDI, el teclado del ordenador o el raton.
+          </p>
+          <p className="text-sm text-[var(--text-secondary)] mt-2">
+            Tu piano: {keyCount(piano)} teclas ({describeRange(piano)}) ·{' '}
+            <button
+              type="button"
+              onClick={() => setShowPiano((value) => !value)}
+              className="text-[var(--accent-green)] font-semibold"
+            >
+              {showPiano ? 'ocultar' : 'configurar'}
+            </button>
           </p>
         </div>
 
-        <MidiDropzone onFiles={handleFiles} busy={importing} />
+        {/* La misma configuracion que hay en el perfil, aqui tambien porque
+            funciona sin cuenta (se guarda en el navegador). */}
+        {showPiano && <PianoRangeSettings />}
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-bold">Tu biblioteca</h2>
+        <div className="flex gap-2 border-b border-white/10">
+          {([
+            ['catalogo', 'Catalogo'],
+            ['mios', 'Mis ficheros'],
+          ] as Array<[Tab, string]>).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setTab(id)}
+              className={`px-4 py-2 font-semibold border-b-2 -mb-px ${
+                tab === id
+                  ? 'border-[var(--accent-green)] text-[var(--accent-green)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-white'
+              }`}
+            >
+              {label}
+              {id === 'mios' && entries.length > 1 ? ` (${entries.length - 1})` : ''}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'catalogo' && <CatalogBrowser piano={piano} />}
+
+        <section className={`flex-col gap-3 ${tab === 'mios' ? 'flex' : 'hidden'}`}>
+          <MidiDropzone onFiles={handleFiles} busy={importing} />
+
+          <h2 className="text-xl font-bold mt-2">Tus ficheros importados</h2>
 
           {loading ? (
             <p className="text-[var(--text-secondary)]">Cargando...</p>

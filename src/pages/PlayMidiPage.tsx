@@ -10,6 +10,13 @@ import { usePlayer } from '../hooks/usePlayer';
 import { useComputerKeyboard } from '../hooks/useComputerKeyboard';
 import { useMidiKeyboard } from '../hooks/useMidiKeyboard';
 import { usePiano } from '../hooks/usePiano';
+import { usePianoSettings } from '../hooks/usePianoSettings';
+import {
+  describeRange,
+  fitsInPiano,
+  keyCount,
+  suggestTranspose,
+} from '../features/piano/pianoSettings';
 import pianoService from '../services/pianoService';
 import { getMidiData, getMidiEntry, type MidiLibraryEntry } from '../features/midi/library';
 import { parseMidiBuffer } from '../features/midi/parseMidi';
@@ -23,6 +30,7 @@ const PlayMidiPage: React.FC = () => {
   const { midiId } = useParams<{ midiId: string }>();
   const { player, snapshot } = usePlayer();
   const { loadProgress, isSampled, isLoading } = usePiano();
+  const { settings: piano } = usePianoSettings();
 
   const [song, setSong] = useState<ParsedSong | null>(null);
   const [entry, setEntry] = useState<MidiLibraryEntry | null>(null);
@@ -57,9 +65,13 @@ const PlayMidiPage: React.FC = () => {
         // izquierda; si la pieza solo tiene una mano, se toca esa.
         const hasLeft = parsed.notes.some((note) => note.hand === 'left');
         const hasRight = parsed.notes.some((note) => note.hand === 'right');
+        const shift = suggestTranspose(piano, parsed.lowestMidi, parsed.highestMidi);
         player.updateSettings({
           userHands: { left: !hasRight, right: hasRight },
           playbackHands: { left: hasLeft, right: hasRight },
+          // Si la pieza no entra en el teclado del usuario y lo tiene activado,
+          // se mueve de octava automaticamente.
+          transpose: piano.autoTranspose ? shift : 0,
         });
       } catch (caught) {
         if (!cancelled) setError(caught instanceof Error ? caught.message : 'No se pudo abrir la cancion');
@@ -72,6 +84,9 @@ const PlayMidiPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
+    // piano solo se usa para el ajuste inicial: no hace falta recargar al
+    // cambiarlo desde el perfil en otra pestana.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [midiId, player]);
 
   const handleToggle = useCallback(() => player.toggle(), [player]);
@@ -94,8 +109,29 @@ const PlayMidiPage: React.FC = () => {
   const { stats, status } = snapshot;
   const scored = stats.hits + stats.wrong;
 
+  const transpose = snapshot.settings.transpose;
+  const suggested = song ? suggestTranspose(piano, song.lowestMidi, song.highestMidi) : 0;
+  const fitsNow = song
+    ? fitsInPiano(piano, song.lowestMidi + transpose, song.highestMidi + transpose)
+    : true;
+  const keyboardRange: [number, number] = [piano.lowestMidi, piano.highestMidi];
+
   // Un solo aviso flotante sobre el canvas, para que la vista nunca se mueva.
+  const pianoLabel = `tu piano de ${keyCount(piano)} teclas (${describeRange(piano)})`;
+  const octaves = transpose / 12;
+  const shifted = `Transpuesta ${octaves > 0 ? '+' : ''}${octaves} octava${Math.abs(octaves) === 1 ? '' : 's'}`;
+
   let notice: string | null = null;
+  if (transpose === 0 && !fitsNow) {
+    // Solo se menciona el boton cuando mover octavas arregla algo.
+    notice = suggested
+      ? `Esta pieza usa notas fuera de ${pianoLabel}: se oyen, pero no caben en el teclado. Con "Ajustar a mi piano" se mueve de octava.`
+      : `Esta pieza es mas ancha que ${pianoLabel}: las notas de los extremos se oyen, pero no caben en el teclado.`;
+  } else if (transpose !== 0 && fitsNow) {
+    notice = `${shifted} para que entre en ${pianoLabel}.`;
+  } else if (transpose !== 0) {
+    notice = `${shifted}, aunque la pieza es mas ancha que ${pianoLabel} y alguna nota se queda fuera del teclado.`;
+  }
   if (isLoading && !isSampled) {
     notice = `Cargando las muestras del piano (${Math.round(loadProgress * 100)}%). Mientras tanto ya puedes tocar: suena el sintetizador de respaldo.`;
   } else if (status === 'finished') {
@@ -119,11 +155,20 @@ const PlayMidiPage: React.FC = () => {
               <FaArrowLeft />
             </Link>
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold truncate">{song?.name ?? entry?.name ?? 'Cargando...'}</h1>
+              <h1 className="text-2xl font-bold truncate">
+                {entry?.name ?? song?.name ?? 'Cargando...'}
+              </h1>
               {song && (
                 <p className="text-sm text-[var(--text-secondary)]">
                   {song.bpm} BPM · {song.timeSignature[0]}/{song.timeSignature[1]} · compas{' '}
-                  {snapshot.measure} de {song.measures.length} · {song.notes.length} notas
+                  {snapshot.measure} de {song.measures.length} · {song.notes.length} notas ·{' '}
+                  <Link
+                    to="/profile/edit"
+                    className="text-[var(--accent-green)] no-underline"
+                    title="Configurar el rango de tu piano"
+                  >
+                    piano de {keyCount(piano)} teclas
+                  </Link>
                 </p>
               )}
             </div>
@@ -164,6 +209,7 @@ const PlayMidiPage: React.FC = () => {
           time={snapshot.time}
           duration={snapshot.duration}
           showNoteNames={showNoteNames}
+          keyboardRange={keyboardRange}
           loading={loading}
           notice={notice}
         />
@@ -177,6 +223,7 @@ const PlayMidiPage: React.FC = () => {
           onVolumeChange={handleVolumeChange}
           showNoteNames={showNoteNames}
           onToggleNoteNames={() => setShowNoteNames((value) => !value)}
+          suggestedTranspose={suggested}
         />
 
         <div className="grid gap-4 md:grid-cols-2">

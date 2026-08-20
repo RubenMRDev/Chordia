@@ -13,7 +13,9 @@
     "test:coverage": "jest --config jest.frontend.config.cjs --coverage",
     "test:api:coverage": "jest --config jest.config.cjs --coverage",
     "test:all:coverage": "npm run test:coverage && npm run test:api:coverage",
-    "coverage:open": "node open-coverage.js"
+    "coverage:open": "node open-coverage.js",
+    "songs": "node scripts/harvest-songs.mjs",
+    "songs:rescore": "node scripts/harvest-songs.mjs --rescore"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.17",
