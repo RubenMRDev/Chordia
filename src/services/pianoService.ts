@@ -1,170 +1,167 @@
-import * as Tone from 'tone';
+/**
+ * Fachada del piano para el resto de la app.
+ *
+ * Mantiene la misma API que la version anterior (playNote / playChord /
+ * triggerAttack / triggerRelease / ...) pero por debajo usa PianoEngine
+ * (Web Audio + 31 muestras) en lugar de un Tone.Sampler con 3 muestras.
+ *
+ * Se corrigen ademas dos cosas que sonaban mal:
+ *  - normalizeNote ignoraba la octava cuando la nota ya la traia ("E4" acababa
+ *    sonando como C4). Ahora se respeta la octava real del acorde.
+ *  - las notas ya no se cortan en seco: el motor aplica el apagador con un
+ *    release dependiente de la altura.
+ */
+
+import { pianoEngine, type PianoEngineState } from '../features/audio/PianoEngine';
+import { noteNameToMidi, noteToMidi, midiToNoteName } from '../features/audio/notes';
+import { durationToSeconds } from '../features/audio/time';
 
 class PianoService {
-  private piano: any = null;
-  private isInitialized = false;
-  private isInitializing = false;
-
-  constructor() {
-    // Use Tone.start() to resume the context
-    (Tone as any).start();
-  }
+  private engine = pianoEngine;
 
   async initialize(): Promise<void> {
-    if (this.isInitialized || this.isInitializing) {
-      return;
-    }
-
-    this.isInitializing = true;
-
-    try {
-      this.piano = new (Tone as any).Sampler({
-        urls: {
-          "C4": "C4.mp3",
-          "D#4": "Ds4.mp3", 
-          "F#4": "Fs4.mp3",
-        },
-        release: 1,
-        baseUrl: "https://tonejs.github.io/audio/salamander/",
-      }).toDestination();
-
-      await this.piano.loaded;
-      
-      this.isInitialized = true;
-      console.log('Piano service initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize piano service:', error);
-      this.piano = new (Tone as any).Synth({
-        oscillator: {
-          type: "triangle"
-        },
-        envelope: {
-          attack: 0.1,
-          decay: 0.2,
-          sustain: 0.3,
-          release: 1
-        }
-      }).toDestination();
-      
-      this.isInitialized = true;
-    } finally {
-      this.isInitializing = false;
-    }
+    await this.engine.load();
   }
 
-  async playNote(note: string, duration: string = "8n", velocity: number = 0.8, octave?: number): Promise<void> {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
-
-    if (!this.piano) {
-      console.error('Piano not initialized');
-      return;
-    }
-
-    try {
-      const normalizedNote = this.normalizeNote(note, octave);
-      this.piano.triggerAttackRelease(normalizedNote, duration, undefined, velocity);
-    } catch (error) {
-      console.error(`Error playing note ${note}:`, error);
-    }
+  /** Suscripcion al estado de carga (lo usa usePiano). */
+  subscribe(listener: (state: PianoEngineState) => void): () => void {
+    return this.engine.subscribe(listener);
   }
 
-  async playChord(notes: string[], duration: string = "4n", velocity: number = 0.6): Promise<void> {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
+  getState(): PianoEngineState {
+    return this.engine.getState();
+  }
 
-    if (!this.piano) {
-      console.error('Piano not initialized');
-      return;
-    }
+  isReady(): boolean {
+    return this.engine.isReady();
+  }
 
-    try {
-      const normalizedNotes = notes.map(note => this.normalizeNote(note));
-      
-      normalizedNotes.forEach(note => {
-        this.piano!.triggerAttack(note, undefined, velocity);
-      });
+  /**
+   * Convierte cualquier formato usado en la app ("C", "Cs", "C#", "C4",
+   * "C#4", "Db3") a nota MIDI. `octave` solo se aplica si el nombre no
+   * traia la suya.
+   */
+  toMidi(note: string, octave?: number): number | null {
+    const direct = noteNameToMidi(note);
+    if (direct === null) return null;
+    const hasOctave = /-?\d/.test(note);
+    if (!hasOctave && octave !== undefined) return noteToMidi(note, octave);
+    return direct;
+  }
 
-      setTimeout(() => {
-        normalizedNotes.forEach(note => {
-          this.piano!.triggerRelease(note);
-        });
-      }, (Tone as any).Time(duration).toMilliseconds());
-    } catch (error) {
-      console.error(`Error playing chord ${notes}:`, error);
-    }
+  /** Se mantiene por compatibilidad: devuelve el nombre normalizado ("C#4"). */
+  normalizeNote(note: string, octave?: number): string {
+    const midi = this.toMidi(note, octave);
+    return midi === null ? `C${octave ?? 4}` : midiToNoteName(midi);
+  }
+
+  async playNote(
+    note: string,
+    duration: string | number = '8n',
+    velocity: number = 0.8,
+    octave?: number,
+  ): Promise<void> {
+    const midi = this.toMidi(note, octave);
+    if (midi === null) return;
+    await this.engine.resume();
+    this.engine.scheduleNote(midi, velocity, this.engine.now(), durationToSeconds(duration));
+  }
+
+  async playChord(
+    notes: string[],
+    duration: string | number = '4n',
+    velocity: number = 0.6,
+  ): Promise<void> {
+    if (!Array.isArray(notes) || notes.length === 0) return;
+    await this.engine.resume();
+
+    const seconds = durationToSeconds(duration);
+    const start = this.engine.now();
+    const midiNotes = notes
+      .map((note) => this.toMidi(note))
+      .filter((midi): midi is number => midi !== null);
+
+    midiNotes.forEach((midi, index) => {
+      // Micro-desfase ascendente: un acorde tocado por una mano nunca entra
+      // matematicamente a la vez y esto lo hace sonar humano.
+      const humanize = index * 0.006;
+      const noteVelocity = velocity * (index === 0 ? 1 : 0.94);
+      this.engine.scheduleNote(midi, noteVelocity, start + humanize, seconds);
+    });
   }
 
   stopAllNotes(): void {
-    if (this.piano) {
-      this.piano.releaseAll();
-    }
+    this.engine.allNotesOff();
   }
 
-  private normalizeNote(note: string, octave?: number): string {
-    const targetOctave = octave !== undefined ? octave : 4;
-    
-    const noteMap: { [key: string]: string } = {
-      'C': `C${targetOctave}`, 'Cs': `C#${targetOctave}`, 'C#': `C#${targetOctave}`,
-      'D': `D${targetOctave}`, 'Ds': `D#${targetOctave}`, 'D#': `D#${targetOctave}`,
-      'E': `E${targetOctave}`, 'Es': `E#${targetOctave}`, 'E#': `E#${targetOctave}`,
-      'F': `F${targetOctave}`, 'Fs': `F#${targetOctave}`, 'F#': `F#${targetOctave}`,
-      'G': `G${targetOctave}`, 'Gs': `G#${targetOctave}`, 'G#': `G#${targetOctave}`,
-      'A': `A${targetOctave}`, 'As': `A#${targetOctave}`, 'A#': `A#${targetOctave}`,
-      'B': `B${targetOctave}`, 'Bs': `B#${targetOctave}`, 'B#': `B#${targetOctave}`,
-    };
+  triggerAttack(note: string, velocity: number = 0.8, octave?: number): void {
+    const midi = this.toMidi(note, octave);
+    if (midi === null) return;
+    this.engine.noteOn(midi, velocity);
+  }
 
-    return noteMap[note] || `C${targetOctave}`;
+  triggerRelease(note: string, octave?: number): void {
+    const midi = this.toMidi(note, octave);
+    if (midi === null) return;
+    this.engine.noteOff(midi);
+  }
+
+  stopNote(note: string, octave?: number): void {
+    this.triggerRelease(note, octave);
+  }
+
+  stopChord(notes: string[], octave?: number): void {
+    notes.forEach((note) => this.triggerRelease(note, octave));
+  }
+
+  /** Pedal de sustain. */
+  setSustain(down: boolean): void {
+    this.engine.setSustain(down);
+  }
+
+  /** Volumen 0..1 (tambien acepta dB negativos de la API antigua). */
+  setVolume(volume: number): void {
+    const normalized = volume < 0 ? Math.pow(10, volume / 20) : volume;
+    this.engine.setVolume(normalized);
+  }
+
+  getVolume(): number {
+    return this.engine.getVolume();
+  }
+
+  setReverb(mix: number): void {
+    this.engine.setReverb(mix);
+  }
+
+  getReverb(): number {
+    return this.engine.getReverb();
+  }
+
+  /** Click de metronomo sintetizado. */
+  click(accent = false): void {
+    this.engine.click(undefined, accent);
+  }
+
+  activeNotes(): number[] {
+    return this.engine.activeNotes();
   }
 
   getAvailableNotes(): string[] {
     return ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'];
   }
 
-  isReady(): boolean {
-    return this.isInitialized && this.piano !== null;
-  }
-
-  triggerAttack(note: string, velocity: number = 0.8, octave?: number): void {
-    if (!this.piano) return;
-    const normalizedNote = this.normalizeNote(note, octave);
-    this.piano.triggerAttack(normalizedNote, undefined, velocity);
-  }
-
-  triggerRelease(note: string, octave?: number): void {
-    if (!this.piano) return;
-    const normalizedNote = this.normalizeNote(note, octave);
-    this.piano.triggerRelease(normalizedNote);
-  }
-
-  stopNote(note: string, octave?: number): void {
-    if (!this.piano) return;
-    const normalizedNote = this.normalizeNote(note, octave);
-    this.piano.triggerRelease(normalizedNote);
-  }
-
-  stopChord(notes: string[], octave?: number): void {
-    if (!this.piano) return;
-    notes.forEach(note => {
-      const normalizedNote = this.normalizeNote(note, octave);
-      this.piano!.triggerRelease(normalizedNote);
-    });
-  }
-
-  setVolume(volume: number): void {
-    if ((this.piano as any)?.volume !== undefined) {
-      (this.piano as any).volume = volume;
+  /**
+   * Antes servia para recargar otro instrumento. El motor solo tiene piano,
+   * asi que se limita a cortar el sonido y dejarlo listo otra vez.
+   */
+  setInstrument(instrument: string): void {
+    if (instrument && instrument !== 'piano') {
+      console.warn(`Chordia solo tiene piano: se ignora el instrumento "${instrument}".`);
     }
-  }
-
-  setInstrument(_instrument: string): void {
-    this.isInitialized = false;
-    this.piano = null;
+    this.engine.allNotesOff(true);
   }
 }
 
 const pianoService = new PianoService();
 
-export default pianoService; 
+export default pianoService;
