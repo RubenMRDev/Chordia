@@ -19,6 +19,8 @@ Sign up now and start building your chord library today!
 - **Community Sharing**: Share your arrangements and collaborate with other musicians
 - **Smart Practice Tools**: Track your progress and get personalized recommendations
 - **MIDI Import & Play-Along**: Import any `.mid` file and play it with falling notes over the keyboard (Sightread style), with wait mode, hand selection, speed control and scoring
+- **Built-in Song Catalog**: 759 public-domain / Creative Commons piano pieces (105 composers), searchable and filterable by composer, style and difficulty
+- **Your Own Piano**: tell Chordia how many keys your keyboard has and the MIDI mode draws exactly that piano, transposing pieces that don't fit
 - **Studio-grade Piano Engine**: Multi-sampled acoustic piano over the Web Audio API, with velocity dynamics, sustain pedal, stereo spread and reverb
 
 <h1>📸 Screenshots</h1>
@@ -78,6 +80,36 @@ keyboard and you play along with a MIDI keyboard, the computer keyboard or the m
 - **Input**: any MIDI keyboard is auto-detected (velocity + CC64 sustain pedal). Without one, the `q w e r ...` and `z x c v ...` rows are the piano and `Shift` is the pedal.
 - **Bridge to Chordia songs**: *Guardar como cancion* extracts the chord progression from a MIDI file and saves it as a regular Chordia song (key, tempo and time signature included).
 - A built-in public-domain demo song ships with the app, so the feature can be tried without importing anything.
+
+<h2>📚 Song catalog</h2>
+
+`/midi` opens with a catalog of **759 pieces from 105 composers** (Bach 124, Schubert 49, Chopin 47,
+Beethoven 43, Mozart 33, Satie, Debussy, Handel, Schumann, Czerny...), all of them public domain or
+Creative Commons, bundled in `public/songs/` with per-song attribution (source, original link and
+license). Search by title or composer and filter by composer, style, difficulty (1-5, relative to
+the rest of the catalog) or "only what fits my piano".
+
+Sources: [Mutopia Project](https://www.mutopiaproject.org/) (their robots.txt allows crawling) and
+the CC-licensed songs shipped with [sightread](https://github.com/sightread/sightread). No
+copyrighted material is redistributed.
+
+Regenerate or extend the catalog with:
+
+```bash
+npm run songs            # crawl + download + analyse (writes public/songs/**)
+npm run songs:rescore    # recompute metrics/difficulty from local files, no network
+```
+
+`scripts/harvest-songs.mjs` parses every file, measures duration, note count, note density,
+polyphony and keyboard range, and assigns a relative difficulty by quantiles.
+
+<h2>🎹 Your piano</h2>
+
+In **Profile > Edit** (or straight from `/midi`, no account needed) you can set how many keys your
+keyboard has: 88, 76, 73, 61, 49, 37, 25 or a custom range. The MIDI mode then draws exactly that
+piano instead of adapting to each song, the catalog marks the pieces that don't fit, and
+"Ajustar a mi piano" (or the automatic option) shifts a piece by octaves so it does. The setting is
+stored in the browser and, when signed in, in the Firestore profile.
 
 <h2>🔊 Piano sound engine</h2>
 
