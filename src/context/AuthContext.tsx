@@ -1,294 +1,314 @@
-"use client"
-
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-  FacebookAuthProvider,
-  updateProfile,
-  type User,
-} from "firebase/auth"
-import { auth } from "../firebase/config"
-import { createUserProfile, getUserProfile } from '../firebase/userService';
-import type { UserProfile } from '../types/firebase'
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import type { User } from 'firebase/auth';
+import { isFirebaseConfigured } from '../firebase/env';
+import type { UserProfile } from '../types/models';
 
 interface AuthContextType {
-  currentUser: User | null
-  userProfile: UserProfile | null
-  loading: boolean
-  register: (email: string, password: string, name: string) => Promise<void>
-  login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
-  signInWithGoogle: () => Promise<void>
-  signInWithFacebook: () => Promise<void>
-  error: string | null
-  setError: (error: string | null) => void
-  updateProfileInContext: () => Promise<void>
-  refreshUserProfile: () => Promise<UserProfile | null>
+  currentUser: User | null;
+  userProfile: UserProfile | null;
+  loading: boolean;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  /**
+   * `remember` picks the session's persistence: local survives closing the
+   * browser, session does not. The login form's checkbox used to set a piece of
+   * state nobody read.
+   */
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  /** Sends a password-reset email. */
+  resetPassword: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
+  error: string | null;
+  setError: (error: string | null) => void;
+  updateProfileInContext: () => Promise<void>;
+  refreshUserProfile: () => Promise<UserProfile | null>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context
+  return context;
 }
 
+/*
+  Firebase is imported on demand, never at module load.
+
+  Importing `firebase/auth` statically here put 466 kB of Firebase (109 kB
+  gzipped) on the critical path of every page — including the home page and the
+  player, which work with no account at all. These load it the first time
+  something actually needs a session; the browser caches the chunk after that.
+*/
+const authModule = () => import('firebase/auth');
+const firebaseConfig = () => import('../firebase/config');
+const profileModule = () => import('../firebase/userService');
+
+/** A blank profile for a user who has signed in but has no document yet. */
+const blankProfile = (user: User): UserProfile => ({
+  uid: user.uid,
+  displayName: user.displayName || '',
+  email: user.email || '',
+  photoURL: user.photoURL || '',
+  bio: '',
+  location: '',
+  website: '',
+  role: 'user',
+  joinDate: new Date().toISOString(),
+  socialLinks: {
+    instagram: '',
+    twitter: '',
+    soundcloud: '',
+    spotify: '',
+  },
+});
+
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(isFirebaseConfigured);
+  const [error, setError] = useState<string | null>(null);
 
-  
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (currentUser) {
-        try {
-          let profile = await getUserProfile(currentUser.uid)
-          if (!profile) {
-            // Si no existe perfil, creamos uno con valores vacíos excepto displayName y email
-            profile = {
-              uid: currentUser.uid,
-              displayName: currentUser.displayName || "",
-              email: currentUser.email || "",
-              photoURL: currentUser.photoURL || "",
-              bio: "",
-              location: "",
-              website: "",
-              role: "user",
-              joinDate: new Date().toISOString(),
-              socialLinks: {
-                instagram: "",
-                twitter: "",
-                soundcloud: "",
-                spotify: ""
-              }
-            }
-            await createUserProfile(profile)
-          }
-          setUserProfile(profile)
-        } catch (error) {
-          console.error("Error fetching user profile:", error)
-        }
-      } else {
-        setUserProfile(null)
-      }
+    // With no credentials there is no session to watch, so nothing loads and
+    // everything that needs no account keeps working.
+    if (!isFirebaseConfigured) return;
+
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    void authModule().then(({ onAuthStateChanged }) => {
+      if (cancelled) return;
+      void firebaseConfig().then(({ requireAuth }) => {
+        if (cancelled) return;
+        unsubscribe = onAuthStateChanged(requireAuth(), (user) => {
+          setCurrentUser(user);
+          setLoading(false);
+        });
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setUserProfile(null);
+      return;
     }
 
-    fetchUserProfile()
-  }, [currentUser])
+    let cancelled = false;
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user)
-      setLoading(false)
-    })
+    const load = async () => {
+      try {
+        const { getUserProfile, createUserProfile } = await profileModule();
+        let profile = await getUserProfile(currentUser.uid);
+        if (!profile) {
+          // No document yet: create one from what the provider gave us.
+          profile = blankProfile(currentUser);
+          await createUserProfile(profile);
+        }
+        if (!cancelled) setUserProfile(profile);
+      } catch (cause) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Could not load the user profile', cause);
+        }
+      }
+    };
 
-    return unsubscribe
-  }, [])
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
-  async function register(email: string, password: string, name: string) {
+  /** Runs an auth action, surfacing its message and rethrowing for the caller. */
+  const run = useCallback(async (action: () => Promise<void>) => {
     try {
-      setError(null)
-      const result = await createUserWithEmailAndPassword(auth, email, password)
-      if (result.user) {
-        await updateProfile(result.user, {
-          displayName: name,
-        })
+      setError(null);
+      await action();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : 'An unknown error occurred',
+      );
+      throw cause;
+    }
+  }, []);
+
+  const register = useCallback(
+    (email: string, password: string, name: string) =>
+      run(async () => {
+        const { createUserWithEmailAndPassword, updateProfile } =
+          await authModule();
+        const { requireAuth } = await firebaseConfig();
+        const { createUserProfile } = await profileModule();
+        const result = await createUserWithEmailAndPassword(
+          requireAuth(),
+          email,
+          password,
+        );
+        if (!result.user) return;
+        await updateProfile(result.user, { displayName: name });
         await createUserProfile({
-          uid: result.user.uid,
-          displayName: name || "",
-          email: result.user.email || "",
-          photoURL: result.user.photoURL || "",
-          bio: "",
-          location: "",
-          website: "",
-          role: "user",
-          joinDate: new Date().toISOString(),
-          socialLinks: {
-            instagram: "",
-            twitter: "",
-            soundcloud: "",
-            spotify: ""
-          }
-        })
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError("An unknown error occurred")
-      }
-      throw error
-    }
-  }
+          ...blankProfile(result.user),
+          displayName: name || '',
+        });
+      }),
+    [run],
+  );
 
-  async function login(email: string, password: string) {
-    try {
-      setError(null)
-      await signInWithEmailAndPassword(auth, email, password)
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError("An unknown error occurred")
-      }
-      throw error
-    }
-  }
+  const login = useCallback(
+    (email: string, password: string, remember = true) =>
+      run(async () => {
+        const {
+          signInWithEmailAndPassword,
+          setPersistence,
+          browserLocalPersistence,
+          browserSessionPersistence,
+        } = await authModule();
+        const { requireAuth } = await firebaseConfig();
+        const auth = requireAuth();
+        await setPersistence(
+          auth,
+          remember ? browserLocalPersistence : browserSessionPersistence,
+        );
+        await signInWithEmailAndPassword(auth, email, password);
+      }),
+    [run],
+  );
 
-  async function logout() {
-    try {
-      setError(null)
-      await signOut(auth)
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError("An unknown error occurred")
-      }
-      throw error
-    }
-  }
+  const resetPassword = useCallback(
+    (email: string) =>
+      run(async () => {
+        const { sendPasswordResetEmail } = await authModule();
+        const { requireAuth } = await firebaseConfig();
+        await sendPasswordResetEmail(requireAuth(), email);
+      }),
+    [run],
+  );
 
-  async function signInWithGoogle() {
-    try {
-      setError(null)
-      const provider = new GoogleAuthProvider()
-      const result = await signInWithPopup(auth, provider)
-      if (result.user) {
-        // Verificar si el usuario ya existe
-        const existingProfile = await getUserProfile(result.user.uid)
-        if (!existingProfile) {
-          // Solo crear perfil si no existe
-          await createUserProfile({
-            uid: result.user.uid,
-            displayName: result.user.displayName || "",
-            email: result.user.email || "",
-            photoURL: result.user.photoURL || "",
-            bio: "",
-            location: "",
-            website: "",
-            role: "user", // Solo para usuarios nuevos
-            joinDate: new Date().toISOString(),
-            socialLinks: {
-              instagram: "",
-              twitter: "",
-              soundcloud: "",
-              spotify: ""
-            }
-          })
-        }
-        // Si el usuario ya existe, no sobrescribimos su perfil
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError("An unknown error occurred")
-      }
-      throw error
-    }
-  }
+  const logout = useCallback(
+    () =>
+      run(async () => {
+        const { signOut } = await authModule();
+        const { requireAuth } = await firebaseConfig();
+        await signOut(requireAuth());
+      }),
+    [run],
+  );
 
-  async function signInWithFacebook() {
-    try {
-      setError(null)
-      const provider = new FacebookAuthProvider()
-      const result = await signInWithPopup(auth, provider)
-      if (result.user) {
-        // Verificar si el usuario ya existe
-        const existingProfile = await getUserProfile(result.user.uid)
-        if (!existingProfile) {
-          // Solo crear perfil si no existe
-          await createUserProfile({
-            uid: result.user.uid,
-            displayName: result.user.displayName || "",
-            email: result.user.email || "",
-            photoURL: result.user.photoURL || "",
-            bio: "",
-            location: "",
-            website: "",
-            role: "user", // Solo para usuarios nuevos
-            joinDate: new Date().toISOString(),
-            socialLinks: {
-              instagram: "",
-              twitter: "",
-              soundcloud: "",
-              spotify: ""
-            }
-          })
-        }
-        // Si el usuario ya existe, no sobrescribimos su perfil
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError("An unknown error occurred")
-      }
-      throw error
-    }
-  }
+  /**
+   * Shared by the Google and Facebook buttons. An existing profile is never
+   * overwritten, so a returning user keeps their bio and their role.
+   */
+  const signInWithProvider = useCallback(
+    (which: 'google' | 'facebook') =>
+      run(async () => {
+        const { GoogleAuthProvider, FacebookAuthProvider, signInWithPopup } =
+          await authModule();
+        const { requireAuth } = await firebaseConfig();
+        const { getUserProfile, createUserProfile } = await profileModule();
+        const provider =
+          which === 'google'
+            ? new GoogleAuthProvider()
+            : new FacebookAuthProvider();
+        const result = await signInWithPopup(requireAuth(), provider);
+        if (!result.user) return;
+        const existing = await getUserProfile(result.user.uid);
+        if (!existing) await createUserProfile(blankProfile(result.user));
+      }),
+    [run],
+  );
 
-  async function updateProfileInContext() {
-    if (currentUser) {
+  const signInWithGoogle = useCallback(
+    () => signInWithProvider('google'),
+    [signInWithProvider],
+  );
+
+  const signInWithFacebook = useCallback(
+    () => signInWithProvider('facebook'),
+    [signInWithProvider],
+  );
+
+  const refreshUserProfile =
+    useCallback(async (): Promise<UserProfile | null> => {
+      if (!currentUser) return null;
       try {
+        const { getUserProfile } = await profileModule();
         const profile = await getUserProfile(currentUser.uid);
         if (profile) {
           setUserProfile(profile);
-          console.log('✅ Perfil actualizado en contexto:', profile.role);
-        }
-      } catch (error) {
-        console.error("Error updating user profile in context:", error);
-      }
-    }
-  }
-
-  // Función para forzar la actualización del perfil
-  const refreshUserProfile = async () => {
-    if (currentUser) {
-      try {
-        const profile = await getUserProfile(currentUser.uid);
-        if (profile) {
-          setUserProfile(profile);
-          console.log('🔄 Perfil refrescado:', profile.role);
           return profile;
         }
-      } catch (error) {
-        console.error("Error refreshing user profile:", error);
+      } catch (cause) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error('Could not refresh the user profile', cause);
+        }
       }
-    }
-    return null;
-  };
+      return null;
+    }, [currentUser]);
 
-  const value = {
-    currentUser,
-    userProfile,
-    loading,
-    register,
-    login,
-    logout,
-    signInWithGoogle,
-    signInWithFacebook,
-    error,
-    setError,
-    updateProfileInContext,
-    refreshUserProfile,
-  }
+  const updateProfileInContext = useCallback(async () => {
+    await refreshUserProfile();
+  }, [refreshUserProfile]);
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>
+  const value = useMemo<AuthContextType>(
+    () => ({
+      currentUser,
+      userProfile,
+      loading,
+      register,
+      login,
+      resetPassword,
+      logout,
+      signInWithGoogle,
+      signInWithFacebook,
+      error,
+      setError,
+      updateProfileInContext,
+      refreshUserProfile,
+    }),
+    [
+      currentUser,
+      userProfile,
+      loading,
+      register,
+      login,
+      resetPassword,
+      logout,
+      signInWithGoogle,
+      signInWithFacebook,
+      error,
+      updateProfileInContext,
+      refreshUserProfile,
+    ],
+  );
+
+  /*
+    Children always render. This used to be `{!loading && children}`, which
+    blanked the whole app — home page included — until Firebase answered, so a
+    slow network showed an empty screen on pages that need no account.
+    `ProtectedRoute` is what waits for the session.
+  */
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-

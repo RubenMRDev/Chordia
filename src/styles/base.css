@@ -1,0 +1,176 @@
+/*
+  Base layer. The parts of the page we did not draw still have to carry the
+  design: selection, caret, scrollbars, focus rings, autofill and the figures
+  in measured data all ship with browser defaults that belong to no design
+  system.
+*/
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--color-ground-4) var(--color-ground-1);
+    scrollbar-width: thin;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-ground-1);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    /* Inter's contextual alternates plus real quotes and dashes. */
+    font-feature-settings: 'cv05' 1, 'cv08' 1, 'ss03' 1;
+  }
+
+  /* Display face carries headings; Inter is never the display voice. */
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  figure {
+    margin: 0;
+  }
+
+  /* Measured values line up in a column: tempo, time, accuracy, counts. */
+  .numeric {
+    font-variant-numeric: tabular-nums slashed-zero;
+    font-feature-settings: 'tnum' 1, 'zero' 1;
+  }
+
+  /* ---- Selection: note light, not the OS blue ------------------------- */
+  ::selection {
+    background-color: rgba(0, 230, 118, 0.28);
+    color: var(--color-ivory);
+  }
+
+  /* ---- Caret ---------------------------------------------------------- */
+  input,
+  textarea,
+  [contenteditable='true'] {
+    caret-color: var(--color-hand-right);
+  }
+
+  /* ---- Focus: one ring, from the palette, only for keyboard users ----- */
+  :focus-visible {
+    outline: 2px solid var(--color-hand-right);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* ---- Scrollbars ----------------------------------------------------- */
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-ground-1);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-ground-4);
+    border: 3px solid var(--color-ground-1);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ground-4);
+    filter: brightness(1.4);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: var(--color-ground-1);
+  }
+
+  /* ---- Autofill: Chrome's yellow has no business here ----------------- */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--color-ink);
+    -webkit-background-clip: text;
+    caret-color: var(--color-hand-right);
+    transition: background-color 8000s ease-in-out 0s;
+  }
+
+  /* ---- Form controls inherit the palette ------------------------------ */
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  input[type='range'],
+  input[type='checkbox'],
+  input[type='radio'],
+  progress {
+    accent-color: var(--color-hand-right);
+  }
+
+  /* Native select menus render in the OS light theme unless told otherwise. */
+  select option {
+    background-color: var(--color-ground-3);
+    color: var(--color-ink);
+  }
+
+  /* ---- Links ---------------------------------------------------------- */
+  a {
+    color: inherit;
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+
+  ::marker {
+    color: var(--color-ink-low);
+  }
+
+  /* ---- Images --------------------------------------------------------- */
+  img,
+  svg,
+  canvas,
+  video {
+    display: block;
+    max-width: 100%;
+  }
+
+  /*
+    The instrument surfaces are not text: dragging across the keyboard or the
+    transport should not select labels. Applied where it belongs instead of to
+    every element on the page, which is what used to make the whole product
+    unselectable.
+  */
+  .instrument,
+  .instrument * {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}

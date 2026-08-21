@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaCompress, FaExpand, FaPause, FaPlay } from 'react-icons/fa';
 import FallingNotesCanvas from './FallingNotesCanvas';
 import ScrubBar from './ScrubBar';
-import type { Player, PlayerStatus } from '../../features/player/Player';
-import type { ParsedSong } from '../../features/midi/types';
+import type { Player, PlayerStatus } from '@/features/player/Player';
+import type { ParsedSong } from '@/features/midi/types';
+import { useT } from '@/i18n';
 
 interface PlayerStageProps {
   player: Player;
@@ -40,6 +41,7 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
   loading,
   notice,
 }) => {
+  const { t } = useT();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const playing = status === 'playing' || status === 'waiting';
@@ -64,8 +66,10 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden bg-[var(--background-darker)] ${
-        isFullscreen ? 'w-screen h-screen' : 'h-[58vh] min-h-[360px] rounded-lg border border-white/5'
+      className={`relative overflow-hidden bg-ground-0 ${
+        isFullscreen
+          ? 'w-screen h-screen'
+          : 'h-[58vh] min-h-[360px] rounded-xl border border-[var(--edge)] shadow-[var(--lift-2)]'
       }`}
     >
       {/*
@@ -74,8 +78,8 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
       */}
       <div className={isFullscreen ? 'absolute inset-x-0 top-0 bottom-[84px]' : 'w-full h-full'}>
         {loading ? (
-          <div className="w-full h-full flex items-center justify-center text-[var(--text-secondary)]">
-            Cargando la cancion...
+          <div className="w-full h-full flex items-center justify-center text-sm text-ink-low">
+            {t('player.loading')}
           </div>
         ) : (
           <FallingNotesCanvas
@@ -89,7 +93,10 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
       </div>
 
       {notice && (
-        <div className="absolute top-3 left-3 max-w-[70%] rounded-md bg-black/60 backdrop-blur px-3 py-2 text-xs text-[var(--text-secondary)] pointer-events-none">
+        <div
+          role="status"
+          className="absolute top-3 left-3 max-w-[70%] rounded-md border border-[var(--edge)] bg-[color-mix(in_srgb,var(--color-ground-0)_82%,transparent)] backdrop-blur px-3 py-2 text-[12px] leading-relaxed text-ink-mid pointer-events-none"
+        >
           {notice}
         </div>
       )}
@@ -97,26 +104,30 @@ const PlayerStage: React.FC<PlayerStageProps> = ({
       <button
         type="button"
         onClick={() => void toggleFullscreen()}
-        className="absolute top-3 right-3 w-10 h-10 rounded-md bg-black/50 hover:bg-black/70 backdrop-blur text-white flex items-center justify-center"
-        aria-label={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-        title={isFullscreen ? 'Salir de pantalla completa (Esc)' : 'Pantalla completa'}
+        className="press absolute top-3 right-3 h-10 w-10 rounded-md border border-[var(--edge)] bg-[color-mix(in_srgb,var(--color-ground-0)_70%,transparent)] backdrop-blur text-ink grid place-items-center hover:bg-ground-3"
+        aria-label={
+          isFullscreen ? t('player.exitFullscreen') : t('player.fullscreen')
+        }
+        title={
+          isFullscreen ? t('player.exitFullscreen') : t('player.fullscreen')
+        }
       >
         {isFullscreen ? <FaCompress /> : <FaExpand />}
       </button>
 
       {isFullscreen && (
-        <div className="absolute bottom-0 left-0 right-0 h-[84px] flex items-center gap-4 border-t border-white/10 bg-[var(--background-darker)] px-4">
+        <div className="absolute bottom-0 left-0 right-0 h-[84px] flex items-center gap-4 border-t border-[var(--seam)] bg-ground-1 px-4">
           <button
             type="button"
             onClick={() => player.toggle()}
-            className="w-11 h-11 shrink-0 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center hover:brightness-110"
-            aria-label={playing ? 'Pausar' : 'Reproducir'}
+            className="press bloom-right h-11 w-11 shrink-0 rounded-full bg-hand-right text-hand-right-ink grid place-items-center hover:brightness-110"
+            aria-label={playing ? t('player.pause') : t('player.play')}
           >
             {playing ? <FaPause /> : <FaPlay className="ml-0.5" />}
           </button>
           <ScrubBar time={time} duration={duration} onSeek={(next) => player.seek(next)} />
-          <span className="hidden md:block text-xs text-[var(--text-secondary)] whitespace-nowrap">
-            Espacio: play · flechas: 5 s · Esc: salir
+          <span className="hidden md:block text-[12px] text-ink-low whitespace-nowrap">
+            {t('player.shortcuts')}
           </span>
         </div>
       )}

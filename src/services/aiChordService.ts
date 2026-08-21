@@ -1,4 +1,5 @@
-declare const puter: any;
+
+import { ensurePuter, puterText } from './puterText';
 
 export interface AIChordRequest {
   style: string;
@@ -390,21 +391,25 @@ class AIChordService {
     const prompt = this.buildPrompt(request);
     
     try {
-      const response = await puter.ai.chat(prompt);
+      const sdk = await ensurePuter();
+      if (!sdk) {
+        throw new Error('The Puter SDK did not load');
+      }
+      const text = puterText(await sdk.ai.chat(prompt));
 
-      if (!response) {
+      if (!text) {
         throw new Error('No response from AI');
       }
 
       let parsedResponse;
       try {
-        parsedResponse = JSON.parse(response);
-      } catch (parseError) {
+        parsedResponse = JSON.parse(text);
+      } catch {
         console.warn('AI response was not valid JSON, creating basic response');
         parsedResponse = {
           chords: ['C', 'F', 'G', 'Am'],
           progression: ['C', 'F', 'G', 'Am'],
-          explanation: 'Generated progression: ' + response
+          explanation: 'Generated progression: ' + text
         };
       }
       

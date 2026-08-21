@@ -1,560 +1,205 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaMusic, FaPlay, FaStar, FaRegStar, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
-import Header from '../components/Header';
-import { getAllSongs } from '../firebase/songService';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Shell from '@/components/layout/Shell';
+import SongCard from '@/components/songs/SongCard';
+import EmptyState from '@/components/songs/EmptyState';
+import { useAuth } from '@/context/AuthContext';
+import { getUserSongs } from '@/firebase/songService';
+import type { Song } from '@/types/models';
+import { useT, type MessageKey } from '@/i18n';
+import { ButtonLink, Panel } from '@/ui';
 
-interface DisplaySong {
-  id: string;
-  title: string;
-  key: string;
-  timeSignature: string;
-  tempo: number;
-  username: string;
-  userId: string;
-  createdAt: string;
-  difficulty?: number;
-}
+/** How many recent songs the dashboard shows before pointing at the library. */
+const RECENT = 4;
 
+/** One of the three things you can go and do from here. */
+const QuickAction: React.FC<{
+  to: string;
+  titleKey: MessageKey;
+  bodyKey: MessageKey;
+}> = ({ to, titleKey, bodyKey }) => {
+  const { t } = useT();
+  return (
+    <Link
+      to={to}
+      className="press group block rounded-lg border border-[var(--edge)] bg-ground-2 p-5 no-underline hover:border-[var(--seam)] hover:bg-ground-3"
+    >
+      <span className="flex items-center gap-2.5">
+        <span
+          aria-hidden
+          className="h-1.5 w-6 rounded-full bg-[var(--edge)] transition-colors duration-[var(--t-quick)] group-hover:bg-hand-right"
+        />
+        <span className="font-semibold text-ink">{t(titleKey)}</span>
+      </span>
+      <span className="mt-2 block text-[13px] leading-relaxed text-ink-low">
+        {t(bodyKey)}
+      </span>
+    </Link>
+  );
+};
+
+/**
+ * Where you left off and what to do next.
+ *
+ * It shows *your* songs. It used to call `getAllSongs()` and present everyone's
+ * work as the signed-in user's dashboard, which is what Discover is for.
+ */
 const DashboardPage: React.FC = () => {
-  const [songs, setSongs] = useState<DisplaySong[]>([]);
+  const { t, tn } = useT();
+  const { currentUser, userProfile } = useAuth();
+
+  const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+
+  const load = useCallback(async () => {
+    if (!currentUser) {
+      setSongs([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      setSongs(await getUserSongs(currentUser.uid));
+    } catch {
+      setSongs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
-    const fetchRandomSongs = async () => {
-      try {
-        setLoading(true);
-        const allSongs = await getAllSongs();
-        const songsWithUserData = await Promise.all(
-          allSongs.map(async (song) => {
-            let username = '@user';
-            try {
-              const userDoc = await getDoc(doc(db, 'users', song.userId));
-              if (userDoc.exists()) {
-                username =
-                  '@' +
-                  (userDoc.data().username ||
-                    userDoc.data().displayName ||
-                    userDoc.data().email?.split('@')[0] ||
-                    'user');
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
-            }
-            const difficulty = Math.floor(Math.random() * 3) + 1;
-            return {
-              id: song.id || '',
-              title: song.title,
-              key: song.key,
-              timeSignature: song.timeSignature,
-              tempo: song.tempo,
-              username: username,
-              userId: song.userId,
-              createdAt: song.createdAt,
-              difficulty: difficulty,
-            };
-          })
-        );
-        const randomSongs = [...songsWithUserData]
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 3);
-        setSongs(randomSongs);
-      } catch (error) {
-        console.error('Error fetching songs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRandomSongs();
-  }, []);
+    void load();
+  }, [load]);
 
-  const renderDifficultyStars = (level: number) => {
-    const stars = [];
-    for (let i = 0; i < 3; i++) {
-      if (i < level) {
-        stars.push(<FaStar key={i} style={{ color: 'var(--accent-green)' }} data-testid="filled-star" />);
-      } else {
-        stars.push(
-          <FaRegStar key={i} style={{ color: 'var(--text-secondary)' }} data-testid="empty-star" />
-        );
-      }
-    }
-    return stars;
-  };
+  const name =
+    userProfile?.displayName ||
+    currentUser?.displayName ||
+    currentUser?.email?.split('@')[0] ||
+    '';
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  const recent = [...songs]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, RECENT);
+
+  const totalChords = songs.reduce(
+    (sum, song) => sum + (song.chords?.length ?? 0),
+    0,
+  );
 
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--background-darker)',
-        minHeight: '100vh',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <Header />
-      <section
-        style={{
-          padding: '4rem 2rem',
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundImage:
-            'linear-gradient(to right, var(--background-darker), rgba(21, 33, 45, 0.9))',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ maxWidth: '600px', zIndex: 1 }}>
-          <h1
-            style={{
-              fontSize: '3rem',
-              fontWeight: 'bold',
-              color: 'var(--accent-green)',
-              marginBottom: '1rem',
-            }}
-          >
-            Create Music Magic with Chordia
+    <Shell padded={false}>
+      <div className="shell pt-10 pb-16">
+        <header>
+          <h1 className="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-[1.05]">
+            {/* Without a name to greet, the heading is just the page's name. */}
+            {name ? t('dashboard.title', { name }) : t('nav.dashboard')}
           </h1>
-          <p
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '1.1rem',
-              marginBottom: '2rem',
-              lineHeight: 1.6,
-            }}
-          >
-            Your ultimate platform for chord progression and song creation.
-            Transform your musical ideas into reality.
+          <p className="mt-3 text-[15px] text-ink-mid">
+            {t('dashboard.lede')}
           </p>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <Link
-              to="/create"
-              style={{
-                backgroundColor: 'var(--accent-green)',
-                color: '#000',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '4px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-              }}
-            >
-              Create Custom Song
-            </Link>
-            <Link
-              to="/library"
-              style={{
-                border: '1px solid var(--accent-green)',
-                color: 'var(--accent-green)',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '4px',
-                textDecoration: 'none',
-                fontWeight: 'bold',
-              }}
-            >
-              Browse Library
-            </Link>
-          </div>
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: '100%',
-            height: '100%',
-            opacity: 0.5,
-            zIndex: 0,
-            backgroundImage: `url("https://res.cloudinary.com/doy4x4chv/image/upload/v1742987174/dashboard_eohinb.webp")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        ></div>
-      </section>
-      <section style={{ padding: '2rem' }}>
-        <h2
-          style={{
-            fontSize: '1.75rem',
-            color: 'var(--accent-green)',
-            marginBottom: '2rem',
-          }}
-        >
-          Random Community Songs
-        </h2>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '1rem' }}>
-            <p>Loading songs...</p>
-          </div>
-        ) : songs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '1rem' }}>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              No songs available at the moment.
-            </p>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '1.5rem',
-            }}
-          >
-            {songs.map((song: DisplaySong) => (
-              <div
-                key={song.id}
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  position: 'relative',
-                  cursor: 'pointer',
-                }}
-                onClick={() => navigate(`/song/${song.id}`)}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    color: 'var(--accent-green)',
-                  }}
-                >
-                  <FaMusic />
-                </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: '0.75rem',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  <FaUser style={{ marginRight: '0.5rem' }} />
-                  <span>{song.username}</span>
-                </div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-                  {song.title}
-                </h3>
-                <p
-                  style={{
-                    color: 'var(--text-secondary)',
-                    marginBottom: '0.5rem',
-                  }}
-                >
-                  {song.key} • {song.timeSignature} • {song.tempo} BPM
-                </p>
-                <p
-                  style={{
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.875rem',
-                    marginBottom: '1rem',
-                  }}
-                >
-                  Created: {formatDate(song.createdAt)}
-                </p>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div>
-                    <span
-                      style={{
-                        color: 'var(--text-secondary)',
-                        marginRight: '0.5rem',
-                      }}
-                    >
-                      Difficulty:
-                    </span>
-                    <span style={{ display: 'inline-flex', gap: '0.25rem' }}>
-                      {renderDifficultyStars(song.difficulty || 2)}
-                    </span>
-                  </div>
-                  <button
-                    style={{
-                      backgroundColor: 'var(--accent-green)',
-                      color: '#000',
-                      width: '2.5rem',
-                      height: '2.5rem',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/song/${song.id}`);
-                    }}
-                  >
-                    <FaPlay />
-                  </button>
-                </div>
+        </header>
+
+        {/* Two measured figures, not a wall of tiles. */}
+        {!loading && songs.length > 0 && (
+          <div className="mt-9 flex flex-wrap gap-x-12 gap-y-5">
+            <div>
+              <div className="numeric font-display text-[2.5rem] leading-none text-hand-right">
+                {songs.length}
               </div>
-            ))}
+              <p className="mt-1.5 text-[13px] text-ink-mid">
+                {t('dashboard.stat.songs')}
+              </p>
+            </div>
+            <div>
+              <div className="numeric font-display text-[2.5rem] leading-none text-ink">
+                {totalChords}
+              </div>
+              <p className="mt-1.5 text-[13px] text-ink-mid">
+                {t('dashboard.stat.chords')}
+              </p>
+            </div>
           </div>
         )}
-      </section>
-      <section
-        style={{
-          padding: '4rem 2rem',
-          backgroundColor: 'var(--background-dark)',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '2rem',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontSize: '2.5rem',
-              color: 'var(--accent-green)',
-              marginBottom: '1.5rem',
-            }}
-          >
-            Create Your Own Song
-          </h2>
-          <p
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '1.1rem',
-              marginBottom: '2rem',
-              lineHeight: 1.6,
-              maxWidth: '500px',
-            }}
-          >
-            Start from scratch and compose your masterpiece. Our intuitive chord
-            editor makes it easy to bring your musical vision to life.
-          </p>
-          <Link
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <QuickAction
             to="/create"
-            style={{
-              backgroundColor: 'var(--accent-green)',
-              color: '#000',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '4px',
-              textDecoration: 'none',
-              fontWeight: 'bold',
-              display: 'inline-block',
-            }}
-          >
-            Start Creating Now
-          </Link>
+            titleKey="dashboard.quickCreate"
+            bodyKey="dashboard.quickCreateBody"
+          />
+          <QuickAction
+            to="/midi"
+            titleKey="dashboard.quickPlay"
+            bodyKey="dashboard.quickPlayBody"
+          />
+          <QuickAction
+            to="/discover"
+            titleKey="dashboard.quickDiscover"
+            bodyKey="dashboard.quickDiscoverBody"
+          />
         </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: '300px',
-              height: '300px',
-              borderRadius: '50%',
-              backgroundColor: '#000',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                background:
-                  'radial-gradient(circle, #000 60%, var(--accent-green) 100%)',
-                opacity: 0.5,
-              }}
-            ></div>
-            <FaMusic
-              style={{
-                color: 'var(--accent-green)',
-                fontSize: '4rem',
-                position: 'relative',
-                zIndex: 1,
-              }}
-            />
-          </div>
-        </div>
-      </section>
-      <footer
-        style={{
-          backgroundColor: 'var(--background-darker)',
-          padding: '3rem 2rem 1.5rem',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '2rem',
-            marginBottom: '3rem',
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                color: 'var(--accent-green)',
-                marginBottom: '1rem',
-                fontWeight: 'bold',
-                fontSize: '1.25rem',
-              }}
-            >
-              <FaMusic style={{ marginRight: '0.5rem' }} />
-              Chordia
-            </div>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              Your musical journey starts here.
-            </p>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: '1rem' }}>Quick Links</h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/dashboard"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Home
-                </Link>
-              </li>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/library"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Browse Songs
-                </Link>
-              </li>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/create"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Create Song
-                </Link>
-              </li>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/midi"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Play MIDI
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: '1rem' }}>Resources</h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/help"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/terms"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Terms of Service
-                </Link>
-              </li>
-              <li style={{ marginBottom: '0.5rem' }}>
-                <Link
-                  to="/privacy"
-                  style={{
-                    color: 'var(--text-secondary)',
-                    textDecoration: 'none',
-                  }}
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 style={{ marginBottom: '1rem' }}>Connect</h3>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <a
-                href="#"
-                title="Chordia on Twitter"
-                style={{ color: 'var(--text-secondary)', fontSize: '1.25rem' }}
+
+        <section className="mt-14">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <h2 className="font-display text-lg font-semibold">
+              {t('dashboard.recent')}
+              {songs.length > 0 && (
+                <span className="numeric ml-2 text-[13px] font-normal text-ink-low">
+                  {tn('songs.chordCount', totalChords)}
+                </span>
+              )}
+            </h2>
+            {songs.length > RECENT && (
+              <Link
+                to="/library"
+                className="text-[13px] font-semibold text-hand-right no-underline hover:underline"
               >
-                <FaTwitter />
-              </a>
-              <a
-                href="#"
-                title="Chordia on Instagram"
-                style={{ color: 'var(--text-secondary)', fontSize: '1.25rem' }}
-              >
-                <FaInstagram />
-              </a>
-              <a
-                href="#"
-                title="Chordia on YouTube"
-                style={{ color: 'var(--text-secondary)', fontSize: '1.25rem' }}
-              >
-                <FaYoutube />
-              </a>
-            </div>
+                {t('dashboard.seeAll')}
+              </Link>
+            )}
           </div>
-        </div>
-        <div
-          style={{
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            paddingTop: '1.5rem',
-            fontSize: '0.875rem',
-          }}
-        >
-          &copy; {new Date().getFullYear()} Chordia. All rights reserved.
-        </div>
-      </footer>
-    </div>
+
+          <div className="mt-5">
+            {loading ? (
+              <p className="text-sm text-ink-low" role="status">
+                {t('state.loading')}
+              </p>
+            ) : recent.length === 0 ? (
+              <EmptyState
+                title={t('library.empty')}
+                body={t('library.emptyBody')}
+                action={
+                  <ButtonLink to="/create" tone="right" size="md">
+                    {t('songs.newSong')}
+                  </ButtonLink>
+                }
+              />
+            ) : (
+              <ul className="list-none m-0 p-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {recent.map((song) => (
+                  <li key={song.id} className="flex">
+                    <div className="flex w-full">
+                      <SongCard song={song} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {/* The piano setting lives here too: it is per-browser and account-free. */}
+        <Panel className="mt-12 p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-semibold">{t('piano.mine')}</h2>
+            <p className="mt-1 text-[13px] text-ink-low">{t('piano.body')}</p>
+          </div>
+          <ButtonLink to="/profile/edit" tone="quiet" size="md">
+            {t('catalog.configure')}
+          </ButtonLink>
+        </Panel>
+      </div>
+    </Shell>
   );
 };
 

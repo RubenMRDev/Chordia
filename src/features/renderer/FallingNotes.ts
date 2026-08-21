@@ -5,7 +5,7 @@
  * de React) para que la animacion vaya a 60 fps aunque la UI se re-renderice.
  */
 
-import type { Player } from '../player/Player';
+import type { PlayerSettings } from '../player/Player';
 import type { Hand, ParsedSong, SongNote } from '../midi/types';
 import {
   expandToOctaveBounds,
@@ -22,6 +22,26 @@ export interface KeyGeometry {
   height: number;
   y: number;
   black: boolean;
+}
+
+/**
+ * Lo unico que el renderer necesita de quien lleva el tiempo.
+ *
+ * `Player` lo cumple tal cual, pero declararlo asi permite dibujar el mismo
+ * teclado y las mismas notas con otro reloj: la portada lo anima con
+ * `performance.now()`, porque el reloj del Player es el del AudioContext y no
+ * avanza hasta que el navegador recibe un gesto del usuario.
+ */
+export interface RendererSource {
+  getSettings(): PlayerSettings;
+  getSong(): ParsedSong | null;
+  getTime(): number;
+  isWaiting(): boolean;
+  requiredNoteIds(): number[];
+  requiredNotes(): number[];
+  sounding(midi: number): number;
+  readonly hitNotes: ReadonlySet<number>;
+  readonly pressed: ReadonlySet<number>;
 }
 
 export interface RendererOptions {
@@ -66,7 +86,7 @@ export class FallingNotesRenderer {
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly player: Player,
+    private readonly player: RendererSource,
   ) {
     this.ctx = canvas.getContext('2d');
     this.resize();

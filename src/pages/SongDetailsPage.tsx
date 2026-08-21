@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FaArrowLeft, FaMusic, FaPlay, FaPause, FaStepForward, FaStepBackward, FaKeyboard, FaInfoCircle } from 'react-icons/fa';
-import Header from '../components/Header';
+import Header from '@/components/layout/Header';
 import MIDITroubleshooting from '../components/MIDITroubleshooting';
 import { getSongById } from '../firebase/songService';
 import { type Song, type ChordType } from '../firebase/songService';
 import { useAuth } from '../context/AuthContext';
 import { useMIDI } from '../hooks/useMIDI';
 import { usePiano } from '../hooks/usePiano';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+import { openDialog } from '@/ui/dialog';
+import { useT } from '@/i18n';
 
 const LargePiano = ({ chord }: { chord: ChordType }) => {
   // Encuentra la nota más baja de todos los acordes (por octava)
@@ -50,10 +50,10 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
     <div className="relative h-[120px] w-full max-w-[500px] mx-auto">
       {/* Teclas blancas */}
       <div className="flex h-full w-full relative z-10">
-        {whiteKeys.map((k, _idx) => (
+        {whiteKeys.map((k) => (
           <div
             key={`white-${k.key}`}
-            className={`flex-1 h-full border border-gray-600 rounded-b-sm relative ${chordSet.has(k.key) ? "bg-[#00E676]" : "bg-white"}`}
+            className={`flex-1 h-full border border-[var(--seam)] rounded-b-sm relative ${chordSet.has(k.key) ? "bg-[var(--color-hand-right)]" : "bg-white"}`}
           >
             <div className={`absolute bottom-[5px] w-full text-center text-xs ${chordSet.has(k.key) ? "text-white font-bold" : "text-black font-normal"}`}>{k.key}</div>
           </div>
@@ -61,7 +61,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
       </div>
       {/* Teclas negras */}
       <div className="absolute top-0 left-0 h-[60%] w-full z-20 pointer-events-none">
-        {blackKeys.map((k, _idx) => {
+        {blackKeys.map((k) => {
           // Encuentra la posición entre las blancas
           // C# va entre C y D, D# entre D y E, F# entre F y G, etc
           // Buscamos el índice de la blanca anterior
@@ -74,7 +74,7 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
           return (
             <div
               key={`black-${k.key}`}
-              className={`absolute h-full w-[6%] border-x border-gray-600 rounded-b-sm box-border ${chordSet.has(k.key) ? "bg-[#00E676]" : "bg-black"}`}
+              className={`absolute h-full w-[6%] border-x border-[var(--seam)] rounded-b-sm box-border ${chordSet.has(k.key) ? "bg-[var(--color-hand-right)]" : "bg-black"}`}
               style={{ left }}
             >
               {chordSet.has(k.key) && (
@@ -89,11 +89,13 @@ const LargePiano = ({ chord }: { chord: ChordType }) => {
 };
 
 const SongDetailsPage: React.FC = () => {
+  const { t } = useT();
   const { songId } = useParams<{ songId: string }>();
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { } = useAuth(); // Keep the hook call without storing the result
+  // Se llama para que la pagina se re-renderice al cambiar la sesion.
+  useAuth();
   const [currentChordIndex, setCurrentChordIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [beatCount, setBeatCount] = useState<number>(0);
@@ -104,8 +106,6 @@ const SongDetailsPage: React.FC = () => {
   const [metronomeEnabled, setMetronomeEnabled] = useState<boolean>(true);
   const [pianoSoundEnabled, setPianoSoundEnabled] = useState<boolean>(true);
   const currentBeatRef = useRef(0);
-  const [_pressedKeys, _setPressedKeys] = useState<Set<string>>(new Set());
-  const [_showDebugInfo, _setShowDebugInfo] = useState<boolean>(false);
   const [showMIDIDialog, setShowMIDIDialog] = useState<boolean>(false);
   const [midiAccessRequested, setMidiAccessRequested] = useState<boolean>(false);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
@@ -779,7 +779,7 @@ const SongDetailsPage: React.FC = () => {
         connectToDevice(midiDevices[0].id);
         return true;
       } else {
-        console.log('No MIDI devices found after initialization');
+        console.log(t('song.noDevices'));
       }
     }
     return false;
@@ -887,17 +887,16 @@ const SongDetailsPage: React.FC = () => {
   }, [pianoReady, pianoSoundEnabled]);
 
   const [showMIDIModal, setShowMIDIModal] = useState(false);
-  const MySwal = withReactContent(Swal);
   const openMIDIModal = useCallback(() => {
-    MySwal.fire({
-      title: <span style={{color: '#00E676'}}>MIDI Status & Troubleshooting</span>,
+    openDialog({
+      title: <span style={{color: 'var(--color-hand-right)'}}>MIDI Status & Troubleshooting</span>,
       html: (
         <div>
           {/* MIDI Status Information */}
           {midiSupported && (
-            <div className="w-full p-3 bg-[#0f1624] border border-[#a0aec0] rounded text-sm mb-4">
-              <div className="font-bold mb-2 text-[#00E676]">MIDI Status:</div>
-              <div className="space-y-1 text-xs text-[#a0aec0]">
+            <div className="w-full p-3 bg-[var(--color-ground-2)] border border-[var(--color-ink-mid)] rounded text-sm mb-4">
+              <div className="font-bold mb-2 text-[var(--color-hand-right)]">MIDI Status:</div>
+              <div className="space-y-1 text-xs text-[var(--color-ink-mid)]">
                 <div>• Browser Support: {midiSupported ? '✅ Supported' : '❌ Not Supported'}</div>
                 <div>• Devices Found: {midiDevices.length}</div>
                 <div>• Connection Status: {midiConnected ? '✅ Connected' : '❌ Not Connected'}</div>
@@ -908,7 +907,7 @@ const SongDetailsPage: React.FC = () => {
                   <div>• Current Device: {midiCurrentDevice.name} ({midiCurrentDevice.manufacturer})</div>
                 )}
                 {midiError && (
-                  <div className="text-red-400">• Error: {midiError}</div>
+                  <div className="text-[var(--color-felt-ink)]">• Error: {midiError}</div>
                 )}
               </div>
               <div className="flex gap-2 mt-2">
@@ -917,14 +916,14 @@ const SongDetailsPage: React.FC = () => {
                     await refreshDevices();
                     setMidiRefreshRequested(true);
                   }}
-                  className="flex-1 p-2 bg-[#00E676] text-black rounded text-xs font-bold hover:bg-[#00D666] transition-colors"
+                  className="flex-1 p-2 bg-[var(--color-hand-right)] text-black rounded text-xs font-bold hover:bg-[var(--color-hand-right-deep)] transition-colors"
                 >
                   Refresh MIDI Devices
                 </button>
                 {!midiAccessRequested && (
                   <button
                     onClick={initializeMIDI}
-                    className="flex-1 p-2 bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] rounded text-xs font-bold hover:border-[#00E676] hover:text-[#00E676] transition-colors"
+                    className="flex-1 p-2 bg-[var(--color-ground-2)] text-[var(--color-ink-mid)] border border-[var(--color-ink-mid)] rounded text-xs font-bold hover:border-[var(--color-hand-right)] hover:text-[var(--color-hand-right)] transition-colors"
                   >
                     Initialize MIDI
                   </button>
@@ -942,13 +941,13 @@ const SongDetailsPage: React.FC = () => {
               </div>
               {/* Available Devices List */}
               {midiDevices.length > 0 && (
-                <div className="mt-3 p-2 bg-[#0f1624] rounded border border-[#a0aec0]">
+                <div className="mt-3 p-2 bg-[var(--color-ground-2)] rounded border border-[var(--color-ink-mid)]">
                   <div className="font-medium text-white mb-1 text-xs">Available Devices:</div>
                   {midiDevices.map(device => (
-                    <div key={device.id} className="text-xs text-[#a0aec0] ml-2 mb-1">
+                    <div key={device.id} className="text-xs text-[var(--color-ink-mid)] ml-2 mb-1">
                       • {device.name} ({device.manufacturer}) - {device.state}
                       {midiCurrentDevice?.id === device.id && (
-                        <span className="text-[#00E676] ml-1">← Connected</span>
+                        <span className="text-[var(--color-hand-right)] ml-1">← Connected</span>
                       )}
                     </div>
                   ))}
@@ -971,7 +970,7 @@ const SongDetailsPage: React.FC = () => {
       showConfirmButton: false,
       showCloseButton: true,
       width: '48rem',
-      background: '#0a101b',
+      background: 'var(--color-ground-1)',
       customClass: {
         popup: 'swal2-mt-modal',
       },
@@ -998,39 +997,39 @@ const SongDetailsPage: React.FC = () => {
   }, [showMIDIModal]);
 
   return (
-    <div className="bg-[#0a101b] min-h-screen text-white">
+    <div className="bg-[var(--color-ground-1)] min-h-screen text-white">
       <Header />
       <div className="p-4 md:p-8">
         <Link 
           to="/dashboard" 
-          className="inline-flex items-center gap-2 text-[#a0aec0] no-underline mb-8 transition-colors hover:text-[#00E676]"
+          className="inline-flex items-center gap-2 text-[var(--color-ink-mid)] no-underline mb-8 transition-colors hover:text-[var(--color-hand-right)]"
         >
           <FaArrowLeft /> Back to Stage
         </Link>
         {loading ? (
-          <div className="text-center py-12 text-[#a0aec0]">
+          <div className="text-center py-12 text-[var(--color-ink-mid)]">
             Loading song details...
           </div>
         ) : error ? (
-          <div className="text-center py-12 text-red-500">
+          <div className="text-center py-12 text-[var(--color-felt-ink)]">
             {error}
           </div>
         ) : !song ? (
-          <div className="text-center py-12 text-[#a0aec0]">
+          <div className="text-center py-12 text-[var(--color-ink-mid)]">
             Song not found
           </div>
         ) : (
           <>
-            <div className="bg-[#1a2332]/30 rounded-lg p-4 md:p-8 mb-6">
+            <div className="bg-[var(--color-ground-3)]/30 rounded-lg p-4 md:p-8 mb-6">
               <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
-                <div className="w-20 h-20 bg-[#1a2332] rounded-full flex items-center justify-center border-2 border-[#00E676]">
-                  <FaMusic className="text-3xl text-[#00E676]" />
+                <div className="w-20 h-20 bg-[var(--color-ground-3)] rounded-full flex items-center justify-center border-2 border-[var(--color-hand-right)]">
+                  <FaMusic className="text-3xl text-[var(--color-hand-right)]" />
                 </div>
                 <div>
                   <h1 className="text-2xl md:text-4xl mb-2 text-center md:text-left">
                     {song.title}
                   </h1>
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[#a0aec0] text-sm md:text-base">
+                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-[var(--color-ink-mid)] text-sm md:text-base">
                     <div>Key: {song.key}</div>
                     <div>{song.timeSignature}</div>
                     <div>{song.tempo} BPM</div>
@@ -1039,8 +1038,8 @@ const SongDetailsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-[#1a2332]/30 rounded-lg p-4 md:p-8 mb-6 flex flex-col items-center gap-6">
-              <h2 className="text-xl md:text-2xl text-[#00E676]">
+            <div className="bg-[var(--color-ground-3)]/30 rounded-lg p-4 md:p-8 mb-6 flex flex-col items-center gap-6">
+              <h2 className="text-xl md:text-2xl text-[var(--color-hand-right)]">
                 Current Chord ({currentChordIndex + 1} of {song.chords.length})
               </h2>
               <LargePiano chord={song.chords[currentChordIndex]} />
@@ -1050,7 +1049,7 @@ const SongDetailsPage: React.FC = () => {
                     <div 
                       key={`beat-${index}`}
                       className={`w-2.5 h-2.5 rounded-full ${
-                        beatCount === index ? "bg-[#00E676]" : "bg-white/30"
+                        beatCount === index ? "bg-[var(--color-hand-right)]" : "bg-white/30"
                       }`}
                     />
                   ))}
@@ -1062,8 +1061,8 @@ const SongDetailsPage: React.FC = () => {
                     onClick={() => setMetronomeEnabled(prev => !prev)}
                     className={`px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-all ${
                       metronomeEnabled 
-                        ? "bg-[#00E676] text-black" 
-                        : "bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0]"
+                        ? "bg-[var(--color-hand-right)] text-black" 
+                        : "bg-[var(--color-ground-2)] text-[var(--color-ink-mid)] border border-[var(--color-ink-mid)]"
                     }`}
                   >
                     {metronomeEnabled ? 'Metronome: ON' : 'Metronome: OFF'}
@@ -1072,8 +1071,8 @@ const SongDetailsPage: React.FC = () => {
                     onClick={() => setPianoSoundEnabled(prev => !prev)}
                     className={`px-4 py-2 rounded text-sm font-bold flex items-center gap-2 transition-all ${
                       pianoSoundEnabled 
-                        ? "bg-[#00E676] text-black" 
-                        : "bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0]"
+                        ? "bg-[var(--color-hand-right)] text-black" 
+                        : "bg-[var(--color-ground-2)] text-[var(--color-ink-mid)] border border-[var(--color-ink-mid)]"
                     }`}
                   >
                     {pianoSoundEnabled ? 'Piano Sound: ON' : 'Piano Sound: OFF'}
@@ -1087,16 +1086,16 @@ const SongDetailsPage: React.FC = () => {
                     disabled={midiInitializing}
                     className={`flex-1 px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
                       isPlayYourselfMode 
-                        ? "bg-[#00E676] text-black" 
-                        : "bg-[#0f1624] text-[#a0aec0] border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676]"
+                        ? "bg-[var(--color-hand-right)] text-black" 
+                        : "bg-[var(--color-ground-2)] text-[var(--color-ink-mid)] border border-[var(--color-ink-mid)] hover:border-[var(--color-hand-right)] hover:text-[var(--color-hand-right)]"
                     } ${midiInitializing ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <FaKeyboard />
-                    {midiInitializing ? 'Detecting MIDI...' : (isPlayYourselfMode ? 'Exit Play Yourself' : 'Play Yourself')}
+                    {midiInitializing ? 'Detecting MIDI...' : (isPlayYourselfMode ? t('song.exitPlayYourself') : t('song.playYourself'))}
                   </button>
                   <button
                     onClick={() => setShowMIDIModal(true)}
-                    className="ml-2 p-3 rounded-full bg-[#0f1624] border border-[#a0aec0] text-[#00E676] hover:bg-[#00E676] hover:text-black transition-colors flex items-center justify-center"
+                    className="ml-2 p-3 rounded-full bg-[var(--color-ground-2)] border border-[var(--color-ink-mid)] text-[var(--color-hand-right)] hover:bg-[var(--color-hand-right)] hover:text-black transition-colors flex items-center justify-center"
                     title="MIDI Info & Troubleshooting"
                   >
                     <FaInfoCircle size={22} />
@@ -1106,7 +1105,7 @@ const SongDetailsPage: React.FC = () => {
                 <div className="flex gap-4">
                   <button
                     onClick={handlePrevChord}
-                    className="w-12 h-12 rounded-full bg-[#0f1624] text-white border border-[#a0aec0] flex items-center justify-center cursor-pointer"
+                    className="w-12 h-12 rounded-full bg-[var(--color-ground-2)] text-white border border-[var(--color-ink-mid)] flex items-center justify-center cursor-pointer"
                   >
                     <FaStepBackward />
                   </button>
@@ -1114,23 +1113,23 @@ const SongDetailsPage: React.FC = () => {
                     onClick={handlePlayPause}
                     className={`w-16 h-16 rounded-full flex items-center justify-center cursor-pointer ${
                       isPlaying 
-                        ? "bg-[#0f1624] text-[#00E676] border-2 border-[#00E676]" 
-                        : "bg-[#00E676] text-black"
+                        ? "bg-[var(--color-ground-2)] text-[var(--color-hand-right)] border-2 border-[var(--color-hand-right)]" 
+                        : "bg-[var(--color-hand-right)] text-black"
                     }`}
                   >
                     {isPlaying ? <FaPause /> : <FaPlay />}
                   </button>
                   <button
                     onClick={handleNextChord}
-                    className="w-12 h-12 rounded-full bg-[#0f1624] text-white border border-[#a0aec0] flex items-center justify-center cursor-pointer"
+                    className="w-12 h-12 rounded-full bg-[var(--color-ground-2)] text-white border border-[var(--color-ink-mid)] flex items-center justify-center cursor-pointer"
                   >
                     <FaStepForward />
                   </button>
                 </div>
               </div>
             </div>
-            <div className="bg-[#1a2332]/30 rounded-lg p-4 md:p-8">
-              <h2 className="text-xl md:text-2xl text-[#00E676] mb-6">
+            <div className="bg-[var(--color-ground-3)]/30 rounded-lg p-4 md:p-8">
+              <h2 className="text-xl md:text-2xl text-[var(--color-hand-right)] mb-6">
                 Chord Progression
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -1139,19 +1138,19 @@ const SongDetailsPage: React.FC = () => {
                     key={index}
                     className={`rounded-lg p-6 cursor-pointer ${
                       currentChordIndex === index 
-                        ? "bg-[#00E676]/20 border-2 border-[#00E676]" 
-                        : "bg-[#1a2332]"
+                        ? "bg-[var(--color-hand-right)]/20 border-2 border-[var(--color-hand-right)]" 
+                        : "bg-[var(--color-ground-3)]"
                     }`}
                     onClick={() => handleChordSelect(index)}
                   >
                     <div className="flex justify-between items-center mb-4">
                       <div className={`font-bold ${
-                        currentChordIndex === index ? "text-[#00E676]" : "text-white"
+                        currentChordIndex === index ? "text-[var(--color-hand-right)]" : "text-white"
                       }`}>
                         Chord {index + 1}
                       </div>
                       {currentChordIndex === index && (
-                        <div className="bg-[#00E676] text-black rounded-full text-xs font-bold px-2 py-1">
+                        <div className="bg-[var(--color-hand-right)] text-black rounded-full text-xs font-bold px-2 py-1">
                           Current
                         </div>
                       )}
@@ -1165,14 +1164,14 @@ const SongDetailsPage: React.FC = () => {
             {/* MIDI Device Selection Dialog */}
             {showMIDIDialog && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                <div className="bg-[#1a2332] rounded-lg p-6 max-w-md w-full mx-4">
-                  <h3 className="text-xl font-bold mb-4 text-[#00E676]">
+                <div className="bg-[var(--color-ground-3)] rounded-lg p-6 max-w-md w-full mx-4">
+                  <h3 className="text-xl font-bold mb-4 text-[var(--color-hand-right)]">
                     Select MIDI Device
                   </h3>
                   {midiDevices.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-[#a0aec0] mb-4">No MIDI devices found</p>
-                      <p className="text-sm text-[#a0aec0] mb-6">
+                      <p className="text-[var(--color-ink-mid)] mb-4">{t('song.noDevices')}</p>
+                      <p className="text-sm text-[var(--color-ink-mid)] mb-6">
                         Please connect a MIDI keyboard or other MIDI device and refresh the page.
                       </p>
                       <button
@@ -1180,7 +1179,7 @@ const SongDetailsPage: React.FC = () => {
                           setShowMIDIDialog(false);
                           handleDemoModeToggle();
                         }}
-                        className="w-full p-3 bg-[#00E676] text-black rounded font-bold hover:bg-[#00D666] transition-colors"
+                        className="w-full p-3 bg-[var(--color-hand-right)] text-black rounded font-bold hover:bg-[var(--color-hand-right-deep)] transition-colors"
                       >
                         Try Demo Mode Instead
                       </button>
@@ -1192,10 +1191,10 @@ const SongDetailsPage: React.FC = () => {
                           <button
                             key={device.id}
                             onClick={() => handleMIDIDeviceSelect(device.id)}
-                            className="w-full p-3 text-left bg-[#0f1624] rounded border border-[#a0aec0] hover:border-[#00E676] transition-colors"
+                            className="w-full p-3 text-left bg-[var(--color-ground-2)] rounded border border-[var(--color-ink-mid)] hover:border-[var(--color-hand-right)] transition-colors"
                           >
                             <div className="font-medium text-white">{device.name}</div>
-                            <div className="text-sm text-[#a0aec0]">{device.manufacturer}</div>
+                            <div className="text-sm text-[var(--color-ink-mid)]">{device.manufacturer}</div>
                           </button>
                         ))}
                       </div>
@@ -1204,7 +1203,7 @@ const SongDetailsPage: React.FC = () => {
                           setShowMIDIDialog(false);
                           handleDemoModeToggle();
                         }}
-                        className="w-full p-3 bg-[#0f1624] text-[#a0aec0] rounded border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676] transition-colors"
+                        className="w-full p-3 bg-[var(--color-ground-2)] text-[var(--color-ink-mid)] rounded border border-[var(--color-ink-mid)] hover:border-[var(--color-hand-right)] hover:text-[var(--color-hand-right)] transition-colors"
                       >
                         Try Demo Mode Instead
                       </button>
@@ -1212,7 +1211,7 @@ const SongDetailsPage: React.FC = () => {
                   )}
                   <button
                     onClick={() => setShowMIDIDialog(false)}
-                    className="w-full mt-4 p-3 bg-[#0f1624] text-[#a0aec0] rounded border border-[#a0aec0] hover:border-[#00E676] hover:text-[#00E676] transition-colors"
+                    className="w-full mt-4 p-3 bg-[var(--color-ground-2)] text-[var(--color-ink-mid)] rounded border border-[var(--color-ink-mid)] hover:border-[var(--color-hand-right)] hover:text-[var(--color-hand-right)] transition-colors"
                   >
                     Cancel
                   </button>

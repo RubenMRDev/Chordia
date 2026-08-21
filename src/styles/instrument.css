@@ -1,0 +1,247 @@
+/*
+  The instrument's own materials and its one authored motion.
+
+  The authored moment is the strike: a note reaches the hit line, the key
+  depresses, light blooms from the contact point and decays on the sustain
+  envelope. Every control in the product borrows that single gesture instead of
+  inventing its own hover effect.
+*/
+
+@keyframes strike {
+  0% {
+    opacity: 0.9;
+    transform: scaleY(0.2) translateY(6px);
+  }
+  30% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1) translateY(-14px);
+  }
+}
+
+@keyframes keydown {
+  0% {
+    transform: translateY(0);
+  }
+  18% {
+    transform: translateY(3px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes sustain {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0.35;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer components {
+  /* ---- Chassis: a panel is a machined plate, lit along its top edge ---- */
+  .chassis {
+    position: relative;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-ground-3) 88%, white 3%) 0%,
+        var(--color-ground-2) 38%,
+        var(--color-ground-2) 100%
+      );
+    border: 1px solid var(--edge);
+    border-radius: 10px;
+    box-shadow: var(--lift-1);
+  }
+
+  /* The seam: 1px of caught light along the top. This is what makes it read as
+     a physical plate rather than a rounded rectangle. */
+  .chassis::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--seam-strong) 18%,
+      var(--seam-strong) 82%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .chassis-flush {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .chassis-flush::before {
+    border-radius: 0;
+  }
+
+  /* ---- Press: the depress half of the strike -------------------------- */
+  .press {
+    transition:
+      transform var(--t-tap) var(--ease-depress),
+      box-shadow var(--t-quick) var(--ease-strike),
+      background-color var(--t-quick) var(--ease-strike),
+      border-color var(--t-quick) var(--ease-strike);
+  }
+
+  .press:active {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  /* ---- Bloom: the light half, on the signal colour of the control ----- */
+  .bloom-right:hover,
+  .bloom-right:focus-visible {
+    box-shadow: var(--bloom-right);
+  }
+
+  .bloom-left:hover,
+  .bloom-left:focus-visible {
+    box-shadow: var(--bloom-left);
+  }
+
+  .bloom-wait:hover,
+  .bloom-wait:focus-visible {
+    box-shadow: var(--bloom-wait);
+  }
+
+  /*
+    ---- The strike itself -----------------------------------------------
+    Fired once when a note lands. Light expands from the contact point and
+    decays; it does not pulse, because a struck string does not pulse.
+  */
+
+  .strike {
+    animation: strike 560ms var(--ease-strike) forwards;
+    transform-origin: bottom center;
+  }
+
+  /* A key going down under a strike. */
+
+  .keydown {
+    animation: keydown 420ms var(--ease-strike);
+  }
+
+  /*
+    ---- Sustain: the only continuous motion outside the canvas ----------
+    Used on the live indicator when a MIDI device is connected. Slow, low
+    amplitude, and it stops entirely under reduced motion.
+  */
+
+  .sustain {
+    animation: sustain 2.4s var(--ease-settle) infinite;
+  }
+
+  /*
+    ---- Reveal ----------------------------------------------------------
+    Content is visible by default and animates from an already-readable state.
+    Nothing on this site is hidden waiting for a scroll listener. Used sparingly
+    and never as the same entrance on every section.
+  */
+
+  .rise {
+    animation: rise var(--t-settle) var(--ease-strike) both;
+  }
+
+
+  /* ---- Keycap: an actual key, ivory or ebony -------------------------- */
+  .keycap-white {
+    background: linear-gradient(
+      180deg,
+      var(--color-ivory) 0%,
+      var(--color-ivory) 72%,
+      var(--color-ivory-shade) 100%
+    );
+    color: var(--color-ebony);
+    border-radius: 0 0 4px 4px;
+    box-shadow:
+      inset -1px 0 0 rgba(4, 8, 16, 0.16),
+      inset 0 -3px 0 rgba(4, 8, 16, 0.08);
+  }
+
+  .keycap-black {
+    background: linear-gradient(
+      180deg,
+      #232c3a 0%,
+      var(--color-ebony) 62%,
+      #0c1018 100%
+    );
+    border-radius: 0 0 3px 3px;
+    box-shadow:
+      inset 0 -2px 0 rgba(0, 0, 0, 0.5),
+      0 2px 4px rgba(4, 8, 16, 0.6);
+  }
+
+  /*
+    The same keys in shadow. Used where the keyboard is structure rather than
+    the subject: the page's bottom edge, the footer, empty states. Built from
+    the ground tokens plus a light seam, so it reads as an unlit instrument
+    instead of a grey block.
+  */
+  .keycap-white-shadow {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-ivory) 13%, var(--color-ground-2)) 0%,
+      color-mix(in srgb, var(--color-ivory) 6%, var(--color-ground-1)) 62%,
+      var(--color-ground-0) 100%
+    );
+    border-radius: 0 0 4px 4px;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--color-ivory) 16%, transparent),
+      inset -1px 0 0 rgba(4, 8, 16, 0.55);
+  }
+
+  .keycap-black-shadow {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-ivory) 5%, var(--color-ground-0)) 0%,
+      #05080e 100%
+    );
+    border-radius: 0 0 3px 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* ---- Hairline rule shaped like a keyboard --------------------------- */
+  .rule-keys {
+    height: 1px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--seam) 0 14px,
+      transparent 14px 16px
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strike,
+  .keydown,
+  .sustain,
+  .rise {
+    animation: none;
+  }
+  .press:active {
+    transform: none;
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { formatTime } from '../../features/player/format';
+import { formatTime } from '@/features/player/format';
+import { useT } from '@/i18n';
 
 interface ScrubBarProps {
   time: number;
@@ -7,8 +8,9 @@ interface ScrubBarProps {
   onSeek: (time: number) => void;
 }
 
-/** Barra de progreso con arrastre para moverse por la cancion. */
+/** Progress bar you can drag to move through the piece. */
 const ScrubBar: React.FC<ScrubBarProps> = ({ time, duration, onSeek }) => {
+  const { t } = useT();
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState(0);
@@ -18,7 +20,10 @@ const ScrubBar: React.FC<ScrubBarProps> = ({ time, duration, onSeek }) => {
       const track = trackRef.current;
       if (!track || duration <= 0) return 0;
       const rect = track.getBoundingClientRect();
-      const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      const ratio = Math.min(
+        1,
+        Math.max(0, (clientX - rect.left) / rect.width),
+      );
       return ratio * duration;
     },
     [duration],
@@ -47,16 +52,18 @@ const ScrubBar: React.FC<ScrubBarProps> = ({ time, duration, onSeek }) => {
 
   return (
     <div className="flex items-center gap-3 w-full">
-      <span className="text-xs text-[var(--text-secondary)] tabular-nums w-10 text-right">
+      <span className="numeric w-11 text-right text-[12px] text-ink-low">
         {formatTime(current)}
       </span>
+
       <div
         ref={trackRef}
         role="slider"
-        aria-label="Posicion de la cancion"
+        aria-label={t('player.position')}
         aria-valuemin={0}
         aria-valuemax={Math.round(duration)}
         aria-valuenow={Math.round(current)}
+        aria-valuetext={formatTime(current)}
         tabIndex={0}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -66,18 +73,29 @@ const ScrubBar: React.FC<ScrubBarProps> = ({ time, duration, onSeek }) => {
           if (event.key === 'ArrowLeft') onSeek(Math.max(0, time - 5));
           if (event.key === 'ArrowRight') onSeek(Math.min(duration, time + 5));
         }}
-        className="relative flex-1 h-2 rounded-full bg-white/10 cursor-pointer touch-none"
+        className="group relative flex-1 h-2 rounded-full bg-ground-4 cursor-pointer touch-none"
       >
+        {/* Played so far, in the right hand's colour. */}
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-[var(--accent-green)]"
+          className="absolute inset-y-0 left-0 rounded-full bg-hand-right"
           style={{ width: `${ratio * 100}%` }}
         />
+        {/*
+          The head is a struck key: it lights while it is being dragged, using
+          the same bloom the keyboard uses.
+        */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white shadow"
-          style={{ left: `${ratio * 100}%` }}
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-4 w-4 rounded-full bg-ivory transition-shadow duration-[var(--t-quick)]"
+          style={{
+            left: `${ratio * 100}%`,
+            boxShadow: dragging
+              ? 'var(--bloom-right)'
+              : '0 1px 3px rgba(4,8,16,0.6)',
+          }}
         />
       </div>
-      <span className="text-xs text-[var(--text-secondary)] tabular-nums w-10">
+
+      <span className="numeric w-11 text-[12px] text-ink-low">
         {formatTime(duration)}
       </span>
     </div>

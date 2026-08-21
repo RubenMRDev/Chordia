@@ -1,47 +1,65 @@
 import React from 'react';
-import { FaKeyboard } from 'react-icons/fa';
-import { midiToNoteName } from '../../features/audio/notes';
+import { isBlackKey, midiToNoteName } from '@/features/audio/notes';
+import { useT } from '@/i18n';
+import { Panel } from '@/ui';
 
 interface KeyboardHelpProps {
   mapping: Map<string, number>;
 }
 
-/** Chuleta de las teclas del ordenador que hacen de piano. */
+/**
+ * Cheat sheet for the computer keys that stand in for the piano.
+ *
+ * Each key is drawn as the key it actually plays — ivory for a white note,
+ * ebony for a black one — so the two rows read as two octaves of a keyboard
+ * rather than as a list of shortcuts.
+ */
 const KeyboardHelp: React.FC<KeyboardHelpProps> = ({ mapping }) => {
+  const { t } = useT();
   const entries = [...mapping.entries()];
   const lower = entries.slice(0, 13);
   const upper = entries.slice(13);
 
   const renderRow = (row: Array<[string, number]>) => (
-    <div className="flex flex-wrap gap-1.5">
-      {row.map(([key, midi]) => (
-        <span
-          key={key}
-          className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs text-[var(--text-secondary)]"
-          title={midiToNoteName(midi)}
-        >
-          <span className="text-white font-semibold uppercase">{key === ',' ? ',' : key}</span>
-          <span className="ml-1.5">{midiToNoteName(midi)}</span>
-        </span>
-      ))}
+    <div className="flex flex-wrap gap-1">
+      {row.map(([key, midi]) => {
+        const black = isBlackKey(midi);
+        return (
+          <span
+            key={key}
+            title={midiToNoteName(midi)}
+            className="inline-flex flex-col items-center rounded-[4px] border px-1.5 py-1 min-w-[30px]"
+            style={{
+              background: black
+                ? 'var(--color-ebony)'
+                : 'color-mix(in srgb, var(--color-ivory) 88%, transparent)',
+              borderColor: black ? 'var(--seam)' : 'transparent',
+              color: black ? 'var(--color-ivory)' : 'var(--color-ebony)',
+            }}
+          >
+            <span className="numeric text-[12px] font-semibold uppercase leading-none">
+              {key}
+            </span>
+            <span className="numeric mt-0.5 text-[9px] leading-none opacity-60">
+              {midiToNoteName(midi)}
+            </span>
+          </span>
+        );
+      })}
     </div>
   );
 
   return (
-    <div className="bg-[var(--card-background)] rounded-lg p-4">
-      <h3 className="flex items-center gap-2 font-bold text-white mb-3">
-        <FaKeyboard className="text-[var(--accent-green)]" />
-        Tocar con el teclado del ordenador
-      </h3>
-      <div className="flex flex-col gap-2">
+    <Panel className="p-4">
+      <h2 className="font-semibold">{t('keyboard.helpTitle')}</h2>
+      <div className="mt-3 flex flex-col gap-1.5">
         {renderRow(upper)}
         {renderRow(lower)}
       </div>
-      <p className="text-xs text-[var(--text-secondary)] mt-3">
-        Espacio reproduce o pausa, las flechas se mueven 5 segundos y Shift hace de pedal de
-        sustain. Tambien puedes tocar las teclas de la pantalla con el raton.
+      <p className="mt-3.5 text-[13px] leading-relaxed text-ink-low">
+        {t('keyboard.helpBody')}
       </p>
-    </div>
+    </Panel>
   );
 };
 

@@ -1,0 +1,165 @@
+/*
+  SweetAlert2, dressed in the design system.
+
+  Eight files used to hand SweetAlert its colours inline, with different values
+  in each — '#1a2332' here, 'var(--accent-green)' there, '#dc3545' in the admin
+  screen. Theming the classes once means every dialog in the product matches the
+  panels around it, and `src/ui/dialog.ts` is the only place that opens one.
+*/
+
+@layer components {
+  .swal2-container {
+    backdrop-filter: blur(3px);
+  }
+
+  .swal2-popup {
+    background: var(--color-ground-2);
+    border: 1px solid var(--edge);
+    border-radius: 12px;
+    box-shadow: var(--lift-3);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    padding: 1.75rem;
+  }
+
+  /* The chassis seam, so a dialog is the same material as a panel. */
+  .swal2-popup::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--seam-strong) 18%,
+      var(--seam-strong) 82%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .swal2-title {
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    padding: 0;
+  }
+
+  .swal2-html-container {
+    color: var(--color-ink-mid);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-top: 0.65rem;
+  }
+
+  .swal2-actions {
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .swal2-styled {
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.65rem 1.15rem;
+    transition:
+      transform var(--t-tap) var(--ease-depress),
+      filter var(--t-quick) var(--ease-strike);
+  }
+
+  .swal2-styled:active {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  .swal2-styled:focus-visible {
+    outline: 2px solid var(--color-hand-right);
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  .swal2-styled.swal2-confirm {
+    background: var(--color-hand-right);
+    color: var(--color-hand-right-ink);
+  }
+
+  .swal2-styled.swal2-confirm:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Destructive confirmations wear damper felt. */
+  .swal2-popup.chordia-destructive .swal2-styled.swal2-confirm {
+    background: var(--color-felt);
+    color: var(--color-ivory);
+  }
+
+  .swal2-styled.swal2-cancel,
+  .swal2-styled.swal2-deny {
+    background: var(--color-ground-3);
+    border: 1px solid var(--edge);
+    color: var(--color-ink);
+  }
+
+  .swal2-styled.swal2-cancel:hover,
+  .swal2-styled.swal2-deny:hover {
+    background: var(--color-ground-4);
+  }
+
+  /* The stock icons are a different design language; these are ours. */
+  .swal2-icon {
+    border-color: var(--edge);
+    margin: 0 auto 1.15rem;
+  }
+
+  .swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--color-hand-right);
+  }
+
+  .swal2-icon.swal2-success .swal2-success-ring {
+    border-color: color-mix(in srgb, var(--color-hand-right) 40%, transparent);
+  }
+
+  .swal2-icon.swal2-error {
+    border-color: color-mix(in srgb, var(--color-felt-ink) 45%, transparent);
+  }
+
+  .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--color-felt-ink);
+  }
+
+  .swal2-icon.swal2-warning,
+  .swal2-icon.swal2-info,
+  .swal2-icon.swal2-question {
+    border-color: color-mix(in srgb, var(--color-wait) 45%, transparent);
+    color: var(--color-wait);
+  }
+
+  .swal2-timer-progress-bar {
+    background: var(--color-hand-right);
+  }
+
+  .swal2-input,
+  .swal2-textarea,
+  .swal2-select {
+    background: var(--color-ground-1);
+    border: 1px solid var(--edge);
+    border-radius: 8px;
+    color: var(--color-ink);
+    box-shadow: none;
+  }
+
+  .swal2-input:focus,
+  .swal2-textarea:focus,
+  .swal2-select:focus {
+    border-color: var(--color-hand-right);
+    box-shadow: none;
+  }
+
+  .swal2-validation-message {
+    background: color-mix(in srgb, var(--color-felt) 22%, transparent);
+    color: var(--color-felt-ink);
+  }
+}

@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore"
-import { db } from "./config"
+import { requireDb } from "./config";
 import type { PianoSettings } from "../features/piano/pianoSettings"
 export interface UserProfile {
   uid: string
@@ -21,7 +21,7 @@ export interface UserProfile {
   piano?: PianoSettings
 }
 export const createUserProfile = async (user: UserProfile): Promise<void> => {
-  const userRef = doc(db, "users", user.uid)
+  const userRef = doc(requireDb(), "users", user.uid)
   try {
     const userDoc = await getDoc(userRef)
     if (!userDoc.exists()) {
@@ -39,7 +39,7 @@ export const createUserProfile = async (user: UserProfile): Promise<void> => {
   }
 }
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
-  const userRef = doc(db, "users", uid)
+  const userRef = doc(requireDb(), "users", uid)
   try {
     const userDoc = await getDoc(userRef)
     if (userDoc.exists()) {
@@ -53,7 +53,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   }
 }
 export const updateUserProfile = async (uid: string, data: Partial<UserProfile>): Promise<void> => {
-  const userRef = doc(db, "users", uid)
+  const userRef = doc(requireDb(), "users", uid)
   try {
     await updateDoc(userRef, { ...data })
   } catch (error) {
@@ -63,7 +63,7 @@ export const updateUserProfile = async (uid: string, data: Partial<UserProfile>)
 }
 export const deleteUserProfile = async (userId: string): Promise<void> => {
   try {
-    const userDocRef = doc(db, 'users', userId);
+    const userDocRef = doc(requireDb(), 'users', userId);
     await deleteDoc(userDocRef);
   } catch (error) {
     console.error('Error deleting user profile:', error);
@@ -73,7 +73,7 @@ export const deleteUserProfile = async (userId: string): Promise<void> => {
 
 // Función para actualizar el rol de un usuario a admin
 export const updateUserRole = async (userId: string, role: 'user' | 'admin'): Promise<void> => {
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(requireDb(), "users", userId);
   try {
     await updateDoc(userRef, { role });
   } catch (error) {

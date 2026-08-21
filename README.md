@@ -63,10 +63,19 @@ Sign up now and start building your chord library today!
 2. **Libraries**:
    - **react-icons** - For UI icons
    - **react-router-dom** - For navigation and routing
-   - **firebase** - For backend services
-   - **sweetalert2** - For attractive alerts and confirmations
-   - **tailwindcss** - For utility-first CSS
+   - **firebase** - Auth, Firestore and Storage, all loaded on demand
+   - **sweetalert2** - Dialogs, themed in `src/styles/dialog.css` and opened
+     only through `src/ui/dialog.ts`
+   - **tailwindcss** (v4) - Utility CSS; the design tokens live in
+     `src/styles/tokens.css` under `@theme`
    - **@tonejs/midi** - For parsing imported `.mid` files
+   - **@fontsource-variable/{inter,bricolage-grotesque}** - Self-hosted
+     variable fonts
+
+3. **Language**: the interface is bilingual (Spanish and English). Strings live
+   in `src/i18n/messages/`; `es.ts` is the source of truth and `en.ts` is typed
+   against it, so adding a Spanish string without an English one fails the
+   build.
 
 <h1>🎹 MIDI Import & Play-Along</h1>
 
@@ -174,18 +183,50 @@ stored in the browser and, when signed in, in the Firestore profile.
 
 ```
 chordia-landing/
-├── public/           # Static assets
-├── src/              # Source code
-│   ├── components/   # Reusable components
-│   ├── context/      # React context providers
-│   ├── firebase/     # Firebase configuration and services
-│   ├── pages/        # Application pages
-│   ├── App.tsx       # Main application component
-│   ├── main.tsx      # Application entry point
-│   └── index.css     # Global styles
-├── .env              # Environment variables
-└── README.md         # Project documentation
+├── public/               # Static assets, including the 759-piece catalogue
+│   └── songs/            # catalog.json + the bundled .mid files
+├── src/
+│   ├── app/              # Application shell
+│   │   ├── main.tsx      # Entry point: providers, fonts, error boundary
+│   │   ├── App.tsx       # Routes, every one a lazy chunk
+│   │   ├── ErrorBoundary.tsx
+│   │   └── RouteFallback.tsx
+│   ├── features/         # Domain logic, framework-free and tested
+│   │   ├── audio/        # Web Audio piano engine (PianoEngine, samples)
+│   │   ├── midi/         # Parsing, library, catalogue, demo song
+│   │   ├── piano/        # The user's own keyboard range
+│   │   ├── player/       # Transport, practice clock, scoring
+│   │   └── renderer/     # Falling-notes canvas
+│   ├── i18n/             # Spanish + English dictionaries and provider
+│   ├── styles/           # tokens.css, base.css, instrument.css
+│   ├── ui/               # Design-system primitives (Button, Keyboard, Field…)
+│   ├── components/
+│   │   ├── layout/       # Header, Footer, Shell, BrandMark
+│   │   ├── home/         # Landing sections
+│   │   ├── player/       # Player surface
+│   │   └── piano/
+│   ├── context/          # AuthContext
+│   ├── firebase/         # env.ts (flag only) + config.ts (SDK, lazy)
+│   ├── hooks/
+│   ├── pages/            # One route each
+│   ├── services/
+│   ├── types/            # Ambient types and domain models
+│   └── index.css         # Imports Tailwind and the style layers
+├── .env                  # VITE_FIREBASE_* (optional: the app plays without it)
+├── DESIGN.md             # The design system, recorded from the build
+├── PRODUCT.md            # Product truth
+└── README.md
 ```
+
+Two conventions worth knowing before editing:
+
+- **`@/` is an alias for `src/`**, wired in `vite.config.ts`, `tsconfig*.json`
+  and the Jest `moduleNameMapper`.
+- **`src/firebase/config.ts` must only ever be reached through a dynamic
+  `import()`.** It is the one module that touches the Firebase SDK; importing
+  it statically puts 535 kB back on the critical path of every page, including
+  the ones that need no account. Import `src/firebase/env.ts` when all you need
+  is `isFirebaseConfigured`.
 
 <h1>🚀 Future Enhancements</h1>
 

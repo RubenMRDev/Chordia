@@ -1,17 +1,22 @@
 import React from 'react';
 import {
-  FaPlay,
+  FaFont,
+  FaGraduationCap,
+  FaHeadphones,
+  FaMusic,
   FaPause,
+  FaPlay,
+  FaSearchPlus,
   FaUndo,
   FaVolumeUp,
-  FaMusic,
-  FaHeadphones,
-  FaGraduationCap,
-  FaSearchPlus,
-  FaFont,
-  FaKeyboard,
 } from 'react-icons/fa';
-import type { Player, PlayerSnapshot } from '../../features/player/Player';
+import type {
+  Player,
+  PlayerMode,
+  PlayerSnapshot,
+} from '@/features/player/Player';
+import { useT } from '@/i18n';
+import { Button, Panel, Segmented, Toggle } from '@/ui';
 
 interface PlayerControlsProps {
   player: Player;
@@ -21,22 +26,31 @@ interface PlayerControlsProps {
   showNoteNames: boolean;
   onToggleNoteNames: () => void;
   /**
-   * Semitonos que harian falta para que la pieza quepa en el piano del usuario
-   * (0 si ya cabe). Con esto se ofrece el boton de ajuste.
+   * Semitones needed for the piece to fit the visitor's piano (0 when it
+   * already does). This is what makes the fit button worth offering.
    */
   suggestedTranspose?: number;
 }
 
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5];
 
-const toggleClass = (active: boolean): string =>
-  `px-3 py-1.5 rounded text-sm font-semibold transition-colors ${
-    active
-      ? 'bg-[var(--accent-green)] text-black'
-      : 'bg-white/5 text-[var(--text-secondary)] hover:bg-white/10'
-  }`;
+/** A labelled group of controls, so the panel reads as sections. */
+const Group: React.FC<{ label: string; children: React.ReactNode }> = ({
+  label,
+  children,
+}) => (
+  <div className="flex items-center gap-2.5">
+    <span className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-low whitespace-nowrap">
+      {label}
+    </span>
+    {children}
+  </div>
+);
 
-/** Panel de controles del reproductor de MIDI. */
+const RANGE =
+  'w-24 accent-[var(--color-hand-right)] h-1.5 cursor-pointer';
+
+/** The transport and settings panel for the MIDI player. */
 const PlayerControls: React.FC<PlayerControlsProps> = ({
   player,
   snapshot,
@@ -46,17 +60,19 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   onToggleNoteNames,
   suggestedTranspose = 0,
 }) => {
+  const { t } = useT();
   const { settings, status } = snapshot;
   const playing = status === 'playing' || status === 'waiting';
 
   return (
-    <div className="bg-[var(--card-background)] rounded-lg p-4 flex flex-col gap-4">
+    <Panel className="p-4 flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
+        {/* Play is the one round control on the page: it is the instrument's key. */}
         <button
           type="button"
           onClick={() => player.toggle()}
-          className="w-12 h-12 rounded-full bg-[var(--accent-green)] text-black flex items-center justify-center hover:brightness-110"
-          aria-label={playing ? 'Pausar' : 'Reproducir'}
+          aria-label={playing ? t('player.pause') : t('player.play')}
+          className="press bloom-right h-12 w-12 shrink-0 rounded-full bg-hand-right text-hand-right-ink grid place-items-center hover:brightness-110"
         >
           {playing ? <FaPause /> : <FaPlay className="ml-0.5" />}
         </button>
@@ -67,83 +83,117 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             player.stop();
             player.resetStats();
           }}
-          className="w-10 h-10 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10"
-          aria-label="Empezar de nuevo"
-          title="Empezar de nuevo"
+          aria-label={t('player.restart')}
+          title={t('player.restart')}
+          className="press h-10 w-10 shrink-0 rounded-full bg-ground-3 border border-[var(--edge)] text-ink grid place-items-center hover:bg-ground-4"
         >
-          <FaUndo />
+          <FaUndo className="text-[13px]" />
         </button>
 
-        <div className="flex items-center gap-2 ml-2">
-          <span className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">Modo</span>
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ mode: 'listen' })}
-            className={toggleClass(settings.mode === 'listen')}
-            title="La cancion suena entera, tu solo escuchas o acompanas"
-          >
-            <FaHeadphones className="inline mr-1.5 -mt-0.5" />
-            Escuchar
-          </button>
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ mode: 'practice' })}
-            className={toggleClass(settings.mode === 'practice')}
-            title="El reproductor espera a que toques las notas correctas"
-          >
-            <FaGraduationCap className="inline mr-1.5 -mt-0.5" />
-            Practicar
-          </button>
-        </div>
+        <Group label={t('player.mode')}>
+          <Segmented<PlayerMode>
+            value={settings.mode}
+            onChange={(mode) => player.updateSettings({ mode })}
+            options={[
+              {
+                value: 'listen',
+                label: (
+                  <>
+                    <FaHeadphones aria-hidden className="text-[11px]" />
+                    {t('home.practice.listen')}
+                  </>
+                ),
+                title: t('home.practice.listenBody'),
+              },
+              {
+                value: 'practice',
+                label: (
+                  <>
+                    <FaGraduationCap aria-hidden className="text-[11px]" />
+                    {t('home.practice.practice')}
+                  </>
+                ),
+                title: t('home.practice.practiceBody'),
+              },
+            ]}
+          />
+        </Group>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">Tocas</span>
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ userHands: { ...settings.userHands, left: !settings.userHands.left } })}
-            className={toggleClass(settings.userHands.left)}
-          >
-            Izquierda
-          </button>
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ userHands: { ...settings.userHands, right: !settings.userHands.right } })}
-            className={toggleClass(settings.userHands.right)}
-          >
-            Derecha
-          </button>
-        </div>
+        {/*
+          Hands are two independent switches, not an either/or: you can play
+          both, or neither. Each wears its own hand colour, which is the same
+          colour its notes have on the canvas.
+        */}
+        <Group label={t('player.youPlay')}>
+          <div className="flex gap-1.5">
+            <Toggle
+              tone="left"
+              size="sm"
+              pressed={settings.userHands.left}
+              onChange={(left) =>
+                player.updateSettings({
+                  userHands: { ...settings.userHands, left },
+                })
+              }
+            >
+              {t('hand.left')}
+            </Toggle>
+            <Toggle
+              tone="right"
+              size="sm"
+              pressed={settings.userHands.right}
+              onChange={(right) =>
+                player.updateSettings({
+                  userHands: { ...settings.userHands, right },
+                })
+              }
+            >
+              {t('hand.right')}
+            </Toggle>
+          </div>
+        </Group>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">Suena</span>
-          <button
-            type="button"
-            onClick={() =>
-              player.updateSettings({ playbackHands: { ...settings.playbackHands, left: !settings.playbackHands.left } })
-            }
-            className={toggleClass(settings.playbackHands.left)}
-          >
-            Izquierda
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              player.updateSettings({ playbackHands: { ...settings.playbackHands, right: !settings.playbackHands.right } })
-            }
-            className={toggleClass(settings.playbackHands.right)}
-          >
-            Derecha
-          </button>
-        </div>
+        <Group label={t('player.appPlays')}>
+          <div className="flex gap-1.5">
+            <Toggle
+              tone="left"
+              size="sm"
+              pressed={settings.playbackHands.left}
+              onChange={(left) =>
+                player.updateSettings({
+                  playbackHands: { ...settings.playbackHands, left },
+                })
+              }
+            >
+              {t('hand.left')}
+            </Toggle>
+            <Toggle
+              tone="right"
+              size="sm"
+              pressed={settings.playbackHands.right}
+              onChange={(right) =>
+                player.updateSettings({
+                  playbackHands: { ...settings.playbackHands, right },
+                })
+              }
+            >
+              {t('hand.right')}
+            </Toggle>
+          </div>
+        </Group>
       </div>
 
+      <div aria-hidden className="rule-keys" />
+
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <span className="whitespace-nowrap">Velocidad</span>
+        <label className="flex items-center gap-2 text-[13px] text-ink-mid">
+          <span className="whitespace-nowrap">{t('player.speed')}</span>
           <select
             value={settings.speed}
-            onChange={(event) => player.updateSettings({ speed: Number(event.target.value) })}
-            className="bg-[var(--background-darker)] text-white text-sm rounded px-2 py-1 border border-white/10"
+            onChange={(event) =>
+              player.updateSettings({ speed: Number(event.target.value) })
+            }
+            className="numeric h-8 rounded-md bg-ground-1 border border-[var(--edge)] px-2 text-[13px] text-ink hover:border-[var(--seam)] focus:border-hand-right focus:outline-none"
           >
             {SPEEDS.map((speed) => (
               <option key={speed} value={speed}>
@@ -153,22 +203,27 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           </select>
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <FaSearchPlus />
-          <span className="whitespace-nowrap">Zoom</span>
+        <label className="flex items-center gap-2 text-[13px] text-ink-mid">
+          <FaSearchPlus aria-hidden className="text-[12px]" />
+          <span className="whitespace-nowrap">{t('player.zoom')}</span>
           <input
             type="range"
             min={2}
             max={8}
             step={0.5}
             value={settings.secondsVisible}
-            onChange={(event) => player.updateSettings({ secondsVisible: Number(event.target.value) })}
-            className="w-24 accent-[var(--accent-green)]"
+            onChange={(event) =>
+              player.updateSettings({
+                secondsVisible: Number(event.target.value),
+              })
+            }
+            className={RANGE}
           />
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <FaVolumeUp />
+        <label className="flex items-center gap-2 text-[13px] text-ink-mid">
+          <FaVolumeUp aria-hidden className="text-[12px]" />
+          <span className="sr-only">{t('player.volume')}</span>
           <input
             type="range"
             min={0}
@@ -176,60 +231,79 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             step={0.01}
             value={volume}
             onChange={(event) => onVolumeChange(Number(event.target.value))}
-            className="w-24 accent-[var(--accent-green)]"
+            aria-label={t('player.volume')}
+            className={RANGE}
           />
         </label>
 
-        <button
-          type="button"
-          onClick={() => player.updateSettings({ metronome: !settings.metronome })}
-          className={toggleClass(settings.metronome)}
+        <Toggle
+          size="sm"
+          pressed={settings.metronome}
+          onChange={(metronome) => player.updateSettings({ metronome })}
         >
-          <FaMusic className="inline mr-1.5 -mt-0.5" />
-          Metronomo
-        </button>
+          <FaMusic aria-hidden className="text-[11px]" />
+          {t('player.metronome')}
+        </Toggle>
 
-        <button type="button" onClick={onToggleNoteNames} className={toggleClass(showNoteNames)}>
-          <FaFont className="inline mr-1.5 -mt-0.5" />
-          Nombres de nota
-        </button>
+        <Toggle size="sm" pressed={showNoteNames} onChange={onToggleNoteNames}>
+          <FaFont aria-hidden className="text-[11px]" />
+          {t('player.noteNames')}
+        </Toggle>
 
-        <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-          <span className="whitespace-nowrap">Octava</span>
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ transpose: settings.transpose - 12 })}
-            className="w-8 h-8 rounded bg-white/5 hover:bg-white/10 text-white font-bold"
-            aria-label="Bajar una octava"
-          >
-            -
-          </button>
-          <span className="w-8 text-center text-white font-semibold tabular-nums">
-            {settings.transpose === 0 ? '0' : `${settings.transpose > 0 ? '+' : ''}${settings.transpose / 12}`}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-low">
+            {t('piano.octave')}
           </span>
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ transpose: settings.transpose + 12 })}
-            className="w-8 h-8 rounded bg-white/5 hover:bg-white/10 text-white font-bold"
-            aria-label="Subir una octava"
-          >
-            +
-          </button>
+          <div className="inline-flex items-center gap-1 rounded-lg bg-ground-1 p-1 border border-[var(--edge)]">
+            <button
+              type="button"
+              onClick={() =>
+                player.updateSettings({ transpose: settings.transpose - 12 })
+              }
+              aria-label={t('piano.octaveDown')}
+              className="press h-7 w-7 rounded-[5px] text-ink-mid hover:text-ink hover:bg-ground-3"
+            >
+              −
+            </button>
+            <span className="numeric w-7 text-center text-[13px] font-semibold">
+              {settings.transpose / 12}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                player.updateSettings({ transpose: settings.transpose + 12 })
+              }
+              aria-label={t('piano.octaveUp')}
+              className="press h-7 w-7 rounded-[5px] text-ink-mid hover:text-ink hover:bg-ground-3"
+            >
+              +
+            </button>
+          </div>
         </div>
 
-        {suggestedTranspose !== 0 && settings.transpose !== suggestedTranspose && (
-          <button
-            type="button"
-            onClick={() => player.updateSettings({ transpose: suggestedTranspose })}
-            className="px-3 py-1.5 rounded text-sm font-semibold bg-[#FFD166]/20 text-[#FFD166] hover:bg-[#FFD166]/30"
-            title="Mueve la pieza las octavas necesarias para que entre en tu teclado"
-          >
-            <FaKeyboard className="inline mr-1.5 -mt-0.5" />
-            Ajustar a mi piano
-          </button>
-        )}
+        {/*
+          Offered only when shifting octaves would actually make the piece fit.
+          It wears amber, the colour the player already uses for "you need to
+          act on this".
+        */}
+        {suggestedTranspose !== 0 &&
+          settings.transpose !== suggestedTranspose && (
+            <Button
+              tone="quiet"
+              size="sm"
+              title={t('player.fitNote', {
+                semitones: Math.abs(suggestedTranspose),
+              })}
+              onClick={() =>
+                player.updateSettings({ transpose: suggestedTranspose })
+              }
+              className="!border-[color-mix(in_srgb,var(--color-wait)_45%,transparent)] !bg-[color-mix(in_srgb,var(--color-wait)_14%,transparent)] !text-wait"
+            >
+              {t('player.fitToPiano')}
+            </Button>
+          )}
       </div>
-    </div>
+    </Panel>
   );
 };
 

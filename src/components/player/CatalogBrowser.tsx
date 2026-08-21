@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaPlay, FaSearch, FaStar, FaExclamationTriangle, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaPlay, FaSearch } from 'react-icons/fa';
 import {
-  DIFFICULTY_LABELS,
   EMPTY_FILTERS,
   catalogStyles,
   filterCatalog,
@@ -11,10 +9,16 @@ import {
   type Catalog,
   type CatalogFilters,
   type CatalogSong,
-} from '../../features/midi/catalog';
-import { formatTime } from '../../features/player/format';
-import { describeRange, fitsInPiano, type PianoSettings } from '../../features/piano/pianoSettings';
-import { midiToNoteName } from '../../features/audio/notes';
+} from '@/features/midi/catalog';
+import { formatTime } from '@/features/player/format';
+import {
+  describeRange,
+  fitsInPiano,
+  type PianoSettings,
+} from '@/features/piano/pianoSettings';
+import { midiToNoteName } from '@/features/audio/notes';
+import { useT, type MessageKey, type Translate } from '@/i18n';
+import { Button, ButtonLink, Panel } from '@/ui';
 
 interface CatalogBrowserProps {
   piano: PianoSettings;
@@ -22,42 +26,71 @@ interface CatalogBrowserProps {
 
 const PAGE_SIZE = 60;
 
-const Difficulty: React.FC<{ level: number }> = ({ level }) => (
+const LEVELS = [1, 2, 3, 4, 5] as const;
+
+const difficultyLabel = (t: Translate, level: number): string =>
+  t(`catalog.diff${level}` as MessageKey);
+
+/**
+ * Difficulty, drawn as five keys rather than five stars.
+ *
+ * Stars read as a rating someone gave the piece; these are a level on a scale,
+ * and the keyboard is the product's own unit of measure.
+ */
+const Difficulty: React.FC<{ level: number; label: string }> = ({
+  level,
+  label,
+}) => (
   <span
-    className="inline-flex items-center gap-0.5"
-    title={DIFFICULTY_LABELS[level] ?? `Nivel ${level}`}
+    className="inline-flex items-end gap-[2px] h-3.5"
+    title={label}
+    aria-label={label}
   >
-    {[1, 2, 3, 4, 5].map((step) => (
-      <FaStar
+    {LEVELS.map((step) => (
+      <span
         key={step}
-        className={`text-[10px] ${step <= level ? 'text-[var(--accent-green)]' : 'text-white/15'}`}
+        aria-hidden
+        className="w-[3px] rounded-[1px]"
+        style={{
+          height: `${45 + step * 11}%`,
+          background:
+            step <= level
+              ? 'var(--color-hand-right)'
+              : 'color-mix(in srgb, var(--color-ivory) 12%, transparent)',
+        }}
       />
     ))}
   </span>
 );
 
-const selectClass =
-  'bg-[var(--background-darker)] text-white text-sm rounded px-2 py-1.5 border border-white/10';
+const SELECT =
+  'h-9 rounded-md bg-ground-1 border border-[var(--edge)] px-2.5 text-[13px] text-ink ' +
+  'hover:border-[var(--seam)] focus:border-hand-right focus:outline-none';
+
+const CHECKBOX =
+  'h-4 w-4 shrink-0 rounded-[3px] border border-[var(--seam)] bg-ground-1';
 
 /**
- * Catalogo de piezas que viene con la app: buscador, filtros por compositor,
- * estilo y dificultad, y aviso de si la pieza cabe en el piano del usuario.
+ * The catalogue that ships with the app: search, filters by composer, style and
+ * difficulty, and a warning when a piece runs past the visitor's own keyboard.
  */
 const CatalogBrowser: React.FC<CatalogBrowserProps> = ({ piano }) => {
+  const { t, tn } = useT();
   const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [filters, setFilters] = useState<CatalogFilters>(EMPTY_FILTERS);
   const [visible, setVisible] = useState(PAGE_SIZE);
 
   useEffect(() => {
     loadCatalog()
       .then(setCatalog)
-      .catch((caught: unknown) =>
-        setError(caught instanceof Error ? caught.message : 'No se pudo cargar el catalogo'),
-      );
+      .catch(() => setFailed(true));
   }, []);
 
-  const styles = useMemo(() => (catalog ? catalogStyles(catalog.songs) : []), [catalog]);
+  const styles = useMemo(
+    () => (catalog ? catalogStyles(catalog.songs) : []),
+    [catalog],
+  );
 
   const results = useMemo(
     () => (catalog ? filterCatalog(catalog.songs, filters) : []),
@@ -69,41 +102,60 @@ const CatalogBrowser: React.FC<CatalogBrowserProps> = ({ piano }) => {
     setVisible(PAGE_SIZE);
   };
 
-  if (error) {
+  const filtered =
+    Boolean(filters.search) ||
+    Boolean(filters.composer) ||
+    Boolean(filters.style) ||
+    filters.difficulty !== null ||
+    filters.soloOnly ||
+    Boolean(filters.range);
+
+  if (failed) {
     return (
-      <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center gap-3">
-        <FaExclamationTriangle className="text-red-400" />
-        <span>{error}</span>
-      </div>
+      <Panel className="p-4 flex items-center gap-3">
+        <span
+          aria-hidden
+          className="h-2 w-2 rounded-full bg-[var(--color-felt-ink)]"
+        />
+        <span className="text-sm text-ink">{t('catalog.error')}</span>
+      </Panel>
     );
   }
 
   if (!catalog) {
-    return <p className="text-[var(--text-secondary)]">Cargando el catalogo...</p>;
+    return (
+      <p className="text-sm text-ink-low" role="status">
+        {t('catalog.loading')}
+      </p>
+    );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-[var(--card-background)] rounded-lg p-4 flex flex-col gap-3">
+      <Panel as="section" className="p-4 flex flex-col gap-3.5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[220px]">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] text-sm" />
+            <FaSearch
+              aria-hidden
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-ink-low pointer-events-none"
+            />
             <input
               type="search"
               value={filters.search}
               onChange={(event) => patch({ search: event.target.value })}
-              placeholder="Buscar por titulo o compositor..."
-              className="w-full bg-[var(--background-darker)] border border-white/10 rounded pl-9 pr-3 py-2 text-sm text-white"
+              placeholder={t('catalog.search')}
+              aria-label={t('catalog.search')}
+              className="w-full h-9 rounded-md bg-ground-1 border border-[var(--edge)] pl-9 pr-3 text-[13px] text-ink placeholder:text-ink-low hover:border-[var(--seam)] focus:border-hand-right focus:outline-none"
             />
           </div>
 
           <select
             value={filters.composer}
             onChange={(event) => patch({ composer: event.target.value })}
-            className={selectClass}
-            aria-label="Compositor"
+            className={SELECT}
+            aria-label={t('catalog.composer')}
           >
-            <option value="">Todos los compositores</option>
+            <option value="">{t('catalog.allComposers')}</option>
             {catalog.composers.map((composer) => (
               <option key={composer} value={composer}>
                 {composer}
@@ -114,61 +166,76 @@ const CatalogBrowser: React.FC<CatalogBrowserProps> = ({ piano }) => {
           <select
             value={filters.style}
             onChange={(event) => patch({ style: event.target.value })}
-            className={selectClass}
-            aria-label="Estilo"
+            className={SELECT}
+            aria-label={t('catalog.style')}
           >
-            <option value="">Todos los estilos</option>
+            <option value="">{t('catalog.allStyles')}</option>
             {styles.map((style) => (
               <option key={style} value={style}>
-                {style}
+                {t(`style.${style}` as MessageKey)}
               </option>
             ))}
           </select>
 
           <select
             value={filters.sort}
-            onChange={(event) => patch({ sort: event.target.value as CatalogFilters['sort'] })}
-            className={selectClass}
-            aria-label="Ordenar"
+            onChange={(event) =>
+              patch({ sort: event.target.value as CatalogFilters['sort'] })
+            }
+            className={SELECT}
+            aria-label={t('catalog.sortLabel')}
           >
-            <option value="composer">Ordenar por compositor</option>
-            <option value="title">Ordenar por titulo</option>
-            <option value="difficulty">Ordenar por dificultad</option>
-            <option value="duration">Ordenar por duracion</option>
+            <option value="composer">{t('catalog.sortComposer')}</option>
+            <option value="title">{t('catalog.sortTitle')}</option>
+            <option value="difficulty">{t('catalog.sortDifficulty')}</option>
+            <option value="duration">{t('catalog.sortDuration')}</option>
           </select>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">Nivel</span>
-          {[1, 2, 3, 4, 5].map((level) => (
-            <button
-              key={level}
-              type="button"
-              onClick={() => patch({ difficulty: filters.difficulty === level ? null : level })}
-              className={`px-3 py-1 rounded text-sm font-semibold ${
-                filters.difficulty === level
-                  ? 'bg-[var(--accent-green)] text-black'
-                  : 'bg-white/5 text-[var(--text-secondary)] hover:bg-white/10'
-              }`}
-              title={DIFFICULTY_LABELS[level]}
-            >
-              {level}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-low">
+            {t('catalog.level')}
+          </span>
+          <div className="inline-flex gap-1 rounded-lg bg-ground-1 p-1 border border-[var(--edge)]">
+            {LEVELS.map((level) => {
+              const active = filters.difficulty === level;
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() =>
+                    patch({ difficulty: active ? null : level })
+                  }
+                  title={difficultyLabel(t, level)}
+                  className={`press numeric h-7 w-7 rounded-[5px] text-[13px] font-semibold ${
+                    active
+                      ? 'bg-hand-right text-hand-right-ink'
+                      : 'text-ink-mid hover:text-ink hover:bg-ground-3'
+                  }`}
+                >
+                  {level}
+                </button>
+              );
+            })}
+          </div>
 
-          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] ml-2">
+          <label className="flex items-center gap-2 text-[13px] text-ink-mid cursor-pointer select-none ml-1">
             <input
               type="checkbox"
               checked={filters.soloOnly}
               onChange={(event) => patch({ soloOnly: event.target.checked })}
-              className="accent-[var(--accent-green)]"
+              className={CHECKBOX}
             />
-            Solo piano
+            {t('catalog.soloPiano')}
           </label>
 
           <label
-            className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"
-            title={`Tu piano: ${describeRange(piano)}`}
+            className="flex items-center gap-2 text-[13px] text-ink-mid cursor-pointer select-none"
+            title={t('catalog.yourPiano', {
+              keys: '',
+              range: describeRange(piano),
+            })}
           >
             <input
               type="checkbox"
@@ -176,95 +243,134 @@ const CatalogBrowser: React.FC<CatalogBrowserProps> = ({ piano }) => {
               onChange={(event) =>
                 patch({
                   range: event.target.checked
-                    ? { lowestMidi: piano.lowestMidi, highestMidi: piano.highestMidi }
+                    ? {
+                        lowestMidi: piano.lowestMidi,
+                        highestMidi: piano.highestMidi,
+                      }
                     : null,
                 })
               }
-              className="accent-[var(--accent-green)]"
+              className={CHECKBOX}
             />
-            Solo lo que cabe en mi piano
+            {t('catalog.fitsOnly')}
           </label>
 
-          {(filters.search ||
-            filters.composer ||
-            filters.style ||
-            filters.difficulty !== null ||
-            filters.soloOnly ||
-            filters.range) && (
-            <button
-              type="button"
+          {filtered && (
+            <Button
+              tone="ghost"
+              size="sm"
+              className="ml-auto"
               onClick={() => {
                 setFilters(EMPTY_FILTERS);
                 setVisible(PAGE_SIZE);
               }}
-              className="ml-auto text-sm text-[var(--accent-green)] font-semibold"
             >
-              Limpiar filtros
-            </button>
+              {t('catalog.clear')}
+            </Button>
           )}
         </div>
-      </div>
+      </Panel>
 
-      <p className="text-sm text-[var(--text-secondary)]">
-        {results.length} de {catalog.count} canciones · {catalog.composers.length} compositores ·
-        todas de dominio publico o Creative Commons
+      <p className="numeric text-[13px] text-ink-low" aria-live="polite">
+        {t('catalog.resultsOf', {
+          shown: results.length,
+          total: catalog.count,
+        })}
+        {' · '}
+        {tn('catalog.composers', catalog.composers.length)}
+        {' · '}
+        {t('catalog.licenceNote')}
       </p>
 
-      <div className="flex flex-col gap-2">
-        {results.slice(0, visible).map((song) => (
-          <CatalogRow key={song.id} song={song} piano={piano} />
-        ))}
-      </div>
-
-      {results.length === 0 && (
-        <p className="text-[var(--text-secondary)]">
-          Nada con esos filtros. Prueba a quitar alguno.
-        </p>
+      {results.length === 0 ? (
+        <Panel className="p-8 text-center">
+          <p className="font-semibold">{t('catalog.empty')}</p>
+          <p className="mt-1.5 text-[13px] text-ink-low">
+            {t('catalog.emptyBody')}
+          </p>
+          {filtered && (
+            <Button
+              tone="quiet"
+              size="md"
+              className="mt-5"
+              onClick={() => {
+                setFilters(EMPTY_FILTERS);
+                setVisible(PAGE_SIZE);
+              }}
+            >
+              {t('catalog.clear')}
+            </Button>
+          )}
+        </Panel>
+      ) : (
+        <ul className="list-none m-0 p-0 flex flex-col gap-2">
+          {results.slice(0, visible).map((song) => (
+            <li key={song.id}>
+              <CatalogRow song={song} piano={piano} />
+            </li>
+          ))}
+        </ul>
       )}
 
       {visible < results.length && (
-        <button
-          type="button"
+        <Button
+          tone="quiet"
+          size="md"
+          className="self-center"
           onClick={() => setVisible((value) => value + PAGE_SIZE)}
-          className="self-center px-5 py-2 rounded bg-white/5 hover:bg-white/10 font-semibold"
         >
-          Mostrar mas ({results.length - visible} restantes)
-        </button>
+          {t('catalog.showMore', { count: results.length - visible })}
+        </Button>
       )}
     </div>
   );
 };
 
-const CatalogRow: React.FC<{ song: CatalogSong; piano: PianoSettings }> = ({ song, piano }) => {
+const CatalogRow: React.FC<{ song: CatalogSong; piano: PianoSettings }> = ({
+  song,
+  piano,
+}) => {
+  const { t } = useT();
   const fits = fitsInPiano(piano, song.lowestMidi, song.highestMidi);
 
   return (
-    <article className="bg-[var(--card-background)] rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+    <Panel className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold truncate">
+        <h3 className="font-semibold truncate">
           {song.title}
           {!song.soloPiano && (
-            <span className="ml-2 text-xs font-normal text-[var(--text-secondary)]">
+            <span className="ml-2 text-[12px] font-normal text-ink-low">
               ({song.instrument})
             </span>
           )}
         </h3>
-        <p className="text-sm text-[var(--text-secondary)] truncate">
+        <p className="numeric mt-0.5 text-[13px] text-ink-low truncate">
           {song.composer}
-          {song.style ? ` · ${song.style}` : ''} · {formatTime(song.duration)} · {song.noteCount}{' '}
-          notas · {midiToNoteName(song.lowestMidi)}-{midiToNoteName(song.highestMidi)}
+          {song.style ? ` · ${t(`style.${song.style}` as MessageKey)}` : ''}
+          {' · '}
+          {formatTime(song.duration)}
+          {' · '}
+          {t('catalog.notes', { count: song.noteCount })}
+          {' · '}
+          {midiToNoteName(song.lowestMidi)}–{midiToNoteName(song.highestMidi)}
         </p>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
-        <Difficulty level={song.difficulty} />
+      <div className="flex items-center gap-3.5 shrink-0">
+        <Difficulty
+          level={song.difficulty}
+          label={`${t('catalog.difficulty')}: ${difficultyLabel(t, song.difficulty)}`}
+        />
 
+        {/* Out of range wears the amber the player uses for "you must act". */}
         {!fits && (
           <span
-            className="text-xs text-[#FFD166] font-semibold"
-            title={`Se sale de tu piano (${describeRange(piano)}); se puede transponer al abrirla`}
+            className="text-[12px] font-semibold text-wait"
+            title={t('catalog.doesNotFitTitle', {
+              range: describeRange(piano),
+            })}
           >
-            no cabe
+            {t('catalog.doesNotFit')}
           </span>
         )}
 
@@ -272,22 +378,19 @@ const CatalogRow: React.FC<{ song: CatalogSong; piano: PianoSettings }> = ({ son
           href={song.sourceUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="text-xs text-[var(--text-secondary)] hover:text-white no-underline flex items-center gap-1"
+          className="flex items-center gap-1 text-[12px] text-ink-low no-underline hover:text-ink-mid"
           title={`${song.source} · ${song.license}`}
         >
           {song.license.replace('Creative Commons ', 'CC ')}
-          <FaExternalLinkAlt className="text-[9px]" />
+          <FaExternalLinkAlt aria-hidden className="text-[8px]" />
         </a>
 
-        <Link
-          to={`/play/${toCatalogId(song.id)}`}
-          className="px-4 py-2 rounded bg-[var(--accent-green)] text-black font-bold no-underline flex items-center gap-2 hover:brightness-110"
-        >
-          <FaPlay />
-          Tocar
-        </Link>
+        <ButtonLink to={`/play/${toCatalogId(song.id)}`} tone="right" size="md">
+          <FaPlay aria-hidden className="text-[11px]" />
+          {t('catalog.play')}
+        </ButtonLink>
       </div>
-    </article>
+    </Panel>
   );
 };
 

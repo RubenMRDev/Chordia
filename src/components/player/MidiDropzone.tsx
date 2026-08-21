@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { FaFileUpload, FaSpinner } from 'react-icons/fa';
+import { useT } from '@/i18n';
+import { Keyboard } from '@/ui';
 
 interface MidiDropzoneProps {
   onFiles: (files: File[]) => void;
@@ -8,13 +9,20 @@ interface MidiDropzoneProps {
 
 const ACCEPTED = ['.mid', '.midi', '.kar'];
 
-function isMidiFile(file: File): boolean {
+const isMidiFile = (file: File): boolean => {
   const name = file.name.toLowerCase();
-  return ACCEPTED.some((extension) => name.endsWith(extension)) || file.type === 'audio/midi';
-}
+  return (
+    ACCEPTED.some((extension) => name.endsWith(extension)) ||
+    file.type === 'audio/midi'
+  );
+};
 
-/** Zona de arrastrar y soltar (o seleccionar) ficheros MIDI. */
-const MidiDropzone: React.FC<MidiDropzoneProps> = ({ onFiles, busy = false }) => {
+/** Drag-and-drop (or pick) MIDI files. */
+const MidiDropzone: React.FC<MidiDropzoneProps> = ({
+  onFiles,
+  busy = false,
+}) => {
+  const { t } = useT();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -36,14 +44,25 @@ const MidiDropzone: React.FC<MidiDropzoneProps> = ({ onFiles, busy = false }) =>
       onClick={() => inputRef.current?.click()}
       role="button"
       tabIndex={0}
+      aria-label={t('import.drop')}
+      aria-busy={busy || undefined}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') inputRef.current?.click();
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          inputRef.current?.click();
+        }
       }}
-      className={`rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${
-        dragging
-          ? 'border-[var(--accent-green)] bg-[var(--accent-green)]/5'
-          : 'border-white/15 hover:border-white/30 bg-[var(--card-background)]'
-      }`}
+      className="press relative overflow-hidden rounded-xl border border-dashed p-8 text-center cursor-pointer"
+      style={{
+        borderColor: dragging
+          ? 'var(--color-hand-right)'
+          : 'color-mix(in srgb, var(--color-ivory) 16%, transparent)',
+        background: dragging
+          ? 'color-mix(in srgb, var(--color-hand-right) 7%, var(--color-ground-2))'
+          : 'var(--color-ground-2)',
+        transition:
+          'border-color var(--t-quick) var(--ease-strike), background var(--t-quick) var(--ease-strike)',
+      }}
     >
       <input
         ref={inputRef}
@@ -57,19 +76,34 @@ const MidiDropzone: React.FC<MidiDropzoneProps> = ({ onFiles, busy = false }) =>
           event.target.value = '';
         }}
       />
-      <div className="flex flex-col items-center gap-3">
-        {busy ? (
-          <FaSpinner className="text-3xl text-[var(--accent-green)] animate-spin" />
-        ) : (
-          <FaFileUpload className="text-3xl text-[var(--accent-green)]" />
-        )}
-        <p className="font-semibold text-white">
-          {busy ? 'Importando...' : 'Arrastra aqui tus ficheros .mid'}
-        </p>
-        <p className="text-sm text-[var(--text-secondary)]">
-          O haz clic para elegirlos. Se guardan en este navegador, no se suben a ningun sitio.
-        </p>
-      </div>
+
+      {/*
+        A keyboard waiting for something to land on it, rather than an upload
+        cloud. It lights up while a file is over the zone.
+      */}
+      <Keyboard
+        lowestMidi={60}
+        highestMidi={72}
+        height={44}
+        decorative
+        tone="shadow"
+        className="mx-auto max-w-[200px] pointer-events-none"
+      />
+
+      <p className="mt-5 font-semibold text-ink">
+        {busy ? `${t('state.loading')}` : t('import.drop')}
+      </p>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-low">
+        {t('import.browse')} · {t('import.note')}
+      </p>
+
+      {/* Progress reads as note light travelling along the top edge. */}
+      {busy && (
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-[2px] bg-hand-right sustain"
+        />
+      )}
     </div>
   );
 };

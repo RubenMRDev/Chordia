@@ -1,15 +1,13 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import Header from "../components/Header"
+import Header from '@/components/layout/Header'
 import { FaTimes, FaPlay, FaPause, FaArrowRight, FaArrowLeft, FaQuestion, FaLightbulb, FaMusic } from "react-icons/fa"
-import Swal from 'sweetalert2'
 import { usePiano } from '../hooks/usePiano'
+import { useT } from '@/i18n'
+import { confirmNext } from '@/ui/dialog'
 
-interface ChordType {
-  keys: string[] 
-  selected: boolean
-}
+import type { ChordType } from '@/types/models'
 interface TutorialStep {
   title: string;
   content: string;
@@ -17,8 +15,9 @@ interface TutorialStep {
   position: "top" | "bottom" | "left" | "right";
 }
 const DemoPage = () => {
+  const { t } = useT()
   const navigate = useNavigate()
-  const [songTitle, setSongTitle] = useState<string>("My Demo Song")
+  const [songTitle, setSongTitle] = useState<string>('')
   const [octave, setOctave] = useState<number>(1)
   const [tempo, setTempo] = useState<number>(130)
   const [key, setKey] = useState<string>("C Major")
@@ -38,42 +37,49 @@ const DemoPage = () => {
   // Piano hook
   const { isReady: pianoReady, playNote: playPianoNote, playChord: playPianoChord, stopAllNotes } = usePiano();
 
-  const tutorialSteps: TutorialStep[] = [
-    {
-      title: "Welcome to Chordia Demo!",
-      content: "This interactive demo shows you how to create your own songs with chord progressions. Let's get started!",
-      position: "top"
-    },
-    {
-      title: "Set Song Parameters",
-      content: "First, set basic song parameters like key, time signature, and tempo. These define the musical structure of your song.",
-      target: "song-parameters",
-      position: "bottom"
-    },
-    {
-      title: "Piano Interface",
-      content: "Use this piano keyboard to select notes and create chords. Click on keys to select or deselect them.",
-      target: "piano-interface",
-      position: "top"
-    },
-    {
-      title: "Create Chords",
-      content: "After selecting keys, click 'Save Chord' to add it to your progression. You can create as many chords as you want.",
-      target: "save-chord",
-      position: "bottom"
-    },
-    {
-      title: "Chord Progression",
-      content: "Your saved chords will appear here. You can edit or delete them as needed.",
-      target: "chord-progression",
-      position: "top"
-    },
-    {
-      title: "Try It Yourself!",
-      content: "Now it's your turn! Experiment with creating your own chord progression. Click 'End Tutorial' to start creating.",
-      position: "bottom"
-    }
-  ];
+  /*
+    The tour, in the visitor's language. It is rebuilt when the locale changes,
+    which is why it is a memo on `t` rather than a module constant.
+  */
+  const tutorialSteps: TutorialStep[] = useMemo(
+    () => [
+      {
+        title: t('tour.welcomeTitle'),
+        content: t('tour.welcomeBody'),
+        position: 'top',
+      },
+      {
+        title: t('tour.paramsTitle'),
+        content: t('tour.paramsBody'),
+        target: 'song-parameters',
+        position: 'bottom',
+      },
+      {
+        title: t('tour.pianoTitle'),
+        content: t('tour.pianoBody'),
+        target: 'piano-interface',
+        position: 'top',
+      },
+      {
+        title: t('tour.saveTitle'),
+        content: t('tour.saveBody'),
+        target: 'save-chord',
+        position: 'bottom',
+      },
+      {
+        title: t('tour.progressionTitle'),
+        content: t('tour.progressionBody'),
+        target: 'chord-progression',
+        position: 'top',
+      },
+      {
+        title: t('tour.endTitle'),
+        content: t('tour.endBody'),
+        position: 'bottom',
+      },
+    ],
+    [t],
+  );
   useEffect(() => {
     // Antes se precargaban /piano-sounds/*.mp3, que no existen en public/ y
     // daban 404 en cada visita. El piano ahora carga sus propias muestras.
@@ -233,21 +239,13 @@ const DemoPage = () => {
     }
   };
   const handleDemoFinished = () => {
-    Swal.fire({
-      title: 'Ready to Create Your Own Songs?',
-      text: "Sign up to save your compositions and access all features!",
-      icon: 'success',
-      showCancelButton: true,
-      confirmButtonColor: "var(--accent-green)",
-      cancelButtonColor: "#6B7280",
-      confirmButtonText: 'Sign Up Now',
-      cancelButtonText: 'Continue Demo',
-      background: "var(--background-darker)",
-      color: "var(--text-secondary)",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        navigate('/register');
-      }
+    void confirmNext({
+      title: t('editor.readyTitle'),
+      text: t('editor.signUpPrompt'),
+      confirmLabel: t('editor.readyConfirm'),
+      cancelLabel: t('editor.readyCancel'),
+    }).then((signUp) => {
+      if (signUp) navigate('/register');
     });
   };
   const reopenTutorial = () => {
@@ -265,7 +263,7 @@ const DemoPage = () => {
           {whiteKeys.map((note, idx) => (
             <div
               key={`mini-white-${idx}`}
-              className={`flex-1 h-full ${chordNotes.includes(note) ? "bg-emerald-500" : "bg-white"} border border-gray-600 rounded-b-sm relative z-10`}
+              className={`flex-1 h-full ${chordNotes.includes(note) ? "bg-hand-right" : "bg-white"} border border-[var(--seam)] rounded-b-sm relative z-10`}
             />
           ))}
         </div>
@@ -281,7 +279,7 @@ const DemoPage = () => {
             return (
               <div
                 key={`mini-black-${idx}`}
-                className={`absolute h-full ${isSelected ? "bg-emerald-500" : "bg-black"} z-20 w-4/25 rounded-b-sm border-x border-gray-600 box-border`}
+                className={`absolute h-full ${isSelected ? "bg-hand-right" : "bg-black"} z-20 w-4/25 rounded-b-sm border-x border-[var(--seam)] box-border`}
                 style={{ left: `calc(${position * 100}% - 9%)` }}
               />
             );
@@ -303,36 +301,36 @@ const DemoPage = () => {
       <div className="relative flex justify-center p-5 pt-8 text-white">
         {}
         {showTutorial && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
-            <div className="bg-gray-800 rounded-lg p-8 max-w-lg w-full relative">
+          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+            <div className="bg-ground-2 rounded-lg p-8 max-w-lg w-full relative">
               <button 
                 onClick={() => setShowTutorial(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-white"
+                className="absolute top-3 right-3 text-ink-low hover:text-white"
               >
                 <FaTimes />
               </button>
-              <div className="text-emerald-500 text-4xl mb-4">
+              <div className="text-hand-right text-4xl mb-4">
                 <FaLightbulb />
               </div>
-              <h2 className="text-2xl font-bold mb-2 text-emerald-500">
+              <h2 className="text-2xl font-bold mb-2 text-hand-right">
                 {tutorialSteps[currentTutorialStep].title}
               </h2>
-              <p className="mb-6 text-gray-300">
+              <p className="mb-6 text-ink-mid">
                 {tutorialSteps[currentTutorialStep].content}
               </p>
               <div className="flex justify-between">
                 <button
                   onClick={prevTutorialStep}
-                  className={`flex items-center ${currentTutorialStep === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-emerald-500'}`}
+                  className={`flex items-center ${currentTutorialStep === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-hand-right'}`}
                   disabled={currentTutorialStep === 0}
                 >
-                  <FaArrowLeft className="mr-2" /> Previous
+                  <FaArrowLeft className="mr-2" /> {t('tour.previous')}
                 </button>
                 <button
                   onClick={nextTutorialStep}
-                  className="flex items-center text-emerald-500 hover:text-emerald-400"
+                  className="flex items-center text-hand-right hover:text-hand-right"
                 >
-                  {currentTutorialStep === tutorialSteps.length - 1 ? 'End Tutorial' : 'Next'} 
+                  {currentTutorialStep === tutorialSteps.length - 1 ? t('tour.end') : t('tour.next')} 
                   {currentTutorialStep < tutorialSteps.length - 1 && <FaArrowRight className="ml-2" />}
                 </button>
               </div>
@@ -342,55 +340,55 @@ const DemoPage = () => {
         {}
         <button 
           onClick={reopenTutorial}
-          className="fixed bottom-6 right-6 bg-emerald-500 hover:bg-emerald-600 text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg z-30"
+          className="fixed bottom-6 right-6 bg-hand-right hover:bg-hand-right-deep text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg z-30"
         >
           <FaQuestion />
         </button>
         <div className="w-full max-w-4xl flex flex-col gap-5">
           <div className="flex justify-between items-center">
-            <h1 className="text-emerald-500 text-2xl font-bold">Chordia Demo</h1>
+            <h1 className="text-hand-right text-2xl font-bold">{t('editor.demoTitle')}</h1>
             <div className="flex space-x-3">
               <button
                 onClick={handlePlayPause}
-                className={`py-2 px-4 rounded-md ${isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'} text-black font-medium`}
+                className={`py-2 px-4 rounded-md ${isPlaying ? 'bg-[var(--color-felt)] hover:bg-red-600' : 'bg-hand-right hover:bg-hand-right-deep'} text-black font-medium`}
               >
-                {isPlaying ? <><FaPause className="inline mr-2" /> Stop</> : <><FaPlay className="inline mr-2" /> Play Progression</>}
+                {isPlaying ? <><FaPause className="inline mr-2" /> {t('editor.stopProgression')}</> : <><FaPlay className="inline mr-2" /> {t('editor.playProgression')}</>}
               </button>
               <button
                 onClick={handleDemoFinished}
-                className="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-md font-medium"
+                className="py-2 px-4 bg-ground-3 border border-[var(--edge)] hover:bg-ground-4 text-ink rounded-md font-medium"
               >
-                Try Full Version
+                {t('editor.fullVersion')}
               </button>
             </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-5">
+          <div className="bg-ground-2 rounded-lg p-5">
             <input
               type="text"
-              placeholder="Enter Song Title"
+              placeholder={t('editor.songTitle')}
               value={songTitle}
               onChange={(e) => setSongTitle(e.target.value)}
-              className="w-full py-3 px-4 bg-gray-700 border-none rounded-md text-white text-base"
+              className="w-full py-3 px-4 bg-ground-3 border-none rounded-md text-white text-base"
             />
           </div>
-          <div className={`bg-gray-800 rounded-lg p-5 ${highlightArea === 'song-parameters' ? 'ring-4 ring-emerald-500' : ''}`} id="song-parameters">
+          <div className={`bg-ground-2 rounded-lg p-5 ${highlightArea === 'song-parameters' ? 'ring-4 ring-wait' : ''}`} id="song-parameters">
             <div className="mb-4">
-              <span className="text-emerald-500 text-base font-medium block mb-3">
-                Song Parameters
+              <span className="text-hand-right text-base font-medium block mb-3">
+                {t('editor.parameters')}
               </span>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label 
                     htmlFor="key-select" 
-                    className="block mb-2 text-gray-300 text-sm"
+                    className="block mb-2 text-ink-mid text-sm"
                   >
-                    Key
+                    {t('editor.key')}
                   </label>
                   <select
                     id="key-select"
                     value={key}
                     onChange={(e) => setKey(e.target.value)}
-                    className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer text-sm"
+                    className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer text-sm"
                   >
                     {[
                       "C Major", "G Major", "D Major", "A Major", "E Major", "B Major", 
@@ -409,15 +407,15 @@ const DemoPage = () => {
                 <div>
                   <label 
                     htmlFor="time-select" 
-                    className="block mb-2 text-gray-300 text-sm"
+                    className="block mb-2 text-ink-mid text-sm"
                   >
-                    Time Signature
+                    {t('editor.timeSignature')}
                   </label>
                   <select
                     id="time-select"
                     value={timeSignature}
                     onChange={(e) => setTimeSignature(e.target.value)}
-                    className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer text-sm"
+                    className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer text-sm"
                   >
                     {["4/4", "3/4", "2/4", "6/8", "9/8", "12/8", "5/4", "7/8"].map((time) => (
                       <option key={time} value={time}>
@@ -429,9 +427,9 @@ const DemoPage = () => {
                 <div>
                   <label 
                     htmlFor="tempo-input" 
-                    className="block mb-2 text-gray-300 text-sm"
+                    className="block mb-2 text-ink-mid text-sm"
                   >
-                    Tempo (BPM)
+                    {t('editor.tempo')}
                   </label>
                   <div className="flex items-center">
                     <input
@@ -441,24 +439,24 @@ const DemoPage = () => {
                       max="240"
                       value={tempo}
                       onChange={(e) => setTempo(Number(e.target.value))}
-                      className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 text-sm"
+                      className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 text-sm"
                     />
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className={`bg-gray-800 rounded-lg p-5 ${highlightArea === 'piano-interface' ? 'ring-4 ring-emerald-500' : ''}`} id="piano-interface">
+          <div className={`bg-ground-2 rounded-lg p-5 ${highlightArea === 'piano-interface' ? 'ring-4 ring-wait' : ''}`} id="piano-interface">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-emerald-500 text-base font-medium">
-                Select Chords
+              <span className="text-hand-right text-base font-medium">
+                {t('editor.selectChords')}
               </span>
-              <div className="flex items-center gap-2.5 text-gray-300">
-                <span>Octaves:</span>
+              <div className="flex items-center gap-2.5 text-ink-mid">
+                <span>{t('editor.octaves')}</span>
                 <select
                   value={octave}
                   onChange={(e) => handleOctaveChange(Number(e.target.value))}
-                  className="bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
+                  className="bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer"
                 >
                   {[1, 2].map((o) => (
                     <option key={o} value={o}>
@@ -477,7 +475,7 @@ const DemoPage = () => {
                       <div
                         key={`white-${index}`}
                         onClick={() => handleKeyClick(note, index)}
-                        className={`flex-1 h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                        className={`flex-1 h-full ${isSelected ? 'bg-hand-right' : 'bg-white'} ${index === 0 ? '' : 'border-l border-[var(--seam)]'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
                       >
                         <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full text-[10px] sm:text-xs`}>
                           {note}
@@ -495,7 +493,7 @@ const DemoPage = () => {
                       <div
                         key={`black-${keyIndex}`}
                         onClick={() => handleKeyClick(note, keyIndex)}
-                        className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-emerald-500' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
+                        className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-hand-right' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
                         style={{ left: `calc(${(keyIndex + 1) * 100 / 7}% - 4%)` }}
                       >
                         <div className="text-white text-center absolute bottom-1 w-full text-[8px] sm:text-[10px]">
@@ -514,7 +512,7 @@ const DemoPage = () => {
                         <div
                           key={`white-${actualIndex}`}
                           onClick={() => handleKeyClick(note, actualIndex)}
-                          className={`flex-1 h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                          className={`flex-1 h-full ${isSelected ? 'bg-hand-right' : 'bg-white'} ${index === 0 ? '' : 'border-l border-[var(--seam)]'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
                         >
                           <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full text-[10px] sm:text-xs`}>
                             {note}
@@ -533,7 +531,7 @@ const DemoPage = () => {
                         <div
                           key={`black-${actualIndex}`}
                           onClick={() => handleKeyClick(note, actualIndex)}
-                          className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-emerald-500' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
+                          className={`absolute h-[60%] sm:h-[70%] ${isSelected ? 'bg-hand-right' : 'bg-black'} z-20 w-[8%] sm:w-[10%] rounded-b-md cursor-pointer transition-colors`}
                           style={{ left: `calc(${(keyIndex + 1) * 100 / 7}% - 4%)` }}
                         >
                           <div className="text-white text-center absolute bottom-1 w-full text-[8px] sm:text-[10px]">
@@ -547,17 +545,17 @@ const DemoPage = () => {
                 <div className="flex justify-center mt-3" id="save-chord">
                   <button
                     onClick={handleSaveChord}
-                    className={`bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-6 rounded-md shadow-md transition-colors duration-200 flex items-center justify-center ${highlightArea === 'save-chord' ? 'ring-4 ring-blue-400' : ''}`}
+                    className={`bg-hand-right hover:bg-hand-right-deep text-hand-right-ink font-medium py-2 px-6 rounded-md shadow-md transition-colors duration-200 flex items-center justify-center ${highlightArea === 'save-chord' ? 'ring-4 ring-wait' : ''}`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                    {editingChordIndex !== null ? "Update Chord" : "Save Chord"}
+                    {editingChordIndex !== null ? t('editor.updateChord') : t('editor.saveChord')}
                   </button>
                   {editingChordIndex !== null && (
                     <button
                       onClick={handleCancelEdit}
-                      className="ml-2 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md shadow-md transition-colors duration-200"
+                      className="ml-2 bg-ground-4 hover:bg-ground-3 text-white font-medium py-2 px-4 rounded-md shadow-md transition-colors duration-200"
                     >
                       Cancel
                     </button>
@@ -578,7 +576,7 @@ const DemoPage = () => {
                         <div
                           key={`white-${index}`}
                           onClick={() => handleKeyClick(note, index)}
-                          className={`w-[54px] h-full ${isSelected ? 'bg-emerald-500' : 'bg-white'} ${index === 0 ? '' : 'border-l border-gray-600'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
+                          className={`w-[54px] h-full ${isSelected ? 'bg-hand-right' : 'bg-white'} ${index === 0 ? '' : 'border-l border-[var(--seam)]'} rounded-b-md relative z-10 cursor-pointer transition-colors`}
                         >
                           <div className={`${isSelected ? 'text-white' : 'text-black'} text-center absolute bottom-1 w-full`}>
                             {note}
@@ -604,7 +602,7 @@ const DemoPage = () => {
                         <div
                           key={`black-${octaveIndex}`}
                           onClick={() => handleKeyClick(note, octaveOffset * 10 + actualKeyIndex)}
-                          className={`w-8 h-[90px] ${isSelected ? 'bg-emerald-500' : 'bg-black'} absolute top-0 z-20 rounded-b-md cursor-pointer transition-colors`}
+                          className={`w-8 h-[90px] ${isSelected ? 'bg-hand-right' : 'bg-black'} absolute top-0 z-20 rounded-b-md cursor-pointer transition-colors`}
                           style={{ left: `${position * 54 + 36}px` }}
                         >
                           <div className="text-white text-center absolute bottom-1 w-full text-xs">
@@ -617,17 +615,17 @@ const DemoPage = () => {
                 <div className="flex justify-center mt-4" id="save-chord">
                   <button
                     onClick={handleSaveChord}
-                    className={`bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-8 rounded-md shadow-md transition-colors duration-200 flex items-center justify-center ${highlightArea === 'save-chord' ? 'ring-4 ring-blue-400' : ''}`}
+                    className={`bg-hand-right hover:bg-hand-right-deep text-hand-right-ink font-medium py-2 px-8 rounded-md shadow-md transition-colors duration-200 flex items-center justify-center ${highlightArea === 'save-chord' ? 'ring-4 ring-wait' : ''}`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
                     </svg>
-                    {editingChordIndex !== null ? "Update Chord" : "Save Chord"}
+                    {editingChordIndex !== null ? t('editor.updateChord') : t('editor.saveChord')}
                   </button>
                   {editingChordIndex !== null && (
                     <button
                       onClick={handleCancelEdit}
-                      className="ml-3 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-md shadow-md transition-colors duration-200"
+                      className="ml-3 bg-ground-4 hover:bg-ground-3 text-white font-medium py-2 px-6 rounded-md shadow-md transition-colors duration-200"
                     >
                       Cancel
                     </button>
@@ -636,10 +634,10 @@ const DemoPage = () => {
               </div>
             </div>
           </div>
-          <div className={`bg-gray-800 rounded-lg p-5 ${highlightArea === 'chord-progression' ? 'ring-4 ring-emerald-500' : ''}`} id="chord-progression">
+          <div className={`bg-ground-2 rounded-lg p-5 ${highlightArea === 'chord-progression' ? 'ring-4 ring-wait' : ''}`} id="chord-progression">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-emerald-500 text-base font-medium">
-                Chord Progression
+              <span className="text-hand-right text-base font-medium">
+                {t('editor.progression')}
               </span>
             </div>
             {chordProgression.length > 0 ? (
@@ -647,19 +645,19 @@ const DemoPage = () => {
                 {chordProgression.map((chord, index) => (
                   <div
                     key={index}
-                    className="bg-gray-700 rounded-md p-2 text-center"
+                    className="bg-ground-3 rounded-md p-2 text-center"
                   >
                     <MiniPiano chord={chord} />
                     <div className="flex justify-between mt-2 gap-1.5">
                       <button
                         onClick={() => handleEditChord(index)}
-                        className="bg-emerald-500 text-white border-none rounded-md py-1 px-2 cursor-pointer flex-1 text-xs"
+                        className="bg-hand-right text-white border-none rounded-md py-1 px-2 cursor-pointer flex-1 text-xs"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteChord(index)}
-                        className="bg-red-500 text-white border-none rounded-md py-1 px-2 cursor-pointer flex-1 text-xs"
+                        className="bg-[var(--color-felt)] text-white border-none rounded-md py-1 px-2 cursor-pointer flex-1 text-xs"
                       >
                         Delete
                       </button>
@@ -668,27 +666,27 @@ const DemoPage = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center italic text-gray-400 py-6">
+              <div className="text-center italic text-ink-low py-6">
                 <div className="flex flex-col items-center">
-                  <FaMusic className="text-3xl mb-3 text-emerald-500 opacity-70" />
-                  <p>No chords created yet. Use the piano above to select notes and create a chord.</p>
+                  <FaMusic className="text-3xl mb-3 text-hand-right opacity-70" />
+                  <p>{t('editor.noChords')}</p>
                 </div>
               </div>
             )}
           </div>
-          <div className="bg-gray-800 rounded-lg p-5 mt-4">
-            <h3 className="text-emerald-500 text-lg font-medium mb-3">Quick Tips</h3>
-            <ul className="list-disc pl-5 text-gray-300 space-y-2">
-              <li>Click on piano keys to select notes for your chord</li>
-              <li>Click "Save Chord" to add the chord to your progression</li>
-              <li>You can edit or delete any chord in your progression</li>
-              <li>Use the Play button to hear your chord progression</li>
+          <div className="bg-ground-2 rounded-lg p-5 mt-4">
+            <h3 className="text-hand-right text-lg font-medium mb-3">{t('editor.tipsTitle')}</h3>
+            <ul className="list-disc pl-5 text-ink-mid space-y-2">
+              <li>{t('editor.tip1')}</li>
+              <li>{t('editor.tip2')}</li>
+              <li>{t('editor.tip4')}</li>
+              <li>{t('editor.tip3')}</li>
               <li>In the full version, you can save your songs and access them anytime</li>
             </ul>
           </div>
           <Link
             to="/register"
-            className="bg-emerald-500 hover:bg-emerald-600 text-black border-none rounded-lg py-4 px-4 text-base font-semibold cursor-pointer w-full shadow-md transition-all duration-200 flex items-center justify-center"
+            className="bg-hand-right hover:bg-hand-right-deep text-black border-none rounded-lg py-4 px-4 text-base font-semibold cursor-pointer w-full shadow-md transition-all duration-200 flex items-center justify-center"
           >
             Sign Up for Full Access
           </Link>

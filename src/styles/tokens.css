@@ -1,0 +1,104 @@
+/*
+  Chordia design tokens — "Senal viva".
+
+  Every colour here comes from one of two places: the signal palette the
+  falling-notes renderer already uses (features/renderer/FallingNotes.ts), or
+  the physical materials a piano is made of. Nothing is invented, so the UI and
+  the canvas can never disagree about what green means.
+*/
+
+@theme {
+  /* ---- Ground: the dark room behind the instrument ------------------ */
+  --color-ground-0: #070c14;
+  --color-ground-1: #0a101b;
+  --color-ground-2: #0f1624;
+  --color-ground-3: #151d2c;
+  --color-ground-4: #1c2536;
+
+  /* ---- Signal: semantic in the product, not decorative -------------- */
+  --color-hand-right: #00e676;
+  --color-hand-right-deep: #00a854;
+  --color-hand-right-ink: #04160b;
+
+  --color-hand-left: #38bdf8;
+  --color-hand-left-deep: #0d7fb8;
+  --color-hand-left-ink: #04121a;
+
+  --color-wait: #ffd166;
+  --color-wait-deep: #c79a2f;
+  --color-wait-ink: #1a1204;
+
+  --color-struck: #ffffff;
+
+  /* Damper felt. A real part of the instrument, used for destructive
+     actions and out-of-range warnings. */
+  --color-felt: #7f1d2e;
+  --color-felt-ink: #ff8a9b;
+
+  /* ---- Materials: the keys themselves ------------------------------- */
+  --color-ivory: #f4f7fb;
+  --color-ivory-shade: #c9d2de;
+  --color-ebony: #151b26;
+
+  /* ---- Ink: tinted from the ground's hue, never neutral grey -------- */
+  --color-ink: #f4f7fb;
+  --color-ink-mid: #9fb0c4;
+  --color-ink-low: #7488a0;
+
+  /* ---- Type -------------------------------------------------------- */
+  --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque',
+    system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+
+  /* ---- Motion ------------------------------------------------------ */
+  /* The strike: exponential ease-out, the gesture every control borrows. */
+  --ease-strike: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-depress: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root {
+  /* Seams and edges. A panel is a chassis: light catches its top edge. */
+  --seam: rgba(255, 255, 255, 0.09);
+  --seam-strong: rgba(255, 255, 255, 0.16);
+  --edge: rgba(255, 255, 255, 0.055);
+
+  /* Depth. Every shadow has an offset and a blur; a zero-offset halo is
+     decoration, not depth. */
+  --lift-1: 0 1px 2px rgba(4, 8, 16, 0.5), 0 2px 8px rgba(4, 8, 16, 0.35);
+  --lift-2: 0 2px 4px rgba(4, 8, 16, 0.55), 0 8px 24px rgba(4, 8, 16, 0.45);
+  --lift-3: 0 4px 8px rgba(4, 8, 16, 0.6), 0 20px 56px rgba(4, 8, 16, 0.55);
+
+  /* Note light. Bloom decays like a struck string, so the falloff is two
+     stops, not a flat ring. */
+  --bloom-right: 0 0 0 1px rgba(0, 230, 118, 0.5),
+    0 0 12px rgba(0, 230, 118, 0.35), 0 0 40px rgba(0, 230, 118, 0.12);
+  --bloom-left: 0 0 0 1px rgba(56, 189, 248, 0.5),
+    0 0 12px rgba(56, 189, 248, 0.35), 0 0 40px rgba(56, 189, 248, 0.12);
+  --bloom-wait: 0 0 0 1px rgba(255, 209, 102, 0.55),
+    0 0 14px rgba(255, 209, 102, 0.4), 0 0 44px rgba(255, 209, 102, 0.14);
+
+  /* Durations. The falling field is continuous; everything else is a short
+     event. */
+  --t-tap: 120ms;
+  --t-quick: 180ms;
+  --t-move: 240ms;
+  --t-settle: 320ms;
+
+  /* Rhythm. One spacing scale, used everywhere. */
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --measure: 68ch;
+
+  color-scheme: dark;
+}
+
+/* Reduced motion: the falling field freezes on one frame and the strike
+   becomes a colour change. Nothing disappears. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-tap: 1ms;
+    --t-quick: 1ms;
+    --t-move: 1ms;
+    --t-settle: 1ms;
+  }
+}

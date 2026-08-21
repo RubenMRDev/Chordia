@@ -9,10 +9,9 @@ module.exports = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    // Ojo con el orden y con anclar el patron: 'tone' sin anclas tambien
-    // casaba con '@tonejs/midi' y devolvia la clase Midi de Tone.js.
-    '^@tonejs/midi$': '<rootDir>/node_modules/@tonejs/midi/build/Midi.js',
-    '^tone$': '<rootDir>/node_modules/tone/build/Tone.js'
+    // Ojo con anclar el patron: sin anclas, un alias corto casaba tambien
+    // con '@tonejs/midi'.
+    '^@tonejs/midi$': '<rootDir>/node_modules/@tonejs/midi/build/Midi.js'
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
@@ -20,9 +19,6 @@ module.exports = {
       useESM: true,
     }]
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!tone)'
-  ],
   resetMocks: false,
   restoreMocks: false,
   automock: false,
@@ -31,7 +27,7 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/main.tsx',
-    '!src/index.tsx',
+    '!src/app/main.tsx',
     '!src/vite-env.d.ts',
     '!src/setupTests.ts',
   ],

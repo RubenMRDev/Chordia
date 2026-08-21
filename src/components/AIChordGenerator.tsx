@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import Swal from 'sweetalert2';
+import { useT } from '@/i18n';
 import aiChordService, { AIChordRequest, AIChordResponse } from '../services/aiChordService';
+import { openDialog } from '@/ui/dialog';
 
 interface ChordType {
   keys: string[];
@@ -14,6 +15,7 @@ interface AIChordGeneratorProps {
 }
 
 export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }: AIChordGeneratorProps) {
+  const { t } = useT();
   const [isGenerating, setIsGenerating] = useState(false);
   const [formData, setFormData] = useState({
     style: 'pop',
@@ -46,13 +48,10 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
 
   const handleGenerate = async () => {
     if (!formData.description.trim()) {
-      Swal.fire({
-        title: 'Description Required',
-        text: 'Please describe how you want your chord progression to sound',
+      openDialog({
+        title: t('ai.needDescription'),
+        text: t('ai.needDescriptionBody'),
         icon: 'warning',
-        confirmButtonColor: "var(--accent-green)",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)",
       });
       return;
     }
@@ -78,19 +77,16 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
         selected: true
       }));
 
-      Swal.fire({
+      openDialog({
         title: 'Chord Progression Generated!',
         html: `
           <div class="text-left">
             <p class="mb-3"><strong>Generated chords:</strong> ${response.chords.join(' - ')}</p>
             <p class="mb-3"><strong>Explanation:</strong> ${response.explanation}</p>
-            <p class="text-sm text-gray-400">The chords have been added to your progression.</p>
+            <p class="text-sm text-ink-low">{t('ai.added')}</p>
           </div>
         `,
         icon: 'success',
-        confirmButtonColor: "var(--accent-green)",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)",
       });
 
       onChordsGenerated(chords);
@@ -98,13 +94,10 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
 
     } catch (error) {
       console.error('Error generating chords:', error);
-      Swal.fire({
-        title: 'Generation Failed',
-        text: 'There was an error generating your chord progression. Please try again.',
+      openDialog({
+        title: t('ai.failed'),
+        text: t('ai.failedBody'),
         icon: 'error',
-        confirmButtonColor: "var(--accent-green)",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)",
       });
     } finally {
       setIsGenerating(false);
@@ -114,13 +107,13 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-ground-2 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">AI Chord Generator</h2>
+          <h2 className="text-2xl font-bold text-white">{t('ai.generatorTitle')}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl font-bold"
+            className="text-ink-low hover:text-white text-2xl font-bold"
           >
             ×
           </button>
@@ -128,14 +121,14 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
 
         <div className="space-y-6">
           <div>
-            <label htmlFor="style-select" className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="style-select" className="block text-ink-mid text-sm font-medium mb-2">
               Musical Style
             </label>
             <select
               id="style-select"
               value={formData.style}
               onChange={(e) => handleInputChange('style', e.target.value)}
-              className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
+              className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer"
             >
               {styles.map(style => (
                 <option key={style} value={style}>
@@ -145,14 +138,14 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
             </select>
           </div>
           <div>
-            <label htmlFor="mood-select" className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="mood-select" className="block text-ink-mid text-sm font-medium mb-2">
               Mood
             </label>
             <select
               id="mood-select"
               value={formData.mood}
               onChange={(e) => handleInputChange('mood', e.target.value)}
-              className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
+              className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer"
             >
               {moods.map(mood => (
                 <option key={mood} value={mood}>
@@ -162,14 +155,14 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
             </select>
           </div>
           <div>
-            <label htmlFor="key-select" className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="key-select" className="block text-ink-mid text-sm font-medium mb-2">
               Key
             </label>
             <select
               id="key-select"
               value={formData.key}
               onChange={(e) => handleInputChange('key', e.target.value)}
-              className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
+              className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer"
             >
               {keys.map(key => (
                 <option key={key} value={key}>
@@ -180,14 +173,14 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="length-select" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="length-select" className="block text-ink-mid text-sm font-medium mb-2">
                 Number of Chords
               </label>
               <select
                 id="length-select"
                 value={formData.length}
                 onChange={(e) => handleInputChange('length', Number(e.target.value))}
-                className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
+                className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer"
               >
                 {[3, 4, 5, 6, 7, 8].map(length => (
                   <option key={length} value={length}>
@@ -197,31 +190,31 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               </select>
             </div>
             <div>
-              <label htmlFor="complexity-select" className="block text-gray-300 text-sm font-medium mb-2">
+              <label htmlFor="complexity-select" className="block text-ink-mid text-sm font-medium mb-2">
                 Complexity
               </label>
               <select
                 id="complexity-select"
                 value={formData.complexity}
                 onChange={(e) => handleInputChange('complexity', e.target.value as 'simple' | 'medium' | 'complex')}
-                className="w-full bg-gray-700 text-white border-none rounded-md py-2 px-3 cursor-pointer"
+                className="w-full bg-ground-3 text-white border-none rounded-md py-2 px-3 cursor-pointer"
               >
-                <option value="simple">Simple</option>
-                <option value="medium">Medium</option>
-                <option value="complex">Complex</option>
+                <option value="simple">{t('ai.simple')}</option>
+                <option value="medium">{t('ai.medium')}</option>
+                <option value="complex">{t('ai.complex')}</option>
               </select>
             </div>
           </div>
           <div>
-            <label htmlFor="description-textarea" className="block text-gray-300 text-sm font-medium mb-2">
+            <label htmlFor="description-textarea" className="block text-ink-mid text-sm font-medium mb-2">
               Describe Your Vision *
             </label>
             <textarea
               id="description-textarea"
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Describe how you want your chord progression to sound. For example: 'A sad progression that builds tension and resolves beautifully' or 'An energetic rock progression with a strong driving feel'"
-              className="w-full bg-gray-700 text-white border-none rounded-md py-3 px-3 resize-none"
+              placeholder={t('ai.describePlaceholder')}
+              className="w-full bg-ground-3 text-white border-none rounded-md py-3 px-3 resize-none"
               rows={4}
             />
           </div>
@@ -231,22 +224,34 @@ export default function AIChordGenerator({ onChordsGenerated, isOpen, onClose }:
               disabled={isGenerating || !formData.description.trim()}
               className={`flex-1 py-3 px-6 rounded-md font-medium text-white transition-colors ${
                 isGenerating || !formData.description.trim()
-                  ? 'bg-gray-600 cursor-not-allowed'
-                  : 'bg-emerald-500 hover:bg-emerald-600'
+                  ? 'bg-ground-4 cursor-not-allowed'
+                  : 'bg-hand-right hover:bg-hand-right-deep'
               }`}
             >
               {isGenerating ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Generating...
-                </div>
+                <span className="flex items-center justify-center gap-2.5">
+                  {/*
+                    Three keys lighting in turn, rather than a spinning border:
+                    the product already has a language for "working".
+                  */}
+                  <span aria-hidden className="flex items-end gap-[3px] h-3">
+                    {[0, 1, 2].map((step) => (
+                      <span
+                        key={step}
+                        className="w-[3px] h-full rounded-[1px] bg-current sustain"
+                        style={{ animationDelay: `${step * 180}ms` }}
+                      />
+                    ))}
+                  </span>
+                  {t('ai.generating')}
+                </span>
               ) : (
-                'Generate Progression'
+                t('ai.generate')
               )}
             </button>
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium transition-colors"
+              className="px-6 py-3 bg-ground-4 hover:bg-ground-3 text-white rounded-md font-medium transition-colors"
             >
               Cancel
             </button>

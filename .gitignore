@@ -25,3 +25,9 @@ dist-ssr
 node_modules
 
 api/serviceAccountKey.json
+
+# Build and tooling artefacts that were committed by accident
+coverage
+*.tsbuildinfo
+.impeccable/review
+.impeccable/hook.cache.json

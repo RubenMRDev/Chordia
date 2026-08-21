@@ -1,214 +1,154 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import Header from '../components/Header';
-import { FaMusic, FaPlay, FaUser, FaRandom, FaClock } from 'react-icons/fa';
-import { getAllSongs } from '../firebase/songService';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/config';
-
-interface DisplaySong {
-  id: string;
-  title: string;
-  key: string;
-  timeSignature: string;
-  tempo: number;
-  username: string;
-  userId: string;
-  createdAt: string;
-}
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FaClock, FaRandom } from 'react-icons/fa';
+import Shell from '@/components/layout/Shell';
+import SongCard from '@/components/songs/SongCard';
+import EmptyState from '@/components/songs/EmptyState';
+import {
+  getAllSongsWithAuthors,
+  type SongWithAuthor,
+} from '@/firebase/songService';
+import { useT } from '@/i18n';
+import { ButtonLink, Panel, Segmented } from '@/ui';
 
 type SortMethod = 'recent' | 'random';
 
+/** Fisher–Yates, so "random" is actually uniform and not a sort-comparator hack. */
+const shuffled = <T,>(items: readonly T[]): T[] => {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swap]] = [copy[swap], copy[index]];
+  }
+  return copy;
+};
+
+/** Everything every user has published. */
 const DiscoverPage: React.FC = () => {
-  const [songs, setSongs] = useState<DisplaySong[]>([]);
+  const { t } = useT();
+  const [songs, setSongs] = useState<SongWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortMethod, setSortMethod] = useState<SortMethod>('recent');
-  const [animationsReady, setAnimationsReady] = useState(false);
-  const navigate = useNavigate();
+  const [failed, setFailed] = useState(false);
+  const [sort, setSort] = useState<SortMethod>('recent');
+  /**
+   * Re-shuffles only when the visitor asks. Shuffling inside the render would
+   * reorder the page on every unrelated state change.
+   */
+  const [shuffleToken, setShuffleToken] = useState(0);
 
-  useEffect(() => {
-    const fetchAllSongs = async () => {
-      try {
-        setLoading(true);
-        const allSongs = await getAllSongs();
-        const songsWithUserData = await Promise.all(
-          allSongs.map(async (song) => {
-            let username = '@user';
-            try {
-              const userDoc = await getDoc(doc(db, "users", song.userId));
-              if (userDoc.exists()) {
-                username = '@' + (userDoc.data().username || 
-                                  userDoc.data().displayName || 
-                                  userDoc.data().email?.split('@')[0] || 
-                                  'user');
-              }
-            } catch (err) {
-              console.error('Error fetching user data:', err);
-            }
-            return {
-              id: song.id || '',
-              title: song.title,
-              key: song.key,
-              timeSignature: song.timeSignature,
-              tempo: song.tempo,
-              username: username,
-              userId: song.userId,
-              createdAt: song.createdAt
-            };
-          })
-        );
-        setSongs(sortSongs(songsWithUserData, sortMethod));
-      } catch (error) {
-        console.error('Error fetching songs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllSongs();
-  }, [sortMethod]);
-
-  useEffect(() => {
-    setAnimationsReady(false);
-    const timer = setTimeout(() => {
-      setAnimationsReady(true);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [songs]);
-
-  const sortSongs = (songsToSort: DisplaySong[], method: SortMethod): DisplaySong[] => {
-    switch (method) {
-      case 'recent':
-        return [...songsToSort].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      case 'random':
-        return [...songsToSort].sort(() => Math.random() - 0.5);
-      default:
-        return songsToSort;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      setSongs(await getAllSongsWithAuthors());
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const handleSortChange = (method: SortMethod) => {
-    setSortMethod(method);
-    setSongs(sortSongs([...songs], method));
-  };
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const getAnimationDelay = (index: number): string => {
-    return `${index * 100}ms`;
-  };
+  const ordered = useMemo(() => {
+    if (sort === 'random') return shuffled(songs);
+    return [...songs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    // `shuffleToken` is what makes "random" re-roll on a repeat click.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [songs, sort, shuffleToken]);
 
   return (
-    <div className="bg-[#0c141c] min-h-screen text-white">
-      <Header />
-      <div className="p-4 md:p-8">
-        <h1 className="text-2xl md:text-4xl text-[#04e073] mb-8 text-center font-bold">
-          Discover Music From All Users
-        </h1>
-        <div className="flex justify-center mb-8 gap-4 flex-wrap">
-          <button
-            onClick={() => handleSortChange('recent')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md border-none cursor-pointer ${
-              sortMethod === 'recent' 
-                ? 'bg-[#04e073] text-black' 
-                : 'bg-[#1e2638] text-white hover:bg-[#2a324d]'
-            } transition-colors`}
-          >
-            <FaClock /> Most Recent
-          </button>
-          <button
-            onClick={() => handleSortChange('random')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md border-none cursor-pointer ${
-              sortMethod === 'random' 
-                ? 'bg-[#04e073] text-black' 
-                : 'bg-[#1e2638] text-white hover:bg-[#2a324d]'
-            } transition-colors`}
-          >
-            <FaRandom /> Random
-          </button>
-        </div>
-        {loading ? (
-          <div className="text-center py-8">
-            <p>Loading songs...</p>
-          </div>
-        ) : songs.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-300 text-lg">
-              No hay canciones disponibles en este momento.
+    <Shell padded={false}>
+      <div className="shell pt-10 pb-16">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-[1.05]">
+              {t('discover.title')}
+            </h1>
+            <p className="mt-3 text-[15px] text-ink-mid">
+              {t('discover.lede')}
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
-            {songs.map((song, index) => (
-              <div 
-                key={song.id}
-                className={`bg-[#162032] rounded-lg overflow-hidden cursor-pointer shadow-md hover:-translate-y-[1px] transition-transform duration-200 border border-[#1e293b] opacity-0 translate-y-8 ${animationsReady ? 'animate-slide-in' : ''}`}
-                onClick={() => navigate(`/song/${song.id}`)}
-                style={{ animationDelay: getAnimationDelay(index) }}
+
+          <Segmented<SortMethod>
+            value={sort}
+            onChange={(next) => {
+              setSort(next);
+              if (next === 'random') setShuffleToken((token) => token + 1);
+            }}
+            options={[
+              {
+                value: 'recent',
+                label: (
+                  <>
+                    <FaClock aria-hidden className="text-[11px]" />
+                    {t('dashboard.recent')}
+                  </>
+                ),
+              },
+              {
+                value: 'random',
+                label: (
+                  <>
+                    <FaRandom aria-hidden className="text-[11px]" />
+                    {t('discover.title')}
+                  </>
+                ),
+              },
+            ]}
+          />
+        </header>
+
+        <div className="mt-10">
+          {loading ? (
+            <p className="text-sm text-ink-low" role="status">
+              {t('state.loading')}
+            </p>
+          ) : failed ? (
+            <Panel className="p-5 flex flex-wrap items-center gap-3">
+              <span
+                aria-hidden
+                className="h-2 w-2 rounded-full bg-[var(--color-felt-ink)]"
+              />
+              <span className="text-sm">{t('library.loadFailed')}</span>
+              <button
+                type="button"
+                onClick={() => void load()}
+                className="ml-auto text-[13px] font-semibold text-hand-right hover:underline"
               >
-                <div className="text-[#04e073] p-3 border-b border-[#1e293b] flex items-center">
-                  <FaUser className="mr-2" />
-                  <span>{song.username}</span>
-                </div>
-                <div className="relative h-40 bg-[#11192a] flex items-center justify-center p-4">
-                  <div className="w-24 h-24 border-2 border-[#04e073] rounded-full flex items-center justify-center bg-[#0c141c] shadow-inner">
-                    <FaMusic className="text-4xl text-[#04e073]" />
+                {t('state.retry')}
+              </button>
+            </Panel>
+          ) : ordered.length === 0 ? (
+            <EmptyState
+              title={t('discover.empty')}
+              body={t('discover.emptyBody')}
+              action={
+                <ButtonLink to="/create" tone="right" size="md">
+                  {t('songs.newSong')}
+                </ButtonLink>
+              }
+            />
+          ) : (
+            <ul className="list-none m-0 p-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {ordered.map((song) => (
+                <li key={song.id} className="flex">
+                  <div className="flex w-full">
+                    <SongCard
+                      song={song}
+                      author={t('discover.by', {
+                        name: song.authorName ?? t('discover.someone'),
+                      })}
+                    />
                   </div>
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      navigate(`/song/${song.id}`);
-                    }}
-                    className="absolute bottom-4 right-4 bg-[#04e073] text-black w-12 h-12 rounded-full flex items-center justify-center border-none cursor-pointer hover:bg-[#03d069] transition-colors shadow-md"
-                  >
-                    <FaPlay />
-                  </button>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-xl mb-2 truncate font-medium text-gray-100">{song.title}</h3>
-                  <div className="text-gray-300 text-sm mb-4 flex flex-wrap gap-4">
-                    <div className="px-2 py-1 rounded bg-[#1e2638] inline-block">Key: {song.key}</div>
-                    <div className="px-2 py-1 rounded bg-[#1e2638] inline-block">{song.timeSignature}</div>
-                    <div className="px-2 py-1 rounded bg-[#1e2638] inline-block">{song.tempo} BPM</div>
-                  </div>
-                  <div className="text-gray-400 text-sm flex items-center gap-2">
-                    <span>Created: {formatDate(song.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="text-center mt-8">
-          <Link to="/dashboard" className="inline-block bg-[#04e073] text-black py-3 px-6 rounded-md no-underline font-bold hover:bg-[#03c664] transition-colors shadow-md">
-            Volver al Dashboard
-          </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
-      <style>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slide-in {
-          animation: slideIn 0.6s ease forwards;
-        }
-      `}</style>
-    </div>
+    </Shell>
   );
 };
 

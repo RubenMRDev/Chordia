@@ -1,534 +1,296 @@
-"use client";
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaMusic, FaClock, FaPlus, FaMapMarkerAlt, FaGlobe, FaCalendarAlt, FaInstagram, FaTwitter, FaSoundcloud, FaSpotify } from 'react-icons/fa';
-import Header from '../components/Header';
-import { useAuth } from '../context/AuthContext';
-import { getUserSongs, deleteAllUserSongs } from '../firebase/songService';
-import { deleteUserProfile } from '../firebase/userService';
-import Swal from 'sweetalert2';
-import type { Song } from '../types/firebase';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  FaInstagram,
+  FaSpotify,
+  FaSoundcloud,
+  FaTwitter,
+} from 'react-icons/fa';
+import Shell from '@/components/layout/Shell';
+import SongCard from '@/components/songs/SongCard';
+import EmptyState from '@/components/songs/EmptyState';
+import { useAuth } from '@/context/AuthContext';
+import { deleteAllUserSongs, getUserSongs } from '@/firebase/songService';
+import type { Song } from '@/types/models';
+import { useT } from '@/i18n';
+import { Button, ButtonLink, Panel } from '@/ui';
+import { confirmAction, notifyError, notifyOk } from '@/ui/dialog';
+
+const AVATAR_FALLBACK =
+  'https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp';
+
+/** Each social handle, and how to turn it into a URL. */
+const SOCIALS = [
+  {
+    key: 'instagram',
+    Icon: FaInstagram,
+    href: (handle: string) => `https://instagram.com/${handle}`,
+  },
+  {
+    key: 'twitter',
+    Icon: FaTwitter,
+    href: (handle: string) => `https://twitter.com/${handle}`,
+  },
+  {
+    key: 'soundcloud',
+    Icon: FaSoundcloud,
+    href: (handle: string) => `https://soundcloud.com/${handle}`,
+  },
+  {
+    key: 'spotify',
+    Icon: FaSpotify,
+    href: (handle: string) => `https://open.spotify.com/artist/${handle}`,
+  },
+] as const;
 
 const ProfilePage: React.FC = () => {
-  const [_activeTab, _setActiveTab] = useState("songs");
-  const { currentUser, logout, userProfile } = useAuth();
+  const { t, tn } = useT();
+  const navigate = useNavigate();
+  const { currentUser, userProfile, logout } = useAuth();
+
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    const fetchUserSongs = async () => {
-      if (currentUser) {
-        try {
-          const userSongs = await getUserSongs(currentUser.uid);
-          const filteredSongs = (userSongs || []).filter((song: Song) => song.userId === currentUser.uid);
-          setSongs(filteredSongs);
-        } catch (error) {
-          console.error("Error fetching user songs:", error);
-          Swal.fire({
-            title: "Error",
-            text: "Failed to load songs. Please try again later.",
-            icon: "error",
-            background: "var(--background-darker)",
-            color: "var(--text-secondary)",
-          });
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
-    fetchUserSongs();
+  const load = useCallback(async () => {
+    if (!currentUser) {
+      setSongs([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      setSongs(await getUserSongs(currentUser.uid));
+    } catch {
+      setSongs([]);
+    } finally {
+      setLoading(false);
+    }
   }, [currentUser]);
 
-  const handleLogout = async () => {
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleSignOut = async () => {
     try {
-      const result = await Swal.fire({
-        title: "Are you sure you want to log out?",
-        text: "You will be redirected to the login page.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "var(--accent-green)",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Yes, log out",
-        cancelButtonText: "Cancel",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)"
-      });
-      if (result.isConfirmed) {
-        await logout();
-        navigate("/login");
-      }
-    } catch (error) {
-      console.error("Error logging out:", error);
-      Swal.fire({
-        title: "Error",
-        text: "There was a problem logging out. Please try again.",
-        icon: "error",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)",
+      await logout();
+      navigate('/');
+    } catch (cause) {
+      await notifyError({
+        title: t('profile.signOutFailed'),
+        text: cause instanceof Error ? cause.message : undefined,
+        confirmLabel: t('state.ok'),
       });
     }
   };
 
-  const handleDeleteAccount = async () => {
-    try {
-      const result = await Swal.fire({
-        title: "Delete Account?",
-        text: "This will permanently delete your account and all your songs. This action cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#dc3545",
-        cancelButtonColor: "var(--background-darker)",
-        confirmButtonText: "Delete",
-        cancelButtonText: "Cancel",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)"
-      });
-      if (result.isConfirmed) {
-        if (!currentUser) {
-          throw new Error("User not authenticated");
-        }
-        setLoading(true);
-        await deleteAllUserSongs(currentUser.uid);
-        await deleteUserProfile(currentUser.uid);
-        await currentUser.delete();
-        await logout();
-        navigate("/login");
-        Swal.fire({
-          title: "Account Deleted",
-          text: "Your account has been permanently deleted.",
-          icon: "success",
-          background: "var(--background-darker)",
-          color: "var(--text-secondary)",
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      setLoading(false);
-      Swal.fire({
-        title: "Error",
-        text: "There was a problem deleting your account. You may need to re-login before deleting your account.",
-        icon: "error",
-        background: "var(--background-darker)",
-        color: "var(--text-secondary)",
-      });
-    }
-  };
-
-  const formatDate = (dateString: string | number | Date) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      console.error("Invalid date:", dateString);
-      return "Invalid date";
-    }
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+  const handleDeleteAll = async () => {
+    if (!currentUser || songs.length === 0) return;
+    const confirmed = await confirmAction({
+      title: t('profile.dangerConfirmTitle', { count: songs.length }),
+      text: t('profile.dangerConfirmBody'),
+      confirmLabel: t('state.delete'),
+      cancelLabel: t('state.cancel'),
+      destructive: true,
     });
+    if (!confirmed) return;
+
+    setBusy(true);
+    try {
+      await deleteAllUserSongs(currentUser.uid);
+      setSongs([]);
+      await notifyOk({
+        title: t('profile.dangerDone'),
+        confirmLabel: t('state.ok'),
+      });
+    } catch (cause) {
+      await notifyError({
+        title: t('profile.dangerFailed'),
+        text: cause instanceof Error ? cause.message : undefined,
+        confirmLabel: t('state.ok'),
+      });
+    } finally {
+      setBusy(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          backgroundColor: "var(--background-darker)",
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "var(--text-primary)",
-        }}
-      >
-        Loading...
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    navigate("/login");
-    return null;
-  }
+  const name =
+    userProfile?.displayName || currentUser?.displayName || t('profile.title');
+  const avatar =
+    userProfile?.photoURL || currentUser?.photoURL || AVATAR_FALLBACK;
+  const joined = userProfile?.joinDate ? new Date(userProfile.joinDate) : null;
+  const links = userProfile?.socialLinks;
+  const hasLinks = SOCIALS.some((social) => links?.[social.key]);
+  const isAdmin = userProfile?.role === 'admin';
 
   return (
-    <div style={{ backgroundColor: "var(--background-darker)", minHeight: "100vh", color: "var(--text-primary)" }}>
-      <Header/>
-      <div
-        style={{
-          height: "200px",
-          background: "linear-gradient(90deg, #004d40 0%, #00796b 100%)",
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: "0 0 8px 8px",
-          margin: "0 1rem",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%2300E676' fillOpacity='0.3' d='M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,208C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E\")",
-            backgroundSize: "cover",
-            opacity: 0.7,
-          }}
-        ></div>
-      </div>
-      <div
-        style={{
-          padding: "0 2rem",
-          marginTop: "-60px",
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{
-            width: "120px",
-            height: "120px",
-            borderRadius: "50%",
-            border: "4px solid var(--background-darker)",
-            overflow: "hidden",
-            marginBottom: "1rem",
-          }}
-        >
-          <img
-            src={userProfile?.photoURL || currentUser?.photoURL || "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp"}
-            alt="Profile"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            onError={(e) => {
-              e.currentTarget.src = "https://res.cloudinary.com/doy4x4chv/image/upload/v1743174847/pfpplaceholder_fwntlq.webp";
-            }}
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.25rem" }}>
-            {userProfile?.displayName || currentUser?.displayName || "User"}
-          </h1>
-          <p style={{ color: "var(--accent-green)", marginBottom: "1rem" }}>
-            @{(userProfile?.displayName || currentUser?.displayName || "user")?.toLowerCase().replace(/\s+/g, "")}
-          </p>
-          <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", marginBottom: "1.5rem" }}>
-            <div>
-              <span style={{ fontWeight: "bold" }}>{songs.length}</span>
-              <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>Tracks</span>
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-          <Link
-            to="/profile/edit"
-            style={{
-              backgroundColor: "var(--accent-green)",
-              color: "#000",
-              padding: "0.5rem 1.25rem",
-              borderRadius: "4px",
-              border: "none",
-              fontWeight: "bold",
-              cursor: "pointer",
-              textDecoration: "none",
-            }}
-          >
-            Edit Profile
-          </Link>
-          {userProfile?.role === 'admin' && (
-            <Link
-              to="/admin/songs"
-              style={{
-                backgroundColor: "#ff6b35",
-                color: "white",
-                padding: "0.5rem 1.25rem",
-                borderRadius: "4px",
-                border: "none",
-                fontWeight: "bold",
-                cursor: "pointer",
-                textDecoration: "none",
+    <Shell padded={false}>
+      <div className="shell pt-10 pb-16">
+        {/* Identity, then the two things you can do with the account. */}
+        <header className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-5 min-w-0">
+            <img
+              src={avatar}
+              alt=""
+              width={80}
+              height={80}
+              className="h-20 w-20 shrink-0 rounded-full object-cover border border-[var(--seam)]"
+              onError={(event) => {
+                event.currentTarget.src = AVATAR_FALLBACK;
               }}
-            >
-              Manage Songs
-            </Link>
-          )}
-          <button
-            style={{
-              backgroundColor: "#dc3545",
-              color: "white",
-              padding: "0.5rem 1.25rem",
-              borderRadius: "4px",
-              border: "none",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-          <button
-            style={{
-              backgroundColor: "#a9a9a9",
-              color: "white",
-              padding: "0.5rem 1.25rem",
-              borderRadius: "4px",
-              border: "none",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-            onClick={handleDeleteAccount}
-          >
-            Delete Account
-          </button>
-        </div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem", padding: "2rem" }}>
-        <div>
-          <div
-            style={{
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderRadius: "8px",
-              padding: "1.5rem",
-              marginBottom: "2rem",
-            }}
-          >
-            <h2 style={{ marginBottom: "1rem" }}>About</h2>
-            <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem", lineHeight: 1.6 }}>
-              {userProfile?.bio || "No bio yet"}
-            </p>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                color: "var(--text-secondary)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              <FaMapMarkerAlt style={{ marginRight: "0.75rem" }} />
-              {userProfile?.location || "No location set"}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                color: "var(--text-secondary)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              <FaGlobe style={{ marginRight: "0.75rem" }} />
-              <a
-                href={`https://${userProfile?.website || ""}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: "var(--accent-green)", textDecoration: "none" }}
-              >
-                {userProfile?.website || "No website set"}
-              </a>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", color: "var(--text-secondary)" }}>
-              <FaCalendarAlt style={{ marginRight: "0.75rem" }} />
-              Joined{" "}
-              {new Date(userProfile?.joinDate || Date.now()).toLocaleDateString("en-US", {
-                month: "long",
-                year: "numeric",
-              })}
-            </div>
-          </div>
-          <div
-            style={{
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderRadius: "8px",
-              padding: "1.5rem",
-            }}
-          >
-            <h2 style={{ marginBottom: "1rem" }}>Social Links</h2>
-            <div style={{ display: "flex", gap: "1rem" }}>
-              {userProfile?.socialLinks?.instagram && (
-                <a
-                  href={`https://instagram.com/${userProfile.socialLinks.instagram}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
-                >
-                  <FaInstagram />
-                </a>
-              )}
-              {userProfile?.socialLinks?.twitter && (
-                <a
-                  href={`https://twitter.com/${userProfile.socialLinks.twitter}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
-                >
-                  <FaTwitter />
-                </a>
-              )}
-              {userProfile?.socialLinks?.soundcloud && (
-                <a
-                  href={`https://soundcloud.com/${userProfile.socialLinks.soundcloud}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
-                >
-                  <FaSoundcloud />
-                </a>
-              )}
-              {userProfile?.socialLinks?.spotify && (
-                <a
-                  href={`https://open.spotify.com/artist/${userProfile.socialLinks.spotify}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "var(--text-secondary)", fontSize: "1.5rem", transition: "color 0.2s ease" }}
-                >
-                  <FaSpotify />
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-        <div>
-          <div
-            style={{
-              display: "flex",
-              borderBottom: "1px solid rgba(255,255,255,0.1)",
-              marginBottom: "2rem",
-              overflowX: "auto",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <div
-              style={{
-                padding: "1rem 1.5rem",
-                color: "var(--accent-green)",
-                borderBottom: "2px solid var(--accent-green)",
-                fontWeight: "bold",
-              }}
-            >
-              Songs
-            </div>
-          </div>
-          {songs.length > 0 ? (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '1.5rem'
-            }}>
-              {songs.map(song => (
-                <div 
-                  key={song.id}
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s ease',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onClick={() => navigate('/library')}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-5px)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{ 
-                    position: 'relative',
-                    height: '160px',
-                    backgroundColor: '#1f2937',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '1rem'
-                  }}>
-                    <div style={{ 
-                      width: '100px',
-                      height: '100px',
-                      border: '2px solid var(--accent-green)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <FaMusic style={{ fontSize: '2.5rem', color: 'var(--accent-green)' }} />
-                    </div>
-                  </div>
-                  <div style={{ padding: '1rem' }}>
-                    <h3 style={{ 
-                      fontSize: '1.25rem', 
-                      marginBottom: '0.5rem'
-                    }}>
-                      {song.title}
-                    </h3>
-                    <div style={{ 
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem',
-                      marginBottom: '1rem',
-                      display: 'flex',
-                      gap: '1rem'
-                    }}>
-                      <div>Key: {song.key}</div>
-                      <div>{song.timeSignature}</div>
-                      <div>{song.tempo} BPM</div>
-                    </div>
-                    <div style={{ 
-                      display: 'flex',
-                      justifyContent: 'flex-start',
-                      alignItems: 'center',
-                      marginTop: '1rem',
-                      color: 'var(--text-secondary)',
-                      fontSize: '0.875rem'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FaClock style={{ fontSize: '0.875rem' }} />
-                        <span>{formatDate(song.createdAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ 
-              textAlign: "center", 
-              padding: "3rem 1rem", 
-              backgroundColor: "rgba(255,255,255,0.05)", 
-              borderRadius: "8px" 
-            }}>
-              <FaMusic style={{ fontSize: '3rem', color: 'var(--text-secondary)', marginBottom: '1rem' }} />
-              <h2 style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                You haven't created any songs yet
-              </h2>
-              <p style={{ marginBottom: "1.5rem", color: "var(--text-secondary)" }}>
-                Create your first song to see it here
+            />
+            <div className="min-w-0">
+              <h1 className="font-display text-[clamp(1.5rem,3.5vw,2.15rem)] font-semibold leading-tight truncate">
+                {name}
+              </h1>
+              <p className="numeric mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-ink-low">
+                {userProfile?.email && <span>{userProfile.email}</span>}
+                {userProfile?.location && <span>{userProfile.location}</span>}
+                {joined && !Number.isNaN(joined.valueOf()) && (
+                  <span>
+                    {t('profile.joined', {
+                      date: joined.toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'long',
+                      }),
+                    })}
+                  </span>
+                )}
               </p>
-              <Link
-                to="/create"
-                style={{
-                  backgroundColor: "var(--accent-green)",
-                  color: "#000",
-                  padding: "0.75rem 1.5rem",
-                  borderRadius: "4px",
-                  border: "none",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                <FaPlus /> Create Song
-              </Link>
             </div>
-          )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {isAdmin && (
+              <ButtonLink to="/admin/songs" tone="quiet" size="md">
+                {t('profile.admin')}
+              </ButtonLink>
+            )}
+            <ButtonLink to="/profile/edit" tone="quiet" size="md">
+              {t('profile.edit')}
+            </ButtonLink>
+            <Button tone="ghost" size="md" onClick={() => void handleSignOut()}>
+              {t('profile.signOut')}
+            </Button>
+          </div>
+        </header>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-10 items-start">
+          <div className="flex flex-col gap-6">
+            <Panel className="p-5">
+              <h2 className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-low">
+                {t('profile.about')}
+              </h2>
+              <p className="mt-3 text-[14px] leading-relaxed text-ink-mid whitespace-pre-line">
+                {userProfile?.bio || (
+                  <span className="text-ink-low">{t('profile.noBio')}</span>
+                )}
+              </p>
+              {userProfile?.website && (
+                <a
+                  href={userProfile.website}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mt-4 inline-block text-[13px] text-hand-right no-underline hover:underline break-all"
+                >
+                  {userProfile.website}
+                </a>
+              )}
+            </Panel>
+
+            {hasLinks && (
+              <Panel className="p-5">
+                <h2 className="text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-low">
+                  {t('profile.links')}
+                </h2>
+                <ul className="mt-3.5 flex flex-wrap gap-2 list-none m-0 p-0">
+                  {SOCIALS.map(({ key, Icon, href }) => {
+                    const handle = links?.[key];
+                    if (!handle) return null;
+                    return (
+                      <li key={key}>
+                        <a
+                          href={href(handle)}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          title={handle}
+                          aria-label={`${key}: ${handle}`}
+                          className="press grid h-10 w-10 place-items-center rounded-md border border-[var(--edge)] bg-ground-3 text-ink-mid no-underline hover:text-ink hover:border-[var(--seam)]"
+                        >
+                          <Icon aria-hidden />
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Panel>
+            )}
+
+            {songs.length > 0 && (
+              <Panel className="p-5">
+                <h2 className="font-semibold text-[var(--color-felt-ink)]">
+                  {t('profile.dangerTitle')}
+                </h2>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-ink-low">
+                  {t('profile.dangerBody')}
+                </p>
+                <Button
+                  tone="felt"
+                  size="md"
+                  className="mt-4"
+                  busy={busy}
+                  busyLabel={t('auth.working')}
+                  onClick={() => void handleDeleteAll()}
+                >
+                  {t('state.delete')}
+                </Button>
+              </Panel>
+            )}
+          </div>
+
+          <section>
+            <h2 className="font-display text-lg font-semibold">
+              {t('dashboard.yourSongs')}
+              {songs.length > 0 && (
+                <span className="numeric ml-2 text-[13px] font-normal text-ink-low">
+                  {tn('catalog.results', songs.length)}
+                </span>
+              )}
+            </h2>
+
+            <div className="mt-5">
+              {loading ? (
+                <p className="text-sm text-ink-low" role="status">
+                  {t('state.loading')}
+                </p>
+              ) : songs.length === 0 ? (
+                <EmptyState
+                  title={t('library.empty')}
+                  body={t('library.emptyBody')}
+                  action={
+                    <ButtonLink to="/create" tone="right" size="md">
+                      {t('songs.newSong')}
+                    </ButtonLink>
+                  }
+                />
+              ) : (
+                <ul className="list-none m-0 p-0 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {songs.map((song) => (
+                    <li key={song.id} className="flex">
+                      <div className="flex w-full">
+                        <SongCard song={song} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
         </div>
       </div>
-    </div>
+    </Shell>
   );
 };
+
 export default ProfilePage;

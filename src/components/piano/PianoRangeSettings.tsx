@@ -1,116 +1,133 @@
 import React from 'react';
-import { FaKeyboard, FaCheck } from 'react-icons/fa';
-import { usePianoSettings } from '../../hooks/usePianoSettings';
+import { usePianoSettings } from '@/hooks/usePianoSettings';
 import {
   PIANO_PRESETS,
   describeRange,
   keyCount,
   type PianoPresetId,
-} from '../../features/piano/pianoSettings';
+} from '@/features/piano/pianoSettings';
 import {
   HIGHEST_PIANO_MIDI,
   LOWEST_PIANO_MIDI,
-  isBlackKey,
   midiToNoteName,
-} from '../../features/audio/notes';
+} from '@/features/audio/notes';
+import { useT } from '@/i18n';
+import { Keyboard, Panel } from '@/ui';
 
 const ALL_KEYS = Array.from(
   { length: HIGHEST_PIANO_MIDI - LOWEST_PIANO_MIDI + 1 },
   (_, index) => LOWEST_PIANO_MIDI + index,
 );
 
-/** Dibujo del teclado completo con el rango elegido resaltado. */
-const RangePreview: React.FC<{ lowestMidi: number; highestMidi: number }> = ({
-  lowestMidi,
-  highestMidi,
-}) => (
-  <div className="flex h-14 w-full gap-[1px] rounded overflow-hidden bg-black/40 p-1">
-    {ALL_KEYS.filter((midi) => !isBlackKey(midi)).map((midi) => {
-      const inside = midi >= lowestMidi && midi <= highestMidi;
-      // La tecla negra siguiente pertenece al rango si ambas vecinas lo estan.
-      return (
-        <div
-          key={midi}
-          className={`flex-1 rounded-b-sm ${inside ? 'bg-[var(--accent-green)]' : 'bg-white/15'}`}
-          title={midiToNoteName(midi)}
-        />
-      );
-    })}
-  </div>
-);
+const SELECT =
+  'h-9 rounded-md bg-ground-1 border border-[var(--edge)] px-2.5 text-[13px] text-ink ' +
+  'hover:border-[var(--seam)] focus:border-hand-right focus:outline-none';
 
 /**
- * Configuracion del piano del usuario (numero de teclas y rango). Se guarda al
- * instante en el navegador y, con sesion abierta, tambien en el perfil.
+ * The visitor's own piano: how many keys, and which range. Saved to the browser
+ * immediately, and to the Firestore profile when there is a session.
+ *
+ * The preset labels are built here rather than read from `PIANO_PRESETS.label`,
+ * which is Spanish-only: user-facing wording does not belong in the features
+ * layer.
  */
 const PianoRangeSettings: React.FC = () => {
+  const { t, tn } = useT();
   const { settings, update, saving, error } = usePianoSettings();
 
   const handlePreset = (preset: PianoPresetId) => {
     if (preset === 'custom') {
-      update({ preset: 'custom', lowestMidi: settings.lowestMidi, highestMidi: settings.highestMidi });
+      update({
+        preset: 'custom',
+        lowestMidi: settings.lowestMidi,
+        highestMidi: settings.highestMidi,
+      });
     } else {
       update({ preset });
     }
   };
 
+  /** "88 · full piano", "61 · 5 octaves". */
+  const presetNote = (keys: number): string =>
+    keys === 88 ? t('piano.fullPiano') : tn('piano.octaves', Math.round(keys / 12));
+
   return (
-    <div className="bg-[var(--card-background)] rounded-lg p-5 flex flex-col gap-4">
+    <Panel as="section" className="p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h3 className="flex items-center gap-2 font-bold text-lg">
-          <FaKeyboard className="text-[var(--accent-green)]" />
-          Mi piano
-        </h3>
-        <span className="text-sm text-[var(--text-secondary)]">
-          {keyCount(settings)} teclas · {describeRange(settings)}
-          {saving && ' · guardando...'}
+        <h2 className="font-display text-lg font-semibold">{t('piano.mine')}</h2>
+        <span className="numeric text-[13px] text-ink-low">
+          {t('home.piano.keys', { count: keyCount(settings) })}
+          {' · '}
+          {describeRange(settings)}
+          {saving && ` · ${t('piano.saving')}`}
           {!saving && !error && (
-            <FaCheck className="inline ml-2 text-[var(--accent-green)]" title="Guardado" />
+            <span className="ml-2 text-hand-right" title={t('piano.savedShort')}>
+              ✓
+            </span>
           )}
         </span>
       </div>
 
-      <p className="text-sm text-[var(--text-secondary)]">
-        Elige las teclas que tiene tu teclado y el modo MIDI dibujara exactamente ese piano, en vez
-        de adaptarse a cada cancion.
+      <p className="text-[13px] leading-relaxed text-ink-mid prose-measure">
+        {t('piano.lede')}
       </p>
 
-      <div className="flex flex-wrap gap-2">
-        {PIANO_PRESETS.map((preset) => (
-          <button
-            key={preset.id}
-            type="button"
-            onClick={() => handlePreset(preset.id)}
-            className={`px-3 py-2 rounded text-sm font-semibold ${
-              settings.preset === preset.id
-                ? 'bg-[var(--accent-green)] text-black'
-                : 'bg-white/5 text-[var(--text-secondary)] hover:bg-white/10'
-            }`}
-          >
-            {preset.label}
-          </button>
-        ))}
+      <div
+        role="group"
+        aria-label={t('piano.preset')}
+        className="flex flex-wrap gap-2"
+      >
+        {PIANO_PRESETS.map((preset) => {
+          const active = settings.preset === preset.id;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => handlePreset(preset.id)}
+              aria-pressed={active}
+              className={`press flex flex-col items-start rounded-md border px-3 py-2 ${
+                active
+                  ? 'bg-hand-right text-hand-right-ink border-hand-right'
+                  : 'bg-ground-3 border-[var(--edge)] text-ink hover:border-[var(--seam)]'
+              }`}
+            >
+              <span className="numeric text-sm font-semibold leading-none">
+                {preset.keys}
+              </span>
+              <span
+                className={`mt-1 text-[11px] leading-none ${
+                  active ? 'opacity-70' : 'text-ink-low'
+                }`}
+              >
+                {presetNote(preset.keys)}
+              </span>
+            </button>
+          );
+        })}
         <button
           type="button"
           onClick={() => handlePreset('custom')}
-          className={`px-3 py-2 rounded text-sm font-semibold ${
+          aria-pressed={settings.preset === 'custom'}
+          className={`press rounded-md border px-3 py-2 text-sm font-semibold ${
             settings.preset === 'custom'
-              ? 'bg-[var(--accent-green)] text-black'
-              : 'bg-white/5 text-[var(--text-secondary)] hover:bg-white/10'
+              ? 'bg-hand-right text-hand-right-ink border-hand-right'
+              : 'bg-ground-3 border-[var(--edge)] text-ink hover:border-[var(--seam)]'
           }`}
         >
-          Rango personalizado
+          {t('piano.customPreset')}
         </button>
       </div>
 
       {settings.preset === 'custom' && (
         <div className="flex flex-wrap items-end gap-4">
-          <label className="flex flex-col gap-1 text-sm text-[var(--text-secondary)]">
-            Nota mas grave
+          <label className="flex flex-col gap-1.5 text-[13px] text-ink-mid">
+            {t('piano.lowest')}
             <select
               value={settings.lowestMidi}
-              onChange={(event) => update({ lowestMidi: Number(event.target.value) })}
-              className="bg-[var(--background-darker)] text-white rounded px-2 py-1.5 border border-white/10"
+              onChange={(event) =>
+                update({ lowestMidi: Number(event.target.value) })
+              }
+              className={SELECT}
             >
               {ALL_KEYS.map((midi) => (
                 <option key={midi} value={midi}>
@@ -119,12 +136,14 @@ const PianoRangeSettings: React.FC = () => {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm text-[var(--text-secondary)]">
-            Nota mas aguda
+          <label className="flex flex-col gap-1.5 text-[13px] text-ink-mid">
+            {t('piano.highest')}
             <select
               value={settings.highestMidi}
-              onChange={(event) => update({ highestMidi: Number(event.target.value) })}
-              className="bg-[var(--background-darker)] text-white rounded px-2 py-1.5 border border-white/10"
+              onChange={(event) =>
+                update({ highestMidi: Number(event.target.value) })
+              }
+              className={SELECT}
             >
               {ALL_KEYS.map((midi) => (
                 <option key={midi} value={midi}>
@@ -136,26 +155,42 @@ const PianoRangeSettings: React.FC = () => {
         </div>
       )}
 
-      <RangePreview lowestMidi={settings.lowestMidi} highestMidi={settings.highestMidi} />
+      {/*
+        The whole grand, with the visitor's own range lit and the rest in
+        shadow — so the setting reads as "this much of a piano", which is what
+        it means.
+      */}
+      <div className="rounded-lg bg-ground-0 p-2 border border-[var(--edge)]">
+        <Keyboard
+          lowestMidi={LOWEST_PIANO_MIDI}
+          highestMidi={HIGHEST_PIANO_MIDI}
+          litRange={[settings.lowestMidi, settings.highestMidi]}
+          height={64}
+          decorative
+        />
+      </div>
 
-      <label className="flex items-start gap-3 text-sm">
+      <label className="flex items-start gap-3">
         <input
           type="checkbox"
           checked={settings.autoTranspose}
           onChange={(event) => update({ autoTranspose: event.target.checked })}
-          className="mt-1 accent-[var(--accent-green)]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded-[3px] border border-[var(--seam)] bg-ground-1"
         />
         <span>
-          <strong className="block">Transponer las canciones que no quepan</strong>
-          <span className="text-[var(--text-secondary)]">
-            Sube o baja octavas la pieza entera para que entre en tu teclado. Si lo desactivas, se
-            avisa y puedes ajustarlo a mano en cada cancion.
+          <strong className="block text-sm font-semibold text-ink">
+            {t('piano.autoTitle')}
+          </strong>
+          <span className="mt-1 block text-[13px] leading-relaxed text-ink-low">
+            {t('piano.autoBody')}
           </span>
         </span>
       </label>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
-    </div>
+      {error && (
+        <p className="text-[13px] text-[var(--color-felt-ink)]">{error}</p>
+      )}
+    </Panel>
   );
 };
 

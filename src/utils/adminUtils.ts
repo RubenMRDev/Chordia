@@ -76,10 +76,23 @@ export const makeCurrentUserAdmin = async (): Promise<void> => {
   }
 };
 
-// Exponer las funciones globalmente para uso en consola
+/**
+ * Ayudas de administracion que se llaman a mano desde la consola del
+ * navegador. Se declara la forma en vez de castear a `any` cuatro veces, para
+ * que el nombre y la firma de cada una queden comprobados.
+ */
+interface AdminConsole {
+  makeUserAdmin: typeof makeUserAdmin;
+  makeAdminUser: typeof makeAdminUser;
+  checkUserRole: typeof checkUserRole;
+  makeCurrentUserAdmin: typeof makeCurrentUserAdmin;
+}
+
 if (typeof window !== 'undefined') {
-  (window as any).makeUserAdmin = makeUserAdmin;
-  (window as any).makeAdminUser = makeAdminUser;
-  (window as any).checkUserRole = checkUserRole;
-  (window as any).makeCurrentUserAdmin = makeCurrentUserAdmin;
+  Object.assign(window as unknown as AdminConsole, {
+    makeUserAdmin,
+    makeAdminUser,
+    checkUserRole,
+    makeCurrentUserAdmin,
+  } satisfies AdminConsole);
 } 

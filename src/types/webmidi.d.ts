@@ -2,7 +2,7 @@ declare namespace WebMidi {
   interface MIDIAccess extends EventTarget {
     inputs: MIDIInputMap;
     outputs: MIDIOutputMap;
-    onstatechange: ((this: MIDIAccess, ev: Event) => any) | null;
+    onstatechange: ((this: MIDIAccess, ev: Event) => void) | null;
   }
 
   interface MIDIInputMap {
@@ -12,7 +12,7 @@ declare namespace WebMidi {
     keys(): IterableIterator<string>;
     values(): IterableIterator<MIDIInput>;
     entries(): IterableIterator<[string, MIDIInput]>;
-    forEach(callbackfn: (value: MIDIInput, key: string, parent: MIDIInputMap) => void, thisArg?: any): void;
+    forEach(callbackfn: (value: MIDIInput, key: string, parent: MIDIInputMap) => void, thisArg?: unknown): void;
     [Symbol.iterator](): IterableIterator<[string, MIDIInput]>;
   }
 
@@ -23,7 +23,7 @@ declare namespace WebMidi {
     keys(): IterableIterator<string>;
     values(): IterableIterator<MIDIOutput>;
     entries(): IterableIterator<[string, MIDIOutput]>;
-    forEach(callbackfn: (value: MIDIOutput, key: string, parent: MIDIOutputMap) => void, thisArg?: any): void;
+    forEach(callbackfn: (value: MIDIOutput, key: string, parent: MIDIOutputMap) => void, thisArg?: unknown): void;
     [Symbol.iterator](): IterableIterator<[string, MIDIOutput]>;
   }
 
@@ -35,11 +35,11 @@ declare namespace WebMidi {
     version?: string;
     state: MIDIPortDeviceState;
     connection: MIDIPortConnectionState;
-    onstatechange: ((this: MIDIPort, ev: Event) => any) | null;
+    onstatechange: ((this: MIDIPort, ev: Event) => void) | null;
   }
 
   interface MIDIInput extends MIDIPort {
-    onmidimessage: ((this: MIDIInput, ev: MIDIMessageEvent) => any) | null;
+    onmidimessage: ((this: MIDIInput, ev: MIDIMessageEvent) => void) | null;
   }
 
   interface MIDIOutput extends MIDIPort {

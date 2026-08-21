@@ -16,6 +16,12 @@
     "composite": true,
     "jsx": "react-jsx",
 
+    /* Path alias */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

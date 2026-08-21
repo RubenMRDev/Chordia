@@ -1,44 +1,47 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaPlay, FaTrash, FaSave, FaMusic, FaRegClock, FaKeyboard } from 'react-icons/fa';
-import Swal from 'sweetalert2';
-import Header from '../components/Header';
-import MidiDropzone from '../components/player/MidiDropzone';
-import CatalogBrowser from '../components/player/CatalogBrowser';
-import PianoRangeSettings from '../components/piano/PianoRangeSettings';
-import { usePianoSettings } from '../hooks/usePianoSettings';
-import { describeRange, keyCount } from '../features/piano/pianoSettings';
-import { formatTime } from '../features/player/format';
+import { useNavigate } from 'react-router-dom';
+import { FaPlay, FaRegClock, FaSave, FaTrash } from 'react-icons/fa';
+import Shell from '@/components/layout/Shell';
+import MidiDropzone from '@/components/player/MidiDropzone';
+import CatalogBrowser from '@/components/player/CatalogBrowser';
+import PianoRangeSettings from '@/components/piano/PianoRangeSettings';
+import { usePianoSettings } from '@/hooks/usePianoSettings';
+import { describeRange, keyCount } from '@/features/piano/pianoSettings';
+import { formatTime } from '@/features/player/format';
 import {
   deleteMidiSong,
   getMidiData,
   importMidiFile,
   listMidiSongs,
   type MidiLibraryEntry,
-} from '../features/midi/library';
-import { parseMidiBuffer } from '../features/midi/parseMidi';
-import { estimateKey, midiToChords } from '../features/midi/midiToChords';
-import { createSong } from '../firebase/songService';
-import { useAuth } from '../context/AuthContext';
+} from '@/features/midi/library';
+import { parseMidiBuffer } from '@/features/midi/parseMidi';
+import { estimateKey, midiToChords } from '@/features/midi/midiToChords';
+import { createSong } from '@/firebase/songService';
+import { useAuth } from '@/context/AuthContext';
+import { useT } from '@/i18n';
+import { Button, ButtonLink, Panel, Segmented } from '@/ui';
+import {
+  confirmAction,
+  confirmNext,
+  notifyError,
+  notifyInfo,
+} from '@/ui/dialog';
 
-const swalTheme = {
-  background: '#1a2332',
-  color: '#ffffff',
-  confirmButtonColor: '#00E676',
-  cancelButtonColor: '#4a5568',
-};
+type Tab = 'catalog' | 'mine';
 
 /**
- * Biblioteca de ficheros MIDI importados: importar, tocar, borrar y convertir a
- * una cancion de acordes de Chordia.
+ * Pieces to play: the bundled catalogue, and the `.mid` files this browser has
+ * imported. Importing, playing, deleting, and turning a MIDI file into a
+ * Chordia song of chords.
  */
-type Tab = 'catalogo' | 'mios';
-
 const MidiLibraryPage: React.FC = () => {
+  const { t } = useT();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { settings: piano } = usePianoSettings();
-  const [tab, setTab] = useState<Tab>('catalogo');
+
+  const [tab, setTab] = useState<Tab>('catalog');
   const [showPiano, setShowPiano] = useState(false);
   const [entries, setEntries] = useState<MidiLibraryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,8 +70,10 @@ const MidiLibraryPage: React.FC = () => {
       try {
         const entry = await importMidiFile(file);
         lastId = entry.id;
-      } catch (error) {
-        failed.push(`${file.name}: ${error instanceof Error ? error.message : 'error desconocido'}`);
+      } catch (cause) {
+        failed.push(
+          `${file.name}: ${cause instanceof Error ? cause.message : t('state.error')}`,
+        );
       }
     }
 
@@ -76,59 +81,58 @@ const MidiLibraryPage: React.FC = () => {
     await refresh();
 
     if (failed.length > 0) {
-      await Swal.fire({
-        ...swalTheme,
-        icon: 'error',
-        title: 'Algun fichero no se pudo importar',
-        html: failed.map((message) => `<div>${message}</div>`).join(''),
+      await notifyError({
+        title: t('import.failedTitle'),
+        html: failed.map((line) => `<div>${line}</div>`).join(''),
+        confirmLabel: t('state.ok'),
       });
       return;
     }
 
-    if (files.length === 1 && lastId) {
-      navigate(`/play/${lastId}`);
-    }
+    // One file is an unambiguous intent: open it.
+    if (files.length === 1 && lastId) navigate(`/play/${lastId}`);
   };
 
   const handleDelete = async (entry: MidiLibraryEntry) => {
-    const result = await Swal.fire({
-      ...swalTheme,
-      icon: 'warning',
-      title: `Borrar "${entry.name}"?`,
-      text: 'Se quita de este navegador. El fichero original no se toca.',
-      showCancelButton: true,
-      confirmButtonText: 'Borrar',
-      cancelButtonText: 'Cancelar',
+    const confirmed = await confirmAction({
+      title: t('import.deleteTitle', { name: entry.name }),
+      text: t('import.deleteBody'),
+      confirmLabel: t('state.delete'),
+      cancelLabel: t('state.cancel'),
+      destructive: true,
     });
-    if (!result.isConfirmed) return;
+    if (!confirmed) return;
 
     try {
       await deleteMidiSong(entry.id);
       await refresh();
-    } catch (error) {
-      await Swal.fire({
-        ...swalTheme,
-        icon: 'error',
-        title: 'No se pudo borrar',
-        text: error instanceof Error ? error.message : 'Error desconocido',
+    } catch (cause) {
+      await notifyError({
+        title: t('import.deleteFailed'),
+        text: cause instanceof Error ? cause.message : undefined,
+        confirmLabel: t('state.ok'),
       });
     }
   };
 
-  /** Convierte el MIDI en progresion de acordes y la guarda en Firestore. */
+  /** Turns the MIDI file into a chord progression and saves it to Firestore. */
   const handleSaveAsSong = async (entry: MidiLibraryEntry) => {
     if (!currentUser) {
-      await Swal.fire({ ...swalTheme, icon: 'info', title: 'Inicia sesion para guardar canciones' });
+      await notifyInfo({
+        title: t('player.saveNeedsAccount'),
+        text: t('player.saveNeedsAccountBody'),
+        confirmLabel: t('state.ok'),
+      });
       return;
     }
 
     setSavingId(entry.id);
     try {
       const data = await getMidiData(entry.id);
-      if (!data) throw new Error('No se encontro el fichero MIDI');
+      if (!data) throw new Error(t('player.notFound'));
       const parsed = parseMidiBuffer(data, entry.fileName);
       const chords = midiToChords(parsed);
-      if (chords.length === 0) throw new Error('No se pudo extraer ningun acorde');
+      if (chords.length === 0) throw new Error(t('player.saveFailed'));
 
       const songId = await createSong({
         userId: currentUser.uid,
@@ -140,162 +144,171 @@ const MidiLibraryPage: React.FC = () => {
         createdAt: new Date().toISOString(),
       });
 
-      const result = await Swal.fire({
-        ...swalTheme,
-        icon: 'success',
-        title: 'Guardada en tu biblioteca',
-        text: `${chords.length} acordes extraidos de "${entry.name}".`,
-        showCancelButton: true,
-        confirmButtonText: 'Ver la cancion',
-        cancelButtonText: 'Seguir aqui',
+      const view = await confirmNext({
+        title: t('player.savedTitle'),
+        text: t('player.savedBody', { count: chords.length, name: entry.name }),
+        confirmLabel: t('player.savedView'),
+        cancelLabel: t('player.savedStay'),
       });
-      if (result.isConfirmed) navigate(`/song/${songId}`);
-    } catch (error) {
-      await Swal.fire({
-        ...swalTheme,
-        icon: 'error',
-        title: 'No se pudo guardar',
-        text: error instanceof Error ? error.message : 'Error desconocido',
+      if (view) navigate(`/song/${songId}`);
+    } catch (cause) {
+      await notifyError({
+        title: t('player.saveFailed'),
+        text: cause instanceof Error ? cause.message : undefined,
+        confirmLabel: t('state.ok'),
       });
     } finally {
       setSavingId(null);
     }
   };
 
+  // The bundled demo is always present, so "mine" counts everything past it.
+  const importedCount = Math.max(0, entries.length - 1);
+
   return (
-    <div className="min-h-screen bg-[var(--background-dark)] text-[var(--text-primary)]">
-      <Header />
-      <main className="container py-8 flex flex-col gap-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FaMusic className="text-[var(--accent-green)]" />
-            Canciones MIDI
+    <Shell padded={false}>
+      <div className="shell pt-10 pb-16 flex flex-col gap-8">
+        <header>
+          <h1 className="font-display text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-[1.05]">
+            {t('catalog.pageTitle')}
           </h1>
-          <p className="text-[var(--text-secondary)] mt-2 max-w-2xl">
-            Toca cientos de piezas del catalogo o importa tus propios .mid, con las notas cayendo
-            sobre el teclado. Vale un teclado MIDI, el teclado del ordenador o el raton.
+          <p className="mt-4 text-[15px] leading-relaxed text-ink-mid prose-measure">
+            {t('catalog.pageLede')}
           </p>
-          <p className="text-sm text-[var(--text-secondary)] mt-2">
-            Tu piano: {keyCount(piano)} teclas ({describeRange(piano)}) ·{' '}
+          <p className="numeric mt-4 text-[13px] text-ink-low">
+            {t('catalog.yourPiano', {
+              keys: keyCount(piano),
+              range: describeRange(piano),
+            })}
+            {' · '}
             <button
               type="button"
               onClick={() => setShowPiano((value) => !value)}
-              className="text-[var(--accent-green)] font-semibold"
+              aria-expanded={showPiano}
+              className="font-semibold text-hand-right hover:underline"
             >
-              {showPiano ? 'ocultar' : 'configurar'}
+              {showPiano ? t('catalog.hide') : t('catalog.configure')}
             </button>
           </p>
-        </div>
+        </header>
 
-        {/* La misma configuracion que hay en el perfil, aqui tambien porque
-            funciona sin cuenta (se guarda en el navegador). */}
+        {/* The same setting as in the profile. It lives here too because it
+            works without an account: it is kept in the browser. */}
         {showPiano && <PianoRangeSettings />}
 
-        <div className="flex gap-2 border-b border-white/10">
-          {([
-            ['catalogo', 'Catalogo'],
-            ['mios', 'Mis ficheros'],
-          ] as Array<[Tab, string]>).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={`px-4 py-2 font-semibold border-b-2 -mb-px ${
-                tab === id
-                  ? 'border-[var(--accent-green)] text-[var(--accent-green)]'
-                  : 'border-transparent text-[var(--text-secondary)] hover:text-white'
-              }`}
-            >
-              {label}
-              {id === 'mios' && entries.length > 1 ? ` (${entries.length - 1})` : ''}
-            </button>
-          ))}
-        </div>
+        <Segmented<Tab>
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'catalog', label: t('catalog.title') },
+            {
+              value: 'mine',
+              label: importedCount
+                ? `${t('import.mine')} (${importedCount})`
+                : t('import.mine'),
+            },
+          ]}
+        />
 
-        {tab === 'catalogo' && <CatalogBrowser piano={piano} />}
+        {tab === 'catalog' && <CatalogBrowser piano={piano} />}
 
-        <section className={`flex-col gap-3 ${tab === 'mios' ? 'flex' : 'hidden'}`}>
+        {/*
+          Kept mounted but hidden, so switching tabs does not re-read IndexedDB
+          and lose the dropzone's state.
+        */}
+        <section className={tab === 'mine' ? 'flex flex-col gap-4' : 'hidden'}>
           <MidiDropzone onFiles={handleFiles} busy={importing} />
 
-          <h2 className="text-xl font-bold mt-2">Tus ficheros importados</h2>
+          <h2 className="font-display text-lg font-semibold mt-2">
+            {t('import.yourFiles')}
+          </h2>
 
           {loading ? (
-            <p className="text-[var(--text-secondary)]">Cargando...</p>
+            <p className="text-sm text-ink-low">{t('state.loading')}</p>
           ) : (
-            entries.map((entry) => (
-              <article
-                key={entry.id}
-                className="bg-[var(--card-background)] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-4"
-              >
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold truncate">
-                    {entry.name}
-                    {entry.builtIn && (
-                      <span className="ml-2 text-xs font-semibold text-[var(--accent-green)] uppercase">
-                        incluida
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-sm text-[var(--text-secondary)] flex flex-wrap gap-x-4 mt-1">
-                    {entry.duration > 0 && (
-                      <span className="flex items-center gap-1.5">
-                        <FaRegClock />
-                        {formatTime(entry.duration)}
-                      </span>
-                    )}
-                    {entry.noteCount > 0 && <span>{entry.noteCount} notas</span>}
-                    <span>{entry.bpm} BPM</span>
-                    {!entry.builtIn && <span>{Math.round(entry.size / 1024)} KB</span>}
-                  </p>
-                </div>
+            <ul className="list-none m-0 p-0 flex flex-col gap-3">
+              {entries.map((entry) => (
+                <li key={entry.id}>
+                  <Panel className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate flex items-center gap-2">
+                        {entry.name}
+                        {entry.builtIn && (
+                          <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[color-mix(in_srgb,var(--color-hand-right)_16%,transparent)] text-hand-right">
+                            {t('import.builtIn')}
+                          </span>
+                        )}
+                      </h3>
+                      <p className="numeric mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-low">
+                        {entry.duration > 0 && (
+                          <span className="flex items-center gap-1.5">
+                            <FaRegClock aria-hidden />
+                            {formatTime(entry.duration)}
+                          </span>
+                        )}
+                        {entry.noteCount > 0 && (
+                          <span>
+                            {t('import.notes', { count: entry.noteCount })}
+                          </span>
+                        )}
+                        <span>{entry.bpm} BPM</span>
+                        {!entry.builtIn && (
+                          <span>{Math.round(entry.size / 1024)} KB</span>
+                        )}
+                      </p>
+                    </div>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link
-                    to={`/play/${entry.id}`}
-                    className="px-4 py-2 rounded bg-[var(--accent-green)] text-black font-bold no-underline flex items-center gap-2 hover:brightness-110"
-                  >
-                    <FaPlay />
-                    Tocar
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => void handleSaveAsSong(entry)}
-                    disabled={savingId === entry.id}
-                    className="px-4 py-2 rounded bg-white/5 hover:bg-white/10 font-semibold flex items-center gap-2 disabled:opacity-50"
-                    title="Extrae los acordes y la guarda en tu biblioteca de Chordia"
-                  >
-                    <FaSave />
-                    {savingId === entry.id ? 'Guardando...' : 'Guardar como cancion'}
-                  </button>
-                  {!entry.builtIn && (
-                    <button
-                      type="button"
-                      onClick={() => void handleDelete(entry)}
-                      className="px-3 py-2 rounded bg-white/5 hover:bg-red-500/20 text-red-400"
-                      aria-label={`Borrar ${entry.name}`}
-                    >
-                      <FaTrash />
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ButtonLink
+                        to={`/play/${entry.id}`}
+                        tone="right"
+                        size="md"
+                      >
+                        <FaPlay aria-hidden className="text-[12px]" />
+                        {t('catalog.play')}
+                      </ButtonLink>
+                      <Button
+                        tone="quiet"
+                        size="md"
+                        title={t('player.saveHint')}
+                        busy={savingId === entry.id}
+                        busyLabel={t('player.saving')}
+                        onClick={() => void handleSaveAsSong(entry)}
+                      >
+                        <FaSave aria-hidden className="text-[12px]" />
+                        {t('player.saveAsSong')}
+                      </Button>
+                      {!entry.builtIn && (
+                        <Button
+                          tone="ghost"
+                          size="md"
+                          aria-label={`${t('state.delete')} ${entry.name}`}
+                          onClick={() => void handleDelete(entry)}
+                          className="!text-[var(--color-felt-ink)] hover:!bg-[color-mix(in_srgb,var(--color-felt)_25%,transparent)]"
+                        >
+                          <FaTrash aria-hidden className="text-[12px]" />
+                        </Button>
+                      )}
+                    </div>
+                  </Panel>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 
-        <section className="bg-[var(--card-background)] rounded-lg p-4 flex items-start gap-3">
-          <FaKeyboard className="text-[var(--accent-green)] text-xl mt-1" />
+        <Panel className="p-5 flex items-start gap-4">
+          {/* The keyboard silhouette instead of a generic keyboard icon. */}
+          <div aria-hidden className="mt-1 shrink-0 w-14 rule-keys h-px" />
           <div>
-            <h3 className="font-bold">Con teclado MIDI</h3>
-            <p className="text-sm text-[var(--text-secondary)]">
-              Conectalo antes de abrir la cancion y se detecta solo, con velocidad de pulsacion y
-              pedal de sustain. Si no tienes uno, la fila <strong>q w e r</strong> y la fila{' '}
-              <strong>z x c v</strong> hacen de piano.
+            <h2 className="font-semibold">{t('midi.withKeyboardTitle')}</h2>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink-mid prose-measure">
+              {t('midi.withKeyboardBody')}
             </p>
           </div>
-        </section>
-      </main>
-    </div>
+        </Panel>
+      </div>
+    </Shell>
   );
 };
 

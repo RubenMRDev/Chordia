@@ -15,6 +15,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "types": ["jest", "node", "@testing-library/jest-dom"],
     "typeRoots": [
       "./node_modules/@types",

@@ -1,147 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
 
-@import "tailwindcss";
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/instrument.css';
+@import './styles/dialog.css';
 
-:root {
-  --background-dark: #0f1624;
-  --background-darker: #0a101b;
-  --accent-green: #00E676;
-  --text-primary: #ffffff;
-  --text-secondary: #a0aec0;
-  --card-background: #1a2332;
-}
+@layer components {
+  /*
+    Page shell. One rhythm for the whole product: content sits in a measured
+    column with a gutter that grows with the viewport.
+  */
+  .shell {
+    width: 100%;
+    max-width: 84rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
 
-* {
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
-}
+  .shell-narrow {
+    width: 100%;
+    max-width: 52rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
 
-body {
-  background-color: var(--background-dark);
-  color: var(--text-primary);
-  overflow-x: hidden;
-}
+  /* Legacy alias, kept so nothing renders unstyled mid-refactor. */
+  .container {
+    width: 100%;
+    max-width: 84rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background-color: var(--accent-green);
-  color: #000;
-}
-
-.btn-primary:hover {
-  background-color: #00c853;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--text-secondary);
-}
-
-.btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.section {
-  padding: 4rem 0;
-}
-
-.card {
-  background-color: var(--card-background);
-  border-radius: 8px;
-  padding: 1.5rem;
-  height: 100%;
-}
-
-.feature-icon {
-  color: var(--accent-green);
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.music-notes-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.2;
-  z-index: -1;
-  overflow: hidden;
-}
-
-html, body, div, section, header, footer, h1, h2, h3, h4, h5, h6, p, span, 
-figure, img, ul, ol, li, table, tr, td, th {
-  cursor: default;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-a, button, .btn, [role="button"], 
-[role="link"], [type="button"], [type="submit"], [type="reset"],
-label[for], summary {
-  cursor: pointer !important;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-input[type="text"], input[type="email"], input[type="password"], 
-input[type="number"], input[type="search"], input[type="tel"], 
-input[type="url"], textarea, select, [contenteditable="true"] {
-  cursor: text;
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-}
-
-[role="textbox"], .cursor-text {
-  cursor: text;
-  user-select: text;
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-}
-
-.cursor-pointer {
-  cursor: pointer !important;
-}
-
-.cursor-default {
-  cursor: default !important;
-}
-
-.select-text {
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  -moz-user-select: text !important;
-  -ms-user-select: text !important;
-}
-
-.select-none {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
+  /* Prose: body copy at a readable measure. */
+  .prose-measure {
+    max-width: var(--measure);
+    text-wrap: pretty;
+  }
 }

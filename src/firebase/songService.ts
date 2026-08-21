@@ -1,24 +1,17 @@
 import { collection, addDoc, getDocs, getDoc, doc, query, where, orderBy, deleteDoc, writeBatch } from "firebase/firestore";
-import { db } from "./config";
-export interface ChordType {
-  keys: string[];
-  selected: boolean;
-}
+import { requireDb } from "./config";
+import type { ChordType, Song } from "../types/models";
 
-export interface Song {
-  id?: string;
-  userId: string;
-  title: string;
-  tempo: number;
-  key: string;
-  timeSignature: string;
-  chords: ChordType[];
-  createdAt: string;
-}
+/*
+  `Song` and `ChordType` used to be declared here as well as in
+  `types/models.ts`, so the same shape had two definitions that could drift.
+  They are re-exported for the call sites that import them from this module.
+*/
+export type { ChordType, Song };
 
 export const createSong = async (song: Omit<Song, "id">): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, "songs"), song);
+    const docRef = await addDoc(collection(requireDb(), "songs"), song);
     return docRef.id;
   } catch (error) {
     console.error("Error creating song:", error);
@@ -29,7 +22,7 @@ export const createSong = async (song: Omit<Song, "id">): Promise<string> => {
 export const getUserSongs = async (userId: string): Promise<Song[]> => {
   try {
     const q = query(
-      collection(db, "songs"),
+      collection(requireDb(), "songs"),
       where("userId", "==", userId)
     );
     const querySnapshot = await getDocs(q);
@@ -49,7 +42,7 @@ export const getUserSongs = async (userId: string): Promise<Song[]> => {
 
 export const getSongById = async (songId: string): Promise<Song | null> => {
   try {
-    const songDoc = await getDoc(doc(db, "songs", songId));
+    const songDoc = await getDoc(doc(requireDb(), "songs", songId));
     if (songDoc.exists()) {
       const data = songDoc.data() as Omit<Song, 'id'>;
       return { id: songDoc.id, ...data };
@@ -64,7 +57,7 @@ export const getSongById = async (songId: string): Promise<Song | null> => {
 
 export const deleteSongById = async (songId: string): Promise<void> => {
   try {
-    await deleteDoc(doc(db, "songs", songId));
+    await deleteDoc(doc(requireDb(), "songs", songId));
   } catch (error) {
     console.error("Error deleting song:", error);
     throw error;
@@ -74,7 +67,7 @@ export const deleteSongById = async (songId: string): Promise<void> => {
 export const getAllSongs = async (): Promise<Song[]> => {
   try {
     const q = query(
-      collection(db, "songs"),
+      collection(requireDb(), "songs"),
       orderBy("createdAt", "desc")
     );
     const querySnapshot = await getDocs(q);
@@ -92,7 +85,7 @@ export const getAllSongs = async (): Promise<Song[]> => {
 
 export const deleteAllUserSongs = async (userId: string): Promise<void> => {
   try {
-    const songsRef = collection(db, 'songs');
+    const songsRef = collection(requireDb(), 'songs');
     const q = query(songsRef, where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
     
@@ -100,7 +93,7 @@ export const deleteAllUserSongs = async (userId: string): Promise<void> => {
       return;
     }
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(requireDb());
     querySnapshot.forEach((doc) => {
       batch.delete(doc.ref);
     });
@@ -111,11 +104,49 @@ export const deleteAllUserSongs = async (userId: string): Promise<void> => {
   }
 };
 
+/** A song plus the display name of whoever wrote it. */
+export type SongWithAuthor = Song & { authorName: string | null };
+
+/**
+ * Every song, with its author's display name resolved.
+ *
+ * Author names are fetched once per *user*, not once per song: Discover used to
+ * issue one Firestore read for every song on the page, so fifty songs by five
+ * people cost fifty reads instead of five.
+ */
+export const getAllSongsWithAuthors = async (): Promise<SongWithAuthor[]> => {
+  const songs = await getAllSongs();
+  const userIds = [...new Set(songs.map((song) => song.userId).filter(Boolean))];
+
+  const entries = await Promise.all(
+    userIds.map(async (userId) => {
+      try {
+        const snapshot = await getDoc(doc(requireDb(), "users", userId));
+        const data = snapshot.exists() ? snapshot.data() : null;
+        const name =
+          (data?.displayName as string | undefined) ||
+          (data?.username as string | undefined) ||
+          null;
+        return [userId, name] as const;
+      } catch {
+        // A missing or unreadable profile must not lose the song.
+        return [userId, null] as const;
+      }
+    }),
+  );
+
+  const names = new Map(entries);
+  return songs.map((song) => ({
+    ...song,
+    authorName: names.get(song.userId) ?? null,
+  }));
+};
+
 // Funciones para gestión de canciones por admins
 export const getAllSongsWithUserInfo = async (): Promise<(Song & { userDisplayName: string })[]> => {
   try {
     const q = query(
-      collection(db, "songs"),
+      collection(requireDb(), "songs"),
       orderBy("createdAt", "desc")
     );
     const querySnapshot = await getDocs(q);
@@ -127,7 +158,7 @@ export const getAllSongsWithUserInfo = async (): Promise<(Song & { userDisplayNa
       
       // Obtener información del usuario
       try {
-        const userDoc = await getDoc(doc(db, "users", data.userId));
+        const userDoc = await getDoc(doc(requireDb(), "users", data.userId));
         const userDisplayName = userDoc.exists() ? userDoc.data().displayName : 'Usuario desconocido';
         songs.push({ ...song, userDisplayName });
       } catch (error) {
@@ -145,7 +176,7 @@ export const getAllSongsWithUserInfo = async (): Promise<(Song & { userDisplayNa
 
 export const deleteSongAsAdmin = async (songId: string): Promise<void> => {
   try {
-    await deleteDoc(doc(db, "songs", songId));
+    await deleteDoc(doc(requireDb(), "songs", songId));
   } catch (error) {
     console.error("Error deleting song as admin:", error);
     throw error;

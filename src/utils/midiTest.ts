@@ -1,9 +1,28 @@
-export const testMIDIConnectivity = async () => {
+/** Lo que se recoge de cada entrada MIDI al diagnosticar la conexion. */
+interface MIDIDeviceInfo {
+  id: string;
+  name: string;
+  manufacturer: string;
+  state: string;
+  connection: string;
+  type: string;
+}
+
+/** Lo que devuelve `testMIDIConnectivity`. */
+export interface MIDIConnectivityResult {
+  browserSupport: boolean;
+  accessGranted: boolean;
+  devicesFound: number;
+  deviceDetails: MIDIDeviceInfo[];
+  errors: string[];
+}
+
+export const testMIDIConnectivity = async (): Promise<MIDIConnectivityResult> => {
   const results = {
     browserSupport: false,
     accessGranted: false,
     devicesFound: 0,
-    deviceDetails: [] as any[],
+    deviceDetails: [] as MIDIDeviceInfo[],
     errors: [] as string[],
   };
 
@@ -21,7 +40,7 @@ export const testMIDIConnectivity = async () => {
       results.accessGranted = true;
       console.log('MIDI access granted:', access);
 
-      access.inputs.forEach((input, _key) => {
+      access.inputs.forEach((input) => {
         const deviceInfo = {
           id: input.id,
           name: input.name || 'Unknown Device',
@@ -75,7 +94,15 @@ export const getMIDIDebugInfo = () => {
   return debugInfo;
 };
 
-export const logMIDIState = (state: any) => {
+/** El estado que expone `useMIDI`, lo unico que esta funcion registra. */
+interface MIDIStateSnapshot {
+  devices?: unknown;
+  currentDevice?: unknown;
+  error?: unknown;
+  isInitializing?: unknown;
+}
+
+export const logMIDIState = (state: MIDIStateSnapshot) => {
   console.group('MIDI State Log');
   console.log('Timestamp:', new Date().toISOString());
   console.log('State:', state);

@@ -18,10 +18,10 @@
     "songs:rescore": "node scripts/harvest-songs.mjs --rescore"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
     "@tailwindcss/vite": "^4.0.17",
-    "@testing-library/react": "^16.3.0",
     "@tonejs/midi": "^2.0.28",
-    "dotenv": "^16.5.0",
     "firebase": "^11.5.0",
     "marked": "^15.0.12",
     "react": "^19.1.0",
@@ -29,14 +29,12 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.4.0",
     "sweetalert2": "^11.17.2",
-    "sweetalert2-react-content": "^5.1.0",
-    "tailwindcss": "^4.0.17",
-    "tone": "^15.1.22",
-    "vitest": "^3.1.4"
+    "tailwindcss": "^4.0.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.14",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
