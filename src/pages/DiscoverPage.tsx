@@ -83,7 +83,7 @@ const DiscoverPage: React.FC = () => {
                 label: (
                   <>
                     <FaClock aria-hidden className="text-[11px]" />
-                    {t('dashboard.recent')}
+                    {t('discover.sortRecent')}
                   </>
                 ),
               },
@@ -92,7 +92,7 @@ const DiscoverPage: React.FC = () => {
                 label: (
                   <>
                     <FaRandom aria-hidden className="text-[11px]" />
-                    {t('discover.title')}
+                    {t('discover.sortRandom')}
                   </>
                 ),
               },

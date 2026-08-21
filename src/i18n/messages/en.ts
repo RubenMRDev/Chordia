@@ -401,6 +401,8 @@ export const en: Messages = {
   'discover.emptyBody': 'Be the first: save a progression and it will show up here.',
   'discover.by': 'by {name}',
   'discover.someone': 'Someone',
+  'discover.sortRecent': 'Most recent',
+  'discover.sortRandom': 'Shuffle',
   'dashboard.title': 'Hello, {name}',
   'dashboard.lede': 'Where you left off, and what to do next.',
   'dashboard.yourSongs': 'Your songs',

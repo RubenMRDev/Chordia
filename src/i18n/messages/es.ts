@@ -402,6 +402,8 @@ export const es = {
   'discover.emptyBody': 'Sé el primero: guarda una progresión y aparecerá aquí.',
   'discover.by': 'de {name}',
   'discover.someone': 'Alguien',
+  'discover.sortRecent': 'Más recientes',
+  'discover.sortRandom': 'Al azar',
   'dashboard.title': 'Hola, {name}',
   'dashboard.lede': 'Por dónde ibas y qué hacer ahora.',
   'dashboard.yourSongs': 'Tus canciones',
